@@ -6,10 +6,15 @@
 Запуск из корня репозитория:
     .venv/bin/python -m unittest discover -s ядро/скрипты/tests -t .
 """
+import contextlib
+import http.server
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 import unittest
+import unittest.mock
 from pathlib import Path
 
 СКРИПТЫ = Path(__file__).resolve().parent.parent
@@ -20,6 +25,48 @@ import глаза  # noqa: E402
 
 # Цвет кнопки на учебной странице — тот же, что в её стилях: rgb(200, 30, 40)
 ЦВЕТ_КНОПКИ = "#{:02x}{:02x}{:02x}".format(200, 30, 40)
+
+СТРАНИЦА_С_ВЕЧНОЙ_КАРТИНКОЙ = (
+    "<html lang='ru'><head><title>Вечная загрузка</title></head>"
+    "<body><h1>Страница открылась</h1><p>А картинка ещё грузится.</p>"
+    "<img src='/вечная.png' alt='никогда не догрузится'></body></html>"
+).encode("utf-8")
+
+
+@contextlib.contextmanager
+def _сервер_с_вечной_картинкой():
+    """Свой сервер, у которого страница отдаётся сразу, а картинка не догружается никогда.
+
+    Так ведут себя живые сайты с висящим чатом или трекером: разметка на месте, событие
+    «загрузилась» не наступает. Наружу при этом не ходим — сервер свой, на 127.0.0.1.
+    """
+    class Отдающий(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path == "/":
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(СТРАНИЦА_С_ВЕЧНОЙ_КАРТИНКОЙ)))
+                self.end_headers()
+                self.wfile.write(СТРАНИЦА_С_ВЕЧНОЙ_КАРТИНКОЙ)
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", "image/png")
+            self.send_header("Content-Length", "100000")   # обещаем и не досылаем
+            self.end_headers()
+            time.sleep(4)
+
+        def log_message(self, формат, *аргументы):
+            pass
+
+    сервер = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Отдающий)
+    поток = threading.Thread(target=сервер.serve_forever, daemon=True)
+    поток.start()
+    try:
+        yield f"http://127.0.0.1:{сервер.server_port}/"
+    finally:
+        сервер.shutdown()
+        сервер.server_close()
+        поток.join(timeout=5)
 
 
 class ЗамерыТесты(unittest.TestCase):
@@ -128,6 +175,35 @@ class ЗамерыТесты(unittest.TestCase):
         self.assertIn("Воздух:", текст)
         self.assertIn("Адаптивность:", текст)
 
+    def test_две_цифры_адаптивности_подписаны_по_разному(self):
+        """Мелкий текст ищется по всей странице, картинки — только на первом экране.
+        В одной строке без оговорки их читают как одну мерку."""
+        строка = [с for с in глаза.сводка(self.референс).splitlines()
+                  if с.startswith("- Адаптивность:")]
+        self.assertEqual(len(строка), 2, "по строке на каждый размер")
+        for с in строка:
+            self.assertIn("текст — по всей странице, картинки — по первому экрану", с)
+
+    def test_таймаут_после_удачных_замеров_это_не_беда(self):
+        """Живой сайт с висящим трекером не сообщает о полной загрузке — но экран снят и
+        стили померены. Это «ок» с пометкой, а не «страница не открылась»."""
+        with tempfile.TemporaryDirectory() as куда:
+            with _сервер_с_вечной_картинкой() as адрес:
+                # ждём страницу заведомо меньше, чем её вечная картинка, и не ждём тишины
+                with unittest.mock.patch.object(глаза, "ТАЙМАУТ_ЗАГРУЗКИ_МС", 1200), \
+                        unittest.mock.patch.object(глаза, "ТАЙМАУТ_ТИШИНЫ_МС", 300):
+                    итог = глаза.снять_размер(
+                        self.браузер, адрес, "компьютер", Path(куда), ждать_сек=0.2)
+
+        self.assertEqual(итог["статус"], "ок", итог.get("не_пустило"))
+        self.assertIsNone(итог["не_пустило"])
+        self.assertIn("предупреждение", итог)
+        self.assertIn("замеры сняты с того, что успело открыться", итог["предупреждение"])
+        self.assertIn("экран", итог["скриншоты"], "экран должен был сняться")
+        self.assertNotIn("замер_не_вышел", итог)
+        self.assertEqual(итог.get("заголовок_вкладки"), "Вечная загрузка",
+                         "замеры должны быть настоящими, а не с пустой страницы")
+
     def test_замеры_легли_рядом_с_экранами(self):
         папка = Path(self.референс["устройства"]["компьютер"]["скриншоты"]["экран"]).parent
         self.assertTrue((папка / "замеры.md").exists())
@@ -193,6 +269,18 @@ class ИтогТесты(unittest.TestCase):
             self.assertIsNone(глаза.маркер_стены(текст, заголовок), текст)
         self.assertEqual(глаза.маркер_стены("Проверяем браузер", "Магазин"), "проверяем браузер")
         self.assertEqual(глаза.маркер_стены("", "Проверка браузера — captcha"), "captcha")
+
+    def test_сертификат_узнаётся_по_коду_а_не_по_буквам_в_адресе(self):
+        # В текст ошибки браузер вписывает сам адрес: у сайта с «ssl» или «cert» в домене
+        # любая беда получала уверенное и неверное объяснение «незнакомый сертификат».
+        не_дошли = ("Error: net::ERR_NAME_NOT_RESOLVED at "
+                    "https://ssl-cert.example.invalid/")
+        self.assertEqual(глаза.вид_по_ошибке(не_дошли), "ошибка")
+
+        for настоящая in ("Error: net::ERR_CERT_AUTHORITY_INVALID at https://пример.рф/",
+                          "Error: net::ERR_SSL_PROTOCOL_ERROR at https://пример.рф/",
+                          "Error: SSL_ERROR_BAD_CERT_DOMAIN"):
+            self.assertEqual(глаза.вид_по_ошибке(настоящая), "сертификат", настоящая)
 
     def test_у_каждого_вида_есть_подсказка(self):
         for вид in ("антибот_стена", "только_компьютер", "сертификат", "таймаут", "ошибка"):
