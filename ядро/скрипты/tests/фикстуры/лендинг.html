@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Салон красоты — запись онлайн</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 18px; margin: 0; padding: 40px; }
+  h1 { font-size: 40px; margin: 0 0 16px; }
+  input, button { font-size: 18px; padding: 12px; }
+  .ошибка { font-size: 15px; }
+</style>
+<!-- Обычный лендинг с формой заявки: капча живёт в разметке, но сайт открыт и работает.
+     Путь к скрипту нарочно локальный — учебная страница в интернет не ходит. -->
+<script src="/recaptcha/api.js"></script>
+</head>
+<body>
+<h1>Запишитесь на приём</h1>
+<p>Мы принимаем по записи: выберите время, оставьте телефон — мастер перезвонит и подтвердит.</p>
+<form>
+  <input type="text" placeholder="Как вас зовут">
+  <div class="smartcaptcha" data-sitekey="учебный-ключ"></div>
+  <button type="submit">Оставить заявку</button>
+</form>
+<p class="ошибка">Что-то не так, попробуйте позже — обычная подпись формы, а не проверка на роботов.</p>
+</body>
+</html>
