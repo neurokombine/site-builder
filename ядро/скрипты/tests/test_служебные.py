@@ -51,6 +51,26 @@ class ЧемОпасенТесты(unittest.TestCase):
         причины = что_уедет.чем_опасен(файл, self.корень)
         self.assertEqual(причины, [], "учебный шаблон уезжает вместе с системой")
 
+    def test_пропускает_readme_и_gitkeep_служебных_папок(self):
+        # Ложное срабатывание из ревью: README.md и .gitkeep — служебные файлы
+        # самой системы, а не чьи-то данные, даже когда лежат в «опасных» на вид
+        # папках (профили/, сайты/).
+        readme = self.корень / "профили" / "README.md"
+        readme.parent.mkdir(parents=True)
+        readme.write_text("Как устроены профили.\n", encoding="utf-8")
+        self.assertEqual(что_уедет.чем_опасен(readme, self.корень), [])
+
+        gitkeep = self.корень / "сайты" / ".gitkeep"
+        gitkeep.parent.mkdir(parents=True)
+        gitkeep.write_text("", encoding="utf-8")
+        self.assertEqual(что_уедет.чем_опасен(gitkeep, self.корень), [])
+
+        # а настоящий профиль с данными клиента по-прежнему ловится
+        профиль = self.корень / "профили" / "клиент-1" / "profile.json"
+        профиль.parent.mkdir(parents=True)
+        профиль.write_text("{}", encoding="utf-8")
+        self.assertTrue(что_уедет.чем_опасен(профиль, self.корень))
+
 
 class ФайлыПодГитТесты(unittest.TestCase):
     """Находки ревью round 1: кириллические имена и папка, закрытая родительским .gitignore."""
