@@ -24,11 +24,11 @@ import глаза  # noqa: E402
 <meta name="description" content="Страница самопроверки: на ней система проверяет саму себя.">
 <meta name="robots" content="noindex">
 <title>Самопроверка системы</title></head>
-<body style="font-family:sans-serif;max-width:640px;margin:60px auto;padding:0 24px;color:#1a1a1a;background:#ffffff;">
+<body style="font-family:sans-serif;max-width:640px;margin:60px auto;padding:0 24px;color:black;background:white;">
 <h1>Система работает</h1>
 <p>Это тестовая страница для самопроверки: если браузер её открыл и сфотографировал —
 значит окружение и браузер на месте.</p>
-<p><a href="mailto:проверка@пример.рф" style="color:#0b4f8a;">Кнопка для проверки</a></p>
+<p><a href="mailto:проверка@пример.рф" style="color:navy;">Кнопка для проверки</a></p>
 </body></html>
 """
 
