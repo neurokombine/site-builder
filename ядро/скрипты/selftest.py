@@ -113,12 +113,13 @@ def main():
     from playwright.sync_api import sync_playwright
 
     временный_файл = Path(tempfile.gettempdir()) / "site-builder-самопроверка.html"
-    временный_файл.write_text(СТРАНИЦА, encoding="utf-8")
+    шаг("готовлю тестовую страницу",
+        lambda: временный_файл.write_text(СТРАНИЦА, encoding="utf-8"))
 
     try:
         with sync_playwright() as p:
             шаг("проверяю, что браузер (Chromium) установлен", lambda: проверить_браузер(p))
-            браузер = глаза.запустить_браузер(p)
+            браузер = шаг("запускаю браузер", lambda: глаза.запустить_браузер(p))
             try:
                 шаг(
                     "открываю тестовую страницу — на компьютере и на телефоне",

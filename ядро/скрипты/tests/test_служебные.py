@@ -5,6 +5,7 @@
 """
 import contextlib
 import io
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -16,6 +17,10 @@ sys.path.insert(0, str(СКРИПТЫ))
 import глаза  # noqa: E402
 import sync_agents  # noqa: E402
 import что_уедет  # noqa: E402
+
+
+def _git(*аргументы, cwd):
+    subprocess.run(["git", *аргументы], cwd=cwd, capture_output=True, text=True, check=True)
 
 
 class ЧемОпасенТесты(unittest.TestCase):
@@ -45,6 +50,49 @@ class ЧемОпасенТесты(unittest.TestCase):
         файл.write_text("{}", encoding="utf-8")
         причины = что_уедет.чем_опасен(файл, self.корень)
         self.assertEqual(причины, [], "учебный шаблон уезжает вместе с системой")
+
+
+class ФайлыПодГитТесты(unittest.TestCase):
+    """Находки ревью round 1: кириллические имена и папка, закрытая родительским .gitignore."""
+
+    def setUp(self):
+        self._временная = tempfile.TemporaryDirectory()
+        self.корень = Path(self._временная.name)
+        self.addCleanup(self._временная.cleanup)
+
+    def test_кириллические_имена_не_экранируются(self):
+        # git по умолчанию отдаёт не-ASCII имена в кавычках-октетах вида
+        # "\320\277...". Без -c core.quotepath=false это сломало бы весь список:
+        # система целиком на кириллических именах.
+        _git("init", "-q", cwd=self.корень)
+        файл = self.корень / "сайты" / "моё-дело.txt"
+        файл.parent.mkdir(parents=True)
+        файл.write_text("тест", encoding="utf-8")
+        _git("add", "-A", cwd=self.корень)
+
+        файлы, под_git = что_уедет.файлы_под_git(self.корень)
+
+        self.assertTrue(под_git)
+        self.assertIn(файл, файлы, "кириллическое имя должно вернуться как есть, не octal-строкой")
+
+    def test_папка_закрытая_родительским_gitignore_считается_сама(self):
+        # Сценарий шага 7: у сайта своей истории нет, а родительский репозиторий
+        # системы закрывает «сайты/*» целиком — git ls-files тут отработает без
+        # ошибки и вернёт пустой список, будто в папке ничего нет.
+        _git("init", "-q", cwd=self.корень)
+        (self.корень / ".gitignore").write_text("сайты/*\n", encoding="utf-8")
+        _git("add", "-A", cwd=self.корень)
+
+        сайт = self.корень / "сайты" / "тест-сайт"
+        сайт.mkdir(parents=True)
+        (сайт / "index.html").write_text("<html></html>", encoding="utf-8")
+        (сайт / ".env").write_text("SECRET=1\n", encoding="utf-8")
+
+        файлы, под_git = что_уедет.файлы_под_git(сайт)
+
+        self.assertFalse(под_git, "у папки сайта нет своей истории — считаем сами")
+        имена = {ф.name for ф in файлы}
+        self.assertEqual(имена, {"index.html", ".env"}, ".env не должен потеряться молча")
 
 
 class РазобратьТесты(unittest.TestCase):
