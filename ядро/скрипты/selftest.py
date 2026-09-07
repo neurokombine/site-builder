@@ -19,12 +19,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import глаза  # noqa: E402
 
 СТРАНИЦА = """<!DOCTYPE html>
-<html lang="ru"><head><meta charset="utf-8"><title>Самопроверка</title></head>
-<body style="font-family:sans-serif;max-width:640px;margin:60px auto;padding:0 24px;">
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Страница самопроверки: на ней система проверяет саму себя.">
+<meta name="robots" content="noindex">
+<title>Самопроверка системы</title></head>
+<body style="font-family:sans-serif;max-width:640px;margin:60px auto;padding:0 24px;color:#1a1a1a;background:#ffffff;">
 <h1>Система работает</h1>
 <p>Это тестовая страница для самопроверки: если браузер её открыл и сфотографировал —
 значит окружение и браузер на месте.</p>
-<button type="button">Кнопка для проверки</button>
+<p><a href="mailto:проверка@пример.рф" style="color:#0b4f8a;">Кнопка для проверки</a></p>
 </body></html>
 """
 
@@ -87,6 +91,33 @@ def снять_скриншоты(браузер, страница_путь):
         контекст.close()
 
 
+def проверить_проверяющего():
+    """Прогон проверяющего на крошечном сайте: собирается ли отчёт и не находит ли он дыр там,
+    где их нет. Сайт живёт во временной папке, итог ложится рядом с остальной самопроверкой."""
+    скрипт = ROOT / "ядро" / "скрипты" / "проверить.py"
+    if not скрипт.exists():
+        print("→ проверка сайта: проверить.py ещё не сделан — пропускаю, это нормально")
+        return
+    with tempfile.TemporaryDirectory() as временная_папка:
+        (Path(временная_папка) / "index.html").write_text(СТРАНИЦА, encoding="utf-8")
+        шаг("проверяю крошечный сайт целиком — как проверяют настоящий",
+            lambda: _прогнать_проверку(скрипт, временная_папка))
+
+
+def _прогнать_проверку(скрипт: Path, папка_сайта: str):
+    """Запускает проверить.py и ждёт от него двух вещей: кода 0 и отчёта рядом с экранами."""
+    готово = subprocess.run(
+        [PY, str(скрипт), папка_сайта, "--куда", str(ПАПКА)],
+        cwd=ROOT, capture_output=True, text=True,
+    )
+    if готово.returncode != 0:
+        хвост = (готово.stdout + готово.stderr).strip().splitlines()[-12:]
+        raise RuntimeError("На чистой странице проверка нашла то, чего быть не должно "
+                           f"(код {готово.returncode}):\n" + "\n".join(хвост))
+    if not (ПАПКА / "отчёт.md").exists():
+        raise RuntimeError("Проверка прошла, но отчёта нет — ждали отчёт.md рядом с экранами.")
+
+
 def проверить_профиль():
     """Если профиль уже настроен — сверяет его профиль.py --проверить. Нет ни одного — пропускаем,
     это нормальное рабочее состояние, а не поломка."""
@@ -131,11 +162,13 @@ def main():
     finally:
         временный_файл.unlink(missing_ok=True)
 
+    проверить_проверяющего()
     проверить_профиль()
 
+    полка = ПАПКА.relative_to(ROOT).as_posix()
     print("\n✅ Всё работает.")
-    print(f"   Скриншоты: {ПАПКА.relative_to(ROOT).as_posix()}/компьютер.png, "
-          f"{ПАПКА.relative_to(ROOT).as_posix()}/телефон.png")
+    print(f"   Скриншоты: {полка}/компьютер.png, {полка}/телефон.png")
+    print(f"   Отчёт проверки: {полка}/отчёт.md")
     print("   Дальше: скажите, чей сайт собираем, — или /setup.")
 
 

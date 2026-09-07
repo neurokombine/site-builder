@@ -1,0 +1,11 @@
+# Настройки Codex для этой системы. Собрано ядро/скрипты/sync_agents.py — правьте роли,
+# а не этот файл.
+
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 3
+max_depth = 1
+
+[agents.site_checker]
+description = "Use after a screen or the whole site is assembled, as a FRESH pair of eyes — never the agent that built it. Runs проверить.py on both viewports, looks at the screenshots, checks the site against ядро/проверка.md and the reference numbers. Returns a defect list with severity, or a clean verdict. Fixes nothing itself."
+config_file = "./agents/site-checker.toml"

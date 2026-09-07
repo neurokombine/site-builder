@@ -3,6 +3,8 @@
 Запуск из корня репозитория:
     .venv/bin/python -m unittest discover -s ядро/скрипты/tests -t .
 """
+import contextlib
+import io
 import json
 import shutil
 import sys
@@ -268,6 +270,20 @@ class СделатьАктивнымТесты(ФейковыйКореньТе�
         успех, сообщение = профиль.сделать_активным("нет-такого", папка_профилей=self.профили)
         self.assertFalse(успех)
         self.assertIn("нет-такого", сообщение)
+
+    def test_указатель_на_удалённую_папку_не_ломает_работу(self):
+        """Профиль переименовали или удалили руками — считаем, что активного нет, и говорим об этом."""
+        профиль.новый_профиль("проба", папка_профилей=self.профили, шаблон=self.шаблон)
+        shutil.rmtree(self.профили / "проба")
+
+        со_словами = io.StringIO()
+        with contextlib.redirect_stdout(со_словами):
+            активный = профиль.прочитать_активного(папка_профилей=self.профили)
+
+        self.assertIsNone(активный)
+        self.assertIn("проба", со_словами.getvalue())
+        self.assertIn("его папки больше нет", со_словами.getvalue())
+        self.assertTrue((self.профили / "_активный").exists(), "указатель не трогаем")
 
 
 if __name__ == "__main__":
