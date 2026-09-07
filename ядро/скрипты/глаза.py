@@ -107,20 +107,28 @@ MOBILE_UA = (
     "ошибка": "браузер не смог открыть страницу",
 }
 
-# Замер вычисленных стилей прямо в странице: что реально применилось, а не что написано в CSS.
-# ⛔ Отступов между секциями и ширины колонки здесь нет намеренно: эти числа считались,
-# но означали не то, что человек видит глазами, — обещать их нельзя.
-ЗАМЕР_JS = r"""
-() => {
-  function rgbToHex(rgbStr) {
-    if (!rgbStr) return null;
-    const m = rgbStr.match(/rgba?\(([^)]+)\)/);
+# Три вещи, которые нужны в браузере и здесь, и при разборе разметки в `проверить.РАЗБОР_JS`:
+# разобрать цвет, понять, видно ли элемент, и понять, его ли это текст. Держим их в одном
+# месте и подклеиваем в оба замера — иначе одна и та же функция живёт в двух файлах двумя
+# слегка разными копиями, и правка в одной тихо расходится с другой.
+ОБЩИЙ_JS = r"""
+  // 'rgba(17, 17, 17, 0.8)' → {r, g, b, a}. Прозрачность, которой в строке нет, считаем
+  // полной: 'rgb(...)' — это непрозрачный цвет.
+  function parseRgb(строка) {
+    if (!строка) return null;
+    const m = String(строка).match(/rgba?\(([^)]+)\)/);
     if (!m) return null;
-    const parts = m[1].split(',').map(s => parseFloat(s.trim()));
-    const [r,g,b,a] = parts;
-    if (a !== undefined && a === 0) return null;
+    const ч = m[1].split(',').map(s => parseFloat(s.trim()));
+    return {r: ч[0] || 0, g: ч[1] || 0, b: ч[2] || 0, a: ч.length > 3 ? ч[3] : 1};
+  }
+  // Цвет в hex. Принимает и строку браузера, и уже разобранный цвет: из вычисленных стилей
+  // приходит строка, а из расчёта контраста — цвет, положенный на фон. Полностью прозрачное
+  // цветом не считаем вовсе: в палитре ему делать нечего.
+  function rgbToHex(значение) {
+    const c = (значение && typeof значение === 'object') ? значение : parseRgb(значение);
+    if (!c || c.a === 0) return null;
     const toHex = n => Math.max(0,Math.min(255,Math.round(n||0))).toString(16).padStart(2,'0');
-    return '#' + toHex(r) + toHex(g) + toHex(b);
+    return '#' + toHex(c.r) + toHex(c.g) + toHex(c.b);
   }
   function isVisible(el) {
     if (!(el instanceof Element)) return false;
@@ -130,7 +138,21 @@ MOBILE_UA = (
     if (style.visibility === 'hidden' || style.display === 'none' || parseFloat(style.opacity) === 0) return false;
     return true;
   }
+  // «Листовой» текстовый элемент = у него нет детей с непустым текстом (сам текст может
+  // лежать в текстовом узле ИЛИ во вложенном <span>/<b>) — так заголовки вида
+  // <h1><span>Текст</span></h1> тоже находятся, а текст ребёнка не задваивается в родителе.
+  function isLeafText(el) {
+    for (const child of el.children) {
+      if (child.textContent.trim().length > 0) return false;
+    }
+    return el.textContent.trim().length > 0;
+  }
+"""
 
+# Замер вычисленных стилей прямо в странице: что реально применилось, а не что написано в CSS.
+# ⛔ Отступов между секциями и ширины колонки здесь нет намеренно: эти числа считались,
+# но означали не то, что человек видит глазами, — обещать их нельзя.
+ЗАМЕР_JS = "() => {" + ОБЩИЙ_JS + r"""
   // Экран считаем по clientWidth/clientHeight, а не по window.innerWidth: на телефоне
   // страница с чем-нибудь широким внутри «отъезжает» и innerWidth становится шире экрана —
   // тогда вылезающая за край картинка перестаёт считаться вылезающей. clientWidth совпадает
@@ -161,16 +183,6 @@ MOBILE_UA = (
   }
 
   const all = Array.from(document.querySelectorAll('body *'));
-
-  // «листовой» текстовый элемент = у него нет дочерних элементов с непустым текстом
-  // (сам текст может лежать в текстовом узле ИЛИ во вложенном <span>/<b>) —
-  // так заголовки вида <h1><span>Текст</span></h1> тоже находятся
-  function isLeafText(el) {
-    for (const child of el.children) {
-      if (child.textContent.trim().length > 0) return false;
-    }
-    return el.textContent.trim().length > 0;
-  }
 
   let largestVisibleText = null;
 
@@ -313,6 +325,15 @@ def адрес_из(аргумент) -> str:
     return "https://" + строка.lstrip("/")
 
 
+def слаг(имя: str) -> str:
+    """Любая строка — в имя папки: строчными, без пробелов и знаков. «Моё Дело!» → «моё-дело»."""
+    буквы = [с if (с.isalnum() or с == "-") else "-" for с in имя.lower()]
+    имя = "".join(буквы).strip("-")
+    while "--" in имя:
+        имя = имя.replace("--", "-")
+    return имя or "сайт"
+
+
 def слаг_из(адрес: str) -> str:
     """Короткое имя папки по адресу: `https://пример.ру/цены` → `пример-ру`."""
     from urllib.parse import unquote, urlparse
@@ -326,11 +347,7 @@ def слаг_из(адрес: str) -> str:
         имя = разбор.netloc or адрес
         if имя.startswith("www."):
             имя = имя[4:]
-    буквы = [с if (с.isalnum() or с == "-") else "-" for с in имя.lower()]
-    имя = "".join(буквы).strip("-")
-    while "--" in имя:
-        имя = имя.replace("--", "-")
-    return имя or "сайт"
+    return слаг(имя)
 
 
 def доли_по_площади(площади: dict, сколько: int = 6) -> list[dict]:
