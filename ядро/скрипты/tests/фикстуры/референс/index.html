@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Учебная страница для замеров</title>
+<style>
+  body { margin: 0; font-family: Arial, sans-serif; font-size: 18px; }
+  .полоса { padding: 24px; }
+  h1 { font-family: Georgia, serif; font-size: 48px; margin: 0 0 16px; }
+  .мелко { font-size: 12px; }
+  .кнопка {
+    display: inline-block; border: 0; padding: 16px 32px; font-size: 18px;
+    background: rgb(200, 30, 40); color: rgb(255, 255, 255);
+  }
+  .широкая { display: block; width: 800px; height: 120px; }
+</style>
+</head>
+<body>
+<div class="полоса">
+  <h1>Заголовок учебной страницы</h1>
+  <p>Обычный абзац: по нему меряются кегль текста, интерлиньяж и цвет.</p>
+  <p class="мелко">Этот абзац набран мелким кеглем — такой текст на телефоне читают с прищуром.</p>
+  <button type="button" class="кнопка">Оставить заявку</button>
+  <img class="широкая" alt="Полоса, которая шире телефонного экрана"
+       src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAECAIAAAA8r+mnAAAAFUlEQVR42mOMypvGgA0wMeAApEsAAIe0AWZRvfPPAAAAAElFTkSuQmCC">
+</div>
+</body>
+</html>
