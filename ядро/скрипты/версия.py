@@ -26,7 +26,13 @@ from pathlib import Path
 
 
 def git(*аргументы: str, тихо: bool = False) -> tuple[int, str]:
-    р = subprocess.run(["git", *аргументы], cwd=КОРЕНЬ, capture_output=True, text=True)
+    # ⛔ core.quotepath=false здесь обязателен. По умолчанию git отдаёт кириллические имена
+    # файлов экранированными октетами («"\320\277…"»), а в этой системе кириллическое имя у
+    # каждого файла. Откат берёт список появившихся позже файлов из `git diff --name-only` и
+    # убирает их `git rm`: с экранированными именами rm не находил ни одного и молча оставлял
+    # на месте всё, что человек просил убрать. Обещание «верните как было» держится на этом.
+    р = subprocess.run(["git", "-c", "core.quotepath=false", *аргументы],
+                       cwd=КОРЕНЬ, capture_output=True, text=True)
     вывод = (р.stdout + р.stderr).strip()
     if р.returncode != 0 and not тихо:
         print(вывод, file=sys.stderr)

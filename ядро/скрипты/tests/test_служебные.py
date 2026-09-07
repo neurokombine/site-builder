@@ -1,4 +1,4 @@
-"""Тесты служебных скриптов: что_уедет, sync_agents, глаза.
+"""Тесты служебных скриптов: что_уедет, версия, sync_agents, глаза.
 
 Запуск из корня репозитория:
     .venv/bin/python -m unittest discover -s ядро/скрипты/tests -t .
@@ -10,10 +10,13 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 СКРИПТЫ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(СКРИПТЫ))
 
+import версия  # noqa: E402
 import глаза  # noqa: E402
 import sync_agents  # noqa: E402
 import что_уедет  # noqa: E402
@@ -189,6 +192,81 @@ class ФайлыПодГитТесты(unittest.TestCase):
 
         self.assertNotIn(личное, файлы)
         self.assertNotIn(свой_профиль, файлы)
+
+
+class ВерсииТесты(unittest.TestCase):
+    """«Верните как было» — обещание, за которым стоит единственное место с checkout и rm.
+
+    Репозиторий настоящий, во временной папке: корень скрипта подменяем, как для что_уедет.
+    """
+
+    def setUp(self):
+        self._временная = tempfile.TemporaryDirectory()
+        self.корень = Path(self._временная.name)
+        self.addCleanup(self._временная.cleanup)
+        _git("init", "-q", cwd=self.корень)
+        _git("config", "user.name", "Проверка", cwd=self.корень)
+        _git("config", "user.email", "проверка@местная", cwd=self.корень)
+
+    def _сохрани(self, описание: str):
+        with contextlib.redirect_stdout(io.StringIO()):
+            код = версия.команда_сохрани(SimpleNamespace(описание=описание))
+        self.assertEqual(код, 0, описание)
+
+    def _откати(self, на=None) -> int:
+        with contextlib.redirect_stdout(io.StringIO()):
+            return версия.команда_откати(SimpleNamespace(на=на))
+
+    def test_откат_возвращает_прежнее_и_не_трогает_личное(self):
+        (self.корень / ".gitignore").write_text("личное/\n", encoding="utf-8")
+        личное = self.корень / "личное" / "выписка.txt"
+        личное.parent.mkdir()
+        личное.write_text("суммы\n", encoding="utf-8")
+        правила = self.корень / "правила.md"
+        правила.write_text("первая редакция\n", encoding="utf-8")
+        лишний = self.корень / "лишний.md"
+
+        with patch.object(версия, "КОРЕНЬ", self.корень):
+            self._сохрани("первая")            # окажется третьей в списке
+            правила.write_text("вторая редакция\n", encoding="utf-8")
+            self._сохрани("вторая")            # к ней и будем возвращаться
+            лишний.write_text("появился позже\n", encoding="utf-8")
+            правила.write_text("третья редакция\n", encoding="utf-8")
+            self._сохрани("третья")
+            личное.write_text("суммы, которых никто не видел\n", encoding="utf-8")
+
+            список = версия.версии(10)
+            код = self._откати(на=2)
+
+        self.assertEqual([в["описание"] for в in список], ["третья", "вторая", "первая"])
+        self.assertEqual(код, 0)
+        self.assertEqual(правила.read_text(encoding="utf-8"), "вторая редакция\n",
+                         "содержимое файла должно вернуться к выбранной версии")
+        self.assertFalse(лишний.exists(),
+                         "файл, появившийся позже, откатом убирается: вернуть его «содержимым» нельзя")
+        self.assertEqual(личное.read_text(encoding="utf-8"), "суммы, которых никто не видел\n",
+                         "личное живёт мимо версий — откат его не трогает")
+
+    def test_личное_в_версию_не_попадает(self):
+        (self.корень / ".gitignore").write_text("личное/\n", encoding="utf-8")
+        (self.корень / "личное").mkdir()
+        (self.корень / "личное" / "выписка.txt").write_text("суммы\n", encoding="utf-8")
+        (self.корень / "правила.md").write_text("правила\n", encoding="utf-8")
+
+        with patch.object(версия, "КОРЕНЬ", self.корень):
+            self._сохрани("первая")
+
+        готово = subprocess.run(["git", "-c", "core.quotepath=false", "ls-files"],
+                                cwd=self.корень, capture_output=True, text=True, check=True)
+        сохранённое = готово.stdout.split()
+        self.assertIn("правила.md", сохранённое)
+        self.assertNotIn("личное/выписка.txt", сохранённое)
+
+    def test_откатываться_некуда_говорим_прямо(self):
+        (self.корень / "правила.md").write_text("одна-единственная\n", encoding="utf-8")
+        with patch.object(версия, "КОРЕНЬ", self.корень):
+            self._сохрани("первая")
+            self.assertEqual(self._откати(), 1, "одна версия — возвращаться не к чему")
 
 
 class РазобратьТесты(unittest.TestCase):
