@@ -459,6 +459,21 @@ class ОпечаткаВПутиТесты(unittest.TestCase):
         глядели.assert_not_called()
         self.assertIn("Нет такой папки", сказано.getvalue())
 
+    def test_файл_не_html_это_не_папка_сайта_и_никуда_не_ходит(self):
+        """`страница.htm` существует на диске, но это не собранный сайт — не адрес и не опечатка."""
+        with tempfile.TemporaryDirectory() as временная:
+            страница = Path(временная) / "страница.htm"
+            страница.write_text("<html></html>", encoding="utf-8")
+            доводы = ["проверить.py", str(страница)]
+            with patch.object(проверить.глаза, "посмотреть") as глядели, \
+                    patch.object(sys, "argv", доводы), \
+                    contextlib.redirect_stdout(io.StringIO()) as сказано:
+                код = проверить.main()
+
+        self.assertEqual(код, 2)
+        глядели.assert_not_called()
+        self.assertIn("не папка сайта", сказано.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()
