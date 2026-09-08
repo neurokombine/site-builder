@@ -96,7 +96,8 @@ class ПубликацияТесты(unittest.TestCase):
 class ПравкиРевьюТесты(unittest.TestCase):
     """Правки ревью: гейт до первого коммита, отказ отката без риска задеть чужой репозиторий
     (единственный коммит, папка без своего .git), владелец_и_имя не путает родительский
-    репозиторий, включить_pages/завести_полку не маскируют провал gh под успех."""
+    репозиторий, включить_pages/завести_полку не маскируют провал gh под успех,
+    --выкладываем без --завести и без origin не пытается push."""
 
     def setUp(self):
         self._д = tempfile.TemporaryDirectory(); д = Path(self._д.name); self.addCleanup(self._д.cleanup)
@@ -183,3 +184,14 @@ class ПравкиРевьюТесты(unittest.TestCase):
                 [str(self.сайт), "--завести", "moyo-delo", "--выкладываем"])
         self.assertEqual(код, 1)
         self.assertFalse((self.работа / "журнал.md").exists())
+
+    def test_без_origin_и_без_завести_отказ_без_коммита(self):
+        # находка 1 раунда 3: --выкладываем без --завести на свежей папке (свой .git уже
+        # есть — например, после раунда с .env — но origin ещё не добавлен) не должен
+        # пытаться push: голый push до первого коммита/без полки падал бы сырой git-руганью.
+        with patch.object(опубликовать, "gh_есть", lambda: True), \
+             patch.object(опубликовать, "gh_вошёл", lambda: True):
+            код = опубликовать.main_с_аргументами([str(self.сайт), "--выкладываем"])
+        self.assertEqual(код, 2)
+        лог = subprocess.run(["git", "log", "--oneline"], cwd=self.сайт, capture_output=True, text=True)
+        self.assertNotEqual(лог.returncode, 0)   # коммитов ещё нет вовсе
