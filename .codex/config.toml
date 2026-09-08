@@ -6,6 +6,10 @@ enabled = true
 max_concurrent_threads_per_session = 3
 max_depth = 1
 
+[agents.screen_builder]
+description = "Use to build ONE screen of the site — the caller names the screen number N and the work folder. Reads screen N of прототип.md, «Решения» of дизайн.md, ядро/блоки.md and the profile; copies the block template into сайты/<имя>/экраны/NN-<тип>.html, fills the slots with the prototype texts verbatim, runs собрать.py --экран N --без-показа until nothing is 🔴, and returns the paths plus what it took from where and what it could not find. Invents no text, edits no дизайн.md, shows nothing to the human itself."
+config_file = "./agents/screen-builder.toml"
+
 [agents.site_checker]
 description = "Use after a screen or the whole site is assembled, as a FRESH pair of eyes — never the agent that built it. Runs проверить.py on both viewports, looks at the screenshots, checks the site against ядро/проверка.md and the reference numbers. Returns a defect list with severity, or a clean verdict. Fixes nothing itself."
 config_file = "./agents/site-checker.toml"

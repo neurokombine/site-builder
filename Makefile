@@ -1,4 +1,4 @@
-.PHONY: setup check profile research look proto-check verify clean
+.PHONY: setup check profile research look proto-check showcase build image verify clean
 
 setup:          ## разовая установка окружения: питон, зависимости, браузер
 	bash ядро/скрипты/setup.sh
@@ -23,6 +23,16 @@ look:           ## посмотреть чужой сайт: make look URL=https
 proto-check:    ## проверить прототип перед вёрсткой: make proto-check PROTO=сайты/моё-дело/прототип.md
 	@test -n "$(PROTO)" || { echo "Укажите файл прототипа: make proto-check PROTO=сайты/моё-дело/прототип.md"; exit 2; }
 	.venv/bin/python ядро/скрипты/проверить_прототип.py $(PROTO)
+
+showcase:       ## витрина вариантов: make showcase WORK=сайты/моё-дело
+	.venv/bin/python ядро/скрипты/витрина.py $(WORK)
+
+build:          ## собрать и показать: make build WORK=сайты/моё-дело [SCREEN=1]
+	.venv/bin/python ядро/скрипты/собрать.py $(WORK) $(if $(SCREEN),--экран $(SCREEN))
+
+image:          ## вставить и сжать картинку: make image FILE=фото.jpg WORK=сайты/моё-дело
+	@test -n "$(WORK)" || { echo "Укажите папку работы: make image FILE=фото.jpg WORK=сайты/моё-дело"; exit 2; }
+	.venv/bin/python ядро/скрипты/картинка.py $(FILE) --куда $(WORK)/img
 
 verify:         ## проверить свой сайт: make verify SITE=сайты/моё-дело/сайт
 	.venv/bin/python ядро/скрипты/проверить.py $(SITE)
