@@ -137,7 +137,7 @@ class ЧертыИСводкаТесты(unittest.TestCase):
         текст = ресёрч_ниши.сводка_словами(с)
         self.assertIn("Не открылись", текст)
         self.assertIn("https://3.ru", текст)
-        self.assertIn("снять экран самому", текст)
+        self.assertIn("сделать снимок экрана самому", текст)
         self.assertIn("Сайтов передано: 3", текст)
         self.assertIn("не открылись: 1", текст)
 

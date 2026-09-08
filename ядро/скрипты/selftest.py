@@ -18,6 +18,7 @@ PY = sys.executable
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import глаза  # noqa: E402
+from находки import вывод_в_utf8  # noqa: E402
 
 СТРАНИЦА = """<!DOCTYPE html>
 <html lang="ru"><head><meta charset="utf-8">
@@ -204,14 +205,6 @@ def проверить_профиль():
     шаг("проверяю профиль", lambda: subprocess.run(
         [PY, str(скрипт), "--проверить"], cwd=ROOT, check=True,
     ))
-
-
-def вывод_в_utf8():
-    """Эмодзи в перенаправленном выводе: на Windows труба берёт кодировку системы, не UTF-8,
-    и `print("✅")` падает раньше, чем человек увидит хоть строку."""
-    for поток in (sys.stdout, sys.stderr):
-        if hasattr(поток, "reconfigure"):
-            поток.reconfigure(encoding="utf-8", errors="replace")
 
 
 def main():
