@@ -91,3 +91,46 @@ class ПубликацияТесты(unittest.TestCase):
         self.assertEqual(код, 0)
         self.assertIn("<h1>Проба</h1>", (self.сайт / "index.html").read_text(encoding="utf-8"))
         self.assertIn("Revert", _git("log", "--oneline", cwd=self.полка))
+
+
+class ПравкиРевьюТесты(unittest.TestCase):
+    """Правки ревью раунда 1: гейт до первого коммита, отказ отката на единственном коммите,
+    владелец_и_имя не путает родительский репозиторий, включить_pages не маскирует 422 под успех."""
+
+    def setUp(self):
+        self._д = tempfile.TemporaryDirectory(); д = Path(self._д.name); self.addCleanup(self._д.cleanup)
+        self.работа = д / "моё-дело"; self.сайт = self.работа / "сайт"; self.сайт.mkdir(parents=True)
+        (self.сайт / "index.html").write_text(СТРАНИЦА, encoding="utf-8")
+        (self.сайт / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
+        self.полка = д / "полка.git"; self.полка.mkdir()
+        _git("init", "--bare", "-b", "main", cwd=self.полка)
+
+    def test_гейт_до_первого_коммита(self):
+        # находка 1: .env не должен ни разу попасть в историю — гейт обязан остановить
+        # публикацию раньше, чем что-либо закоммичено.
+        (self.сайт / ".env").write_text("KEY=1", encoding="utf-8")
+        код = опубликовать.main_с_аргументами([str(self.сайт), "--выкладываем"])
+        self.assertEqual(код, 1)
+        лог = subprocess.run(["git", "log", "--oneline"], cwd=self.сайт, capture_output=True, text=True)
+        self.assertNotEqual(лог.returncode, 0)   # коммитов ещё нет вовсе
+
+    def test_откат_единственного_коммита_отказ(self):
+        опубликовать.завести_репозиторий(self.сайт)
+        _git("remote", "add", "origin", str(self.полка), cwd=self.сайт)
+        опубликовать.отправить(self.сайт, "Первый экран")
+        код, сообщение = опубликовать.откатить(self.сайт)
+        self.assertNotEqual(код, 0)
+        self.assertIn("нечего", сообщение)
+        self.assertNotIn("Revert", _git("log", "--oneline", cwd=self.полка))
+
+    def test_владелец_без_своего_репозитория_не_путает_родителя(self):
+        # self.работа — родитель self.сайт — становится репозиторием с настоящим origin;
+        # у self.сайт своего .git нет. Без защиты владелец_и_имя поднялась бы к родителю.
+        _git("init", "-b", "main", cwd=self.работа)
+        _git("remote", "add", "origin", "https://github.com/чужой/чужая-полка.git", cwd=self.работа)
+        self.assertEqual(опубликовать.владелец_и_имя(self.сайт), ("", ""))
+
+    def test_pages_422_не_маскируется_под_успех(self):
+        подмена = lambda команда, cwd=None: (1, "HTTP 422: Validation Failed")
+        with patch.object(опубликовать, "запустить", подмена):
+            self.assertEqual(опубликовать.включить_pages("кто-то", "moyo-delo"), "")
