@@ -1,4 +1,4 @@
-.PHONY: setup check profile look verify clean
+.PHONY: setup check profile research look verify clean
 
 setup:          ## разовая установка окружения: питон, зависимости, браузер
 	bash ядро/скрипты/setup.sh
@@ -8,6 +8,9 @@ check:          ## самопроверка: всё ли на месте и от
 
 profile:        ## показать профили и кто из них активный
 	.venv/bin/python ядро/скрипты/профиль.py --список
+
+research:       ## ресёрч ниши: make research WORK=сайты/моё-дело URLS="https://a.ru https://b.ru"
+	.venv/bin/python ядро/скрипты/ресёрч_ниши.py $(URLS) --работа $(WORK)
 
 ## Экраны и замеры лягут в сайты/_референсы/<имя сайта>/. Чтобы положить их в папку работы,
 ## запустите скрипт напрямую: посмотреть_сайт.py <ссылка> --куда сайты/<имя>/референсы/<чужой>/
