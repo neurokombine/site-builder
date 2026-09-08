@@ -94,8 +94,9 @@ class ПубликацияТесты(unittest.TestCase):
 
 
 class ПравкиРевьюТесты(unittest.TestCase):
-    """Правки ревью раунда 1: гейт до первого коммита, отказ отката на единственном коммите,
-    владелец_и_имя не путает родительский репозиторий, включить_pages не маскирует 422 под успех."""
+    """Правки ревью: гейт до первого коммита, отказ отката без риска задеть чужой репозиторий
+    (единственный коммит, папка без своего .git), владелец_и_имя не путает родительский
+    репозиторий, включить_pages/завести_полку не маскируют провал gh под успех."""
 
     def setUp(self):
         self._д = tempfile.TemporaryDirectory(); д = Path(self._д.name); self.addCleanup(self._д.cleanup)
@@ -134,3 +135,51 @@ class ПравкиРевьюТесты(unittest.TestCase):
         подмена = lambda команда, cwd=None: (1, "HTTP 422: Validation Failed")
         with patch.object(опубликовать, "запустить", подмена):
             self.assertEqual(опубликовать.включить_pages("кто-то", "moyo-delo"), "")
+
+    def test_откат_без_своего_репозитория_не_трогает_родителя(self):
+        # находка 1 раунда 2: у self.сайт своего .git нет, а у self.работа — есть, с двумя
+        # коммитами и настоящим origin. Без защиты откатить откатил бы и запушил бы HEAD
+        # РОДИТЕЛЯ (в продакшне — саму систему), а не сайт.
+        _git("init", "-b", "main", cwd=self.работа)
+        (self.работа / "README.md").write_text("версия 1\n", encoding="utf-8")
+        _git("add", "-A", cwd=self.работа)
+        _git("commit", "-m", "родительский коммит 1", cwd=self.работа)
+        (self.работа / "README.md").write_text("версия 2\n", encoding="utf-8")
+        _git("add", "-A", cwd=self.работа)
+        _git("commit", "-m", "родительский коммит 2", cwd=self.работа)
+        _git("remote", "add", "origin", str(self.полка), cwd=self.работа)
+        _git("push", "-u", "origin", "main", cwd=self.работа)
+        код, сообщение = опубликовать.откатить(self.сайт)
+        self.assertEqual(код, 1)
+        self.assertIn("своего репозитория", сообщение)
+        self.assertNotIn("Revert", _git("log", "--oneline", cwd=self.полка))
+
+    def test_завести_повторно_не_путает_старую_полку_с_успехом(self):
+        # находка 2 раунда 2: у сайта уже есть GitHub-origin (со старой публикации).
+        # Повторный gh repo create падает («Name already exists») — этого не должно
+        # хватить, чтобы main принял старую полку за новую и записал «опубликовано».
+        опубликовать.завести_репозиторий(self.сайт)
+        _git("commit", "--allow-empty", "-m", "уже было опубликовано", cwd=self.сайт)
+        _git("remote", "add", "origin", "https://github.com/старый/старая-полка.git", cwd=self.сайт)
+
+        реальный = subprocess.run
+
+        def подмена(команда, cwd=None):
+            if команда[:3] == ["gh", "repo", "create"]:
+                return 1, "Name already exists on this account (createRepository)"
+            if команда[:2] == ["gh", "api"] and "-X" in команда:
+                return 0, json.dumps({"html_url": "https://старый.github.io/старая-полка/"})
+            if команда[:2] == ["gh", "api"]:
+                return 0, json.dumps({"status": "built"})
+            if команда[0] == "gh":
+                return 1, "не должно вызываться в этом тесте"
+            готово = реальный(команда, cwd=cwd, capture_output=True, text=True)
+            return готово.returncode, готово.stdout + готово.stderr
+
+        with patch.object(опубликовать, "gh_есть", lambda: True), \
+             patch.object(опубликовать, "gh_вошёл", lambda: True), \
+             patch.object(опубликовать, "запустить", подмена):
+            код = опубликовать.main_с_аргументами(
+                [str(self.сайт), "--завести", "moyo-delo", "--выкладываем"])
+        self.assertEqual(код, 1)
+        self.assertFalse((self.работа / "журнал.md").exists())
