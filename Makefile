@@ -1,4 +1,4 @@
-.PHONY: setup check profile research look verify clean
+.PHONY: setup check profile research look proto-check verify clean
 
 setup:          ## разовая установка окружения: питон, зависимости, браузер
 	bash ядро/скрипты/setup.sh
@@ -17,6 +17,11 @@ research:       ## ресёрч ниши: make research WORK=сайты/моё-�
 ## — по папке на каждый референс, иначе второй затрёт замеры первого.
 look:           ## посмотреть чужой сайт: make look URL=https://пример.ru
 	.venv/bin/python ядро/скрипты/посмотреть_сайт.py $(URL)
+
+## Скрипт считает форму: пресет и число экранов, гейт, кнопки, цифры без источника, стоп-слова.
+## Смысл — одно ли обещание, нарастает ли аргументация — читается глазами по ядро/прототип.md.
+proto-check:    ## проверить прототип перед вёрсткой: make proto-check PROTO=сайты/моё-дело/прототип.md
+	.venv/bin/python ядро/скрипты/проверить_прототип.py $(PROTO)
 
 verify:         ## проверить свой сайт: make verify SITE=сайты/моё-дело/сайт
 	.venv/bin/python ядро/скрипты/проверить.py $(SITE)
