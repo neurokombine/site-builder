@@ -109,3 +109,42 @@ class ПоказТесты(unittest.TestCase):
                                capture_output=True, text=True, timeout=120)
             self.assertEqual(р.returncode, 0, р.stdout + р.stderr)
             self.assertTrue((Path(д) / "работа" / "сайт" / "index.html").exists())
+
+
+class ПравкиРевьюТесты(unittest.TestCase):
+    """Правки ревью: 🟡 называет настоящую причину — битый profile.json и пустое поле в поиск.md."""
+
+    def _копия_образца(self, д: str) -> Path:
+        import shutil
+        работа = Path(д) / "работа"
+        shutil.copytree(ФИКСТУРЫ / "работа-образец", работа)
+        return работа
+
+    def test_битый_профиль_называет_файл_а_не_шапку(self):
+        with tempfile.TemporaryDirectory() as д:
+            работа = self._копия_образца(д)
+            профиль = Path(д) / "профиль-образец"
+            профиль.mkdir()
+            (профиль / "profile.json").write_text("{ это не json", encoding="utf-8")
+            _, н = собрать.собрать(работа)
+            связь = [x for x in н if x["что"] == "Связь не задана"]
+            self.assertEqual(len(связь), 1, н)
+            строки = " ".join(связь[0]["строки"])
+            self.assertIn("profile.json", строки)
+            self.assertNotIn("шапке прототипа", строки)
+
+    def test_пустой_заголовок_вкладки_это_жёлтое_с_именем_поля(self):
+        with tempfile.TemporaryDirectory() as д:
+            работа = self._копия_образца(д)
+            поиск = работа / "поиск.md"
+            текст = поиск.read_text(encoding="utf-8")
+            self.assertIn("Заголовок вкладки: Репетитор по математике — онлайн", текст)
+            поиск.write_text(текст.replace("Заголовок вкладки: Репетитор по математике — онлайн",
+                                           "Заголовок вкладки:"), encoding="utf-8")
+            _, н = собрать.собрать(работа)
+            голова = [x for x in н if x["что"] == "Служебная голова не заполнена"]
+            self.assertEqual(len(голова), 1, н)
+            строки = " ".join(голова[0]["строки"])
+            self.assertIn("Заголовок вкладки", строки)
+            self.assertNotIn("Описание для поиска", строки)
+            self.assertNotIn(находки.ЧИНИТЬ, [x["уровень"] for x in н])
