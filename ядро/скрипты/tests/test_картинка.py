@@ -16,17 +16,17 @@ class КартинкаТесты(unittest.TestCase):
     def test_сжатие_и_имя(self):
         путь, было, стало = картинка.сжать(self.исходник, self.д / "img")
         self.assertEqual(путь.name, "moyo-foto.webp")
-        self.assertEqual(Image.open(путь).size[0], 1600)
+        with Image.open(путь) as и: self.assertEqual(и.size[0], 1600)
         self.assertLess(стало, было)
         self.assertLess(стало, 300 * 1024)
 
     def test_маленькую_не_растягиваем(self):
         Image.new("RGB", (800, 600), (10, 10, 10)).save(self.исходник)
         путь, _, _ = картинка.сжать(self.исходник, self.д / "img", имя="photo")
-        self.assertEqual(Image.open(путь).size, (800, 600))
+        with Image.open(путь) as и: self.assertEqual(и.size, (800, 600))
         self.assertEqual(путь.name, "photo.webp")
 
     def test_карточка(self):
         путь = картинка.карточка(self.исходник, self.д / "img")
         self.assertEqual(путь.name, "card.jpg")
-        self.assertEqual(Image.open(путь).size, (1200, 630))
+        with Image.open(путь) as и: self.assertEqual(и.size, (1200, 630))
