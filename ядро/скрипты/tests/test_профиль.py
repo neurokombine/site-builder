@@ -254,6 +254,19 @@ class ВалидацияТесты(unittest.TestCase):
         ошибки, _ = профиль.валидировать(данные)
         self.assertTrue(any("палитра" in о for о in ошибки), ошибки)
 
+    def test_виджет_без_файла_предупреждает(self):
+        with tempfile.TemporaryDirectory() as д:
+            путь = Path(д) / "profile.json"
+            данные = json.loads(РЕАЛЬНЫЙ_ШАБЛОН.read_text(encoding="utf-8"))
+            данные["сайт"]["связь"] = {"способ": "виджет", "адрес": ""}
+            путь.write_text(json.dumps(данные, ensure_ascii=False), encoding="utf-8")
+            ошибки, предупреждения = профиль.проверить_файл(путь)
+            self.assertEqual(ошибки, [])
+            self.assertTrue(any("виджет.html" in п for п in предупреждения))
+            (Path(д) / "виджет.html").write_text("<script></script>", encoding="utf-8")
+            _, предупреждения = профиль.проверить_файл(путь)
+            self.assertFalse(any("виджет.html" in п for п in предупреждения))
+
 
 class СоседиТесты(unittest.TestCase):
     def setUp(self):

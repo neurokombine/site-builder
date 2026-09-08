@@ -1,4 +1,4 @@
-.PHONY: setup check profile research look proto-check showcase build image verify clean
+.PHONY: setup check profile research look proto-check showcase build image verify publish clean
 
 setup:          ## разовая установка окружения: питон, зависимости, браузер
 	bash ядро/скрипты/setup.sh
@@ -36,6 +36,12 @@ image:          ## вставить и сжать картинку: make image F
 
 verify:         ## проверить свой сайт: make verify SITE=сайты/моё-дело/сайт
 	.venv/bin/python ядро/скрипты/проверить.py $(SITE)
+
+## Первый раз полка заводится скриптом напрямую: опубликовать.py сайты/<имя>/сайт --завести <имя-латиницей> --выкладываем.
+## Открыть поиску — тоже напрямую, флагом --открыть-поиску вместе с --выкладываем (ядро/публикация.md).
+publish:        ## выложить: make publish WORK=сайты/моё-дело [GO=1 — отправить, без GO сухой прогон]
+	@test -n "$(WORK)" || { echo "Укажите папку работы: make publish WORK=сайты/моё-дело [GO=1]"; exit 2; }
+	.venv/bin/python ядро/скрипты/опубликовать.py $(WORK)/сайт $(if $(GO),--выкладываем)
 
 clean:          ## убрать следы самопроверки (профили и ваши сайты не трогаем)
 	rm -rf сайты/_самопроверка
