@@ -206,7 +206,7 @@ class ФиксВолнаТесты(unittest.TestCase):
 
     def test_имена_переменных_сверяются_со_стилями(self):
         # п. 12: опечатка в имени раньше молча оставляла блок без цвета.
-        self.assertEqual(len(собрать.ПЕРЕМЕННЫЕ), 21)
+        self.assertEqual(len(собрать.ПЕРЕМЕННЫЕ), 32)
         with tempfile.TemporaryDirectory() as д:
             работа = self._копия_образца(д)
             дизайн = работа / "дизайн.md"
