@@ -53,7 +53,7 @@ class Стили(unittest.TestCase):
         self.assertRegex(self.тело, r"\.липкая-кнопка\s*\{\s*display:\s*none")
         self.assertIn("env(safe-area-inset-bottom)", self.тело)
         self.assertIn("prefers-reduced-motion", self.css)
-        self.assertIn("summary::after", self.css[self.css.index("prefers-reduced-motion"):],
+        self.assertIn("summary::after", self.css[self.css.index("@media (prefers-reduced-motion"):],
                       "плюсик вопроса не выключен при reduced-motion")
         self.assertRegex(self.тело, r"body\.с-липкой-кнопкой\s*\{")
         for файл in (ROOT / "ядро").rglob("*"):
