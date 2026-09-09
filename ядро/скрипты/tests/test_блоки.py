@@ -20,6 +20,11 @@ import собрать  # noqa: E402
 class Блоки(unittest.TestCase):
     карта = (ROOT / "ядро" / "блоки.md").read_text(encoding="utf-8")
 
+    def test_в_комментариях_нет_слотов(self):
+        for ф in ФАЙЛЫ:   # сборщик подставляет и в инструкцию: слот в комментарии = 🔴 у человека, стёршего абзац
+            for к in re.findall(r"<!--.*?-->", ф.read_text(encoding="utf-8"), re.S):
+                self.assertNotIn("{{", к, ф.name)
+
     def test_состав_наборов(self):
         for набор, сколько in ОЖИДАЕМ.items():
             имена = sorted(ф.name for ф in (БЛОКИ / набор).glob("*.html"))

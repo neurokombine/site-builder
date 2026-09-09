@@ -29,6 +29,9 @@ class Стили(unittest.TestCase):
     css = СТИЛИ.read_text(encoding="utf-8")
     тело = без_комментариев(css)
 
+    def test_скрытое_скрыто(self):   # [hidden] сильнее display компонентов: таймер после дедлайна не показывает нули
+        self.assertRegex(self.тело, r"\[hidden\]\s*\{\s*display:\s*none\s*!important")
+
     def test_классы_компонентов_на_месте(self):
         for имя in КЛАССЫ:
             self.assertRegex(self.тело, rf"\.{re.escape(имя)}[\s,.:{{\[>]", имя)

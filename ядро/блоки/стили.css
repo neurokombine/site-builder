@@ -44,6 +44,7 @@ h2 { font-size: var(--кегль-h2); font-weight: 800; line-height: 1.12; lette
 
 *, *::before, *::after { box-sizing: border-box; }
 img, video, iframe { max-width: 100%; height: auto; }
+[hidden] { display: none !important; }   /* сильнее display компонентов: таймер после дедлайна не показывает нули */
 /* Длинное слово (адрес, название) не должно распирать колонку: на телефоне это та самая прокрутка вбок. */
 p, li, h1, h2, h3, dd, dt, summary, blockquote { overflow-wrap: break-word; }
 h1, h2, h3 { font-family: var(--шрифт-заголовков); margin: 0 0 .5em; }
@@ -98,7 +99,7 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .кикер { display: inline-flex; align-items: center; gap: .6em; margin-bottom: var(--отступ-блока);
   font: 700 var(--кегль-кикер)/1 var(--шрифт-текста); letter-spacing: var(--разрядка-кикера);
   text-transform: uppercase; color: var(--цвет-акцент); }
-.кикер::before { content: ""; width: 1.2em; height: 2px; background: currentColor; border-radius: 1px; }
+.кикер::before { content: ""; flex: none; align-self: flex-start; margin-top: calc(.5em - 1px); width: 1.2em; height: 2px; background: currentColor; border-radius: 1px; }
 /* Бейдж — пилюля: «рекомендуем», «2 недели», «новое». На главной карточке тарифа висит на верхней кромке. */
 .бейдж { display: inline-flex; align-items: center; gap: .4em; padding: .35em .9em; border-radius: 9em;
   font: 700 var(--кегль-мелкий)/1.2 var(--шрифт-текста); letter-spacing: .06em; text-transform: uppercase;
@@ -134,7 +135,7 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .цифра__значение { display: block; font: 800 var(--кегль-цифра)/1 var(--шрифт-заголовков);
   letter-spacing: -0.02em; color: var(--цвет-акцент); }
 .тёмный .цифра__значение { color: var(--цвет-тёмный-текст); }  .цифра__подпись { display: block; margin-top: .35em; font-size: var(--кегль-мелкий); opacity: .8; }
-.цифры { grid-template-columns: repeat(auto-fit, minmax(6.5em, 1fr)); }
+.цифры { grid-template-columns: repeat(auto-fit, minmax(8em, 1fr)); }   /* на телефоне две колонки: подпись не рвётся посреди слова */
 /* Цифра в карточке (постер): карточка главнее линии слева. */
 .цифра.карточка { padding: var(--отступ-блока) .75em; border-left: 1px solid var(--цвет-линия); text-align: center; }
 .цифра.карточка--стекло { border-left-color: color-mix(in srgb, var(--цвет-тёмный-текст) 12%, transparent); }
@@ -145,6 +146,8 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .фото--маска { border-radius: 0; box-shadow: none; }
 .фото--маска img { mask-image: linear-gradient(to bottom, black 70%, transparent 99%); -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 99%); }
 .фото figcaption, .мокап figcaption { padding: .7em 1em; font-size: var(--кегль-мелкий); color: var(--цвет-текст-мягкий); }
+.мокап figcaption h3 { color: var(--цвет-текст); }
+.тёмный .мокап figcaption h3 { color: var(--цвет-тёмный-текст); }
 /* Мокап — «окно» с полоской и тремя точками: скриншот работы, а не голая картинка. */
 .мокап { margin: 0; position: relative; padding-top: 1.4em; border-radius: var(--радиус-малый); overflow: hidden;
   background: var(--цвет-фон-карточки); border: 1px solid var(--цвет-линия); box-shadow: var(--тень-глубокая); }
@@ -178,6 +181,7 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .цитата__кто { display: flex; align-items: center; gap: .75em; margin-top: var(--отступ-блока);
   font: 400 var(--кегль-мелкий)/1.4 var(--шрифт-текста); color: var(--цвет-текст-мягкий); }
 .цитата__кто b { display: block; color: var(--цвет-текст); font-weight: 700; }
+.карточка .цитата { font-size: calc(var(--кегль-текст) * 1.05); }   /* вторые цитаты не спорят с главной */
 
 /* ── Таймер: дни, часы, минуты (тикает таймер.js по data-дедлайн) ── */
 .таймер { display: inline-flex; gap: .6em; margin: var(--отступ-блока) 0; padding: 0; list-style: none; }

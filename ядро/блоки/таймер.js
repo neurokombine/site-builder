@@ -3,14 +3,14 @@
   document.querySelectorAll("[data-дедлайн]").forEach(function (эл) {
     var конец = Date.parse(эл.getAttribute("data-дедлайн"));
     if (isNaN(конец)) { эл.hidden = true; return; }
-    var поля = эл.querySelectorAll(".таймер__ячейка b");
+    var поля = эл.querySelectorAll(".таймер__ячейка b"), таймер;
     function тик() {
       var осталось = Math.max(0, конец - Date.now());
-      if (осталось === 0) { эл.hidden = true; return; }
+      if (осталось === 0) { эл.hidden = true; clearInterval(таймер); return; }
       var мин = Math.floor(осталось / 60000);
       var значения = [Math.floor(мин / 1440), Math.floor(мин / 60) % 24, мин % 60];
       поля.forEach(function (п, i) { п.textContent = String(значения[i]).padStart(2, "0"); });
     }
-    тик(); setInterval(тик, 30000);
+    тик(); if (!эл.hidden) таймер = setInterval(тик, 30000);
   });
 })();
