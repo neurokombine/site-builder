@@ -96,6 +96,7 @@ class ПоказТесты(unittest.TestCase):
                 (работа / "экраны" / ф.name).write_text(ф.read_text(encoding="utf-8"), encoding="utf-8")
             for имя in ("дизайн.md", "поиск.md", "прототип.md"):
                 (работа / имя).write_text((ФИКСТУРЫ / "работа-образец" / имя).read_text(encoding="utf-8"), encoding="utf-8")
+            import shutil; shutil.copytree(ФИКСТУРЫ / "работа-образец" / "img", работа / "img")   # блоки ссылаются на img/пример.svg
             путь, н = собрать.собрать(работа)
             self.assertNotIn(находки.ЧИНИТЬ, [x["уровень"] for x in н], н)
             р = subprocess.run([sys.executable, str(СКРИПТЫ / "проверить.py"), str(путь.parent)],
