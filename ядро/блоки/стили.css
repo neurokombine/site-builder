@@ -32,11 +32,12 @@
    --плавность, --длительность                кривая и время переходов */
 
 /* ── Основа и типографика ── */
-/* Дословно из брифа; дополнения — ниже отдельными правилами, не сливать. */
+/* Из брифа; дополнения — ниже отдельными правилами, не сливать. Веса нигде не выше 700: у шрифтов
+   заказаны только 400/600/700 (собрать.НАЧЕРТАНИЯ), 800–900 браузер дорисовывал бы сам (faux-bold). */
 body { font: var(--кегль-текст)/1.6 var(--шрифт-текста); color: var(--цвет-текст);
        background: var(--цвет-фон); margin: 0; -webkit-font-smoothing: antialiased; }
-h1 { font-size: var(--кегль-h1); font-weight: 900; line-height: 1.05; letter-spacing: -0.02em; }
-h2 { font-size: var(--кегль-h2); font-weight: 800; line-height: 1.12; letter-spacing: -0.015em; }
+h1 { font-size: var(--кегль-h1); font-weight: 700; line-height: 1.05; letter-spacing: -0.025em; }
+h2 { font-size: var(--кегль-h2); font-weight: 700; line-height: 1.12; letter-spacing: -0.015em; }
 .лид { font-size: calc(var(--кегль-текст) * 1.15); line-height: 1.5; color: var(--цвет-текст-мягкий); }  .акцент { font-style: normal; color: var(--цвет-акцент); }
 .блок { padding: var(--отступ-секции) 0; position: relative; overflow: hidden; }
 .блок__внутри { width: min(100% - 2 * var(--отступ-блока), var(--ширина)); margin: 0 auto; position: relative; }
@@ -82,6 +83,11 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .кнопка--главная { background: var(--цвет-акцент); color: var(--цвет-на-акценте); box-shadow: var(--тень-глубокая); }
 .кнопка--главная:hover { transform: translateY(-2px); background: var(--цвет-акцент-тёмный); }
 .кнопка--контур { background: transparent; color: inherit; border-color: currentColor; }  .кнопка--пульс { animation: пульс-кнопки 2.4s ease-out infinite; }
+/* Главная кнопка на тёмной секции: сырой акцент на тёмном фоне даёт контраст края ≈ 1.8:1 — осветляем
+   в сторону светлого текста и даём светлую кромку; под курсором — ещё чуть светлее, а не темнее. */
+.тёмный .кнопка--главная { background: color-mix(in srgb, var(--цвет-акцент) 78%, var(--цвет-тёмный-текст));
+  border-color: color-mix(in srgb, var(--цвет-тёмный-текст) 30%, transparent); }
+.тёмный .кнопка--главная:hover { background: color-mix(in srgb, var(--цвет-акцент) 68%, var(--цвет-тёмный-текст)); }
 @keyframes пульс-кнопки {
   0%   { box-shadow: var(--тень-глубокая), 0 0 0 0 color-mix(in srgb, var(--цвет-акцент) 45%, transparent); }
   70%  { box-shadow: var(--тень-глубокая), 0 0 0 .8em color-mix(in srgb, var(--цвет-акцент) 0%, transparent); }
@@ -130,15 +136,17 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 
 /* ── Цифры: полоса доказательств ── */
 /* Дословно из брифа; дополнения — ниже отдельными правилами, не сливать. */
-.цифры { display: grid; gap: var(--отступ-блока); margin: var(--отступ-блока) 0 0; padding: 0; list-style: none; }
+.цифры { display: flex; flex-wrap: wrap; gap: var(--отступ-блока); margin: var(--отступ-блока) 0 0; padding: 0; list-style: none; }
 .цифра { padding-left: 1em; border-left: 1px solid color-mix(in srgb, currentColor 25%, transparent); }
-.цифра__значение { display: block; font: 800 var(--кегль-цифра)/1 var(--шрифт-заголовков);
+.цифра__значение { display: block; font: 700 var(--кегль-цифра)/1 var(--шрифт-заголовков);
   letter-spacing: -0.02em; color: var(--цвет-акцент); }
 .тёмный .цифра__значение { color: var(--цвет-тёмный-текст); }  .цифра__подпись { display: block; margin-top: .35em; font-size: var(--кегль-мелкий); opacity: .8; }
-.цифры { grid-template-columns: repeat(auto-fit, minmax(8em, 1fr)); }   /* на телефоне две колонки: подпись не рвётся посреди слова */
-/* Цифра в карточке (постер): карточка главнее линии слева. */
+/* На телефоне цифры текут: две в ряд, третья — во всю ширину, а не одна в полуширинной ячейке; от 900 px — сетка в три колонки. */
+.цифра { flex: 1 1 7em; min-width: 0; }
+/* Цифра в карточке (постер, услуги): карточка главнее линии слева, кегль чуть меньше — «от 3 000 ₽» не ломается на две строки. */
 .цифра.карточка { padding: var(--отступ-блока) .75em; border-left: 1px solid var(--цвет-линия); text-align: center; }
 .цифра.карточка--стекло { border-left-color: color-mix(in srgb, var(--цвет-тёмный-текст) 12%, transparent); }
+.карточка .цифра__значение { font-size: calc(var(--кегль-цифра) * .78); }
 
 /* ── Картинки: только в обёртках ── */
 .фото { margin: 0; border-radius: var(--радиус); overflow: hidden; box-shadow: var(--тень); }
@@ -157,6 +165,7 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
   background: var(--цвет-акцент); box-shadow: .85em 0 0 color-mix(in srgb, var(--цвет-акцент) 55%, transparent),
   1.7em 0 0 color-mix(in srgb, var(--цвет-акцент) 30%, transparent); }
 .мокап img, .мокап iframe { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border: 0; }
+.мокап iframe { aspect-ratio: 16 / 9; }   /* видео — в пропорции плеера, иначе в окне 16:10 остаются полосы */
 .аватар { width: 3.5em; height: 3.5em; border-radius: 50%; object-fit: cover; flex: none;
   border: 2px solid var(--цвет-фон-карточки); box-shadow: var(--тень); }
 .пара__текст, .пара__фото { min-width: 0; }  .пара__фото img { display: block; width: 100%; border-radius: var(--радиус); }
@@ -187,7 +196,7 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .таймер { display: inline-flex; gap: .6em; margin: var(--отступ-блока) 0; padding: 0; list-style: none; }
 .таймер__ячейка { min-width: 3.6em; padding: .6em .5em; text-align: center; border-radius: var(--радиус-малый);
   background: color-mix(in srgb, currentColor 8%, transparent); border: 1px solid color-mix(in srgb, currentColor 16%, transparent); }
-.таймер__ячейка b { display: block; font: 800 calc(var(--кегль-цифра) * .7)/1 var(--шрифт-заголовков);
+.таймер__ячейка b { display: block; font: 700 calc(var(--кегль-цифра) * .7)/1 var(--шрифт-заголовков);
   font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 .таймер__ячейка span { display: block; margin-top: .3em; font-size: var(--кегль-мелкий); text-transform: uppercase;
   letter-spacing: .08em; opacity: .7; }
@@ -197,7 +206,7 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .шаг { position: relative; display: flex; gap: 1em; align-items: flex-start; }
 .шаг__номер { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.4em; height: 2.4em;
   border-radius: 50%; background: var(--цвет-акцент); color: var(--цвет-на-акценте);
-  font: 800 var(--кегль-текст)/1 var(--шрифт-заголовков); box-shadow: var(--тень); }
+  font: 700 var(--кегль-текст)/1 var(--шрифт-заголовков); box-shadow: var(--тень); }
 /* Нить от номера к номеру — шаги читаются как путь, а не как список. */
 .шаг:not(:last-child)::before { content: ""; position: absolute; left: 1.2em; top: 2.4em; bottom: calc(-1 * var(--отступ-блока));
   width: 1px; background: color-mix(in srgb, currentColor 18%, transparent); }
@@ -238,24 +247,40 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 /* ── Первый экран: четыре композиции ──
    разворот — текст | фото · постер — всё по центру в одну колонку · фото — фото с маской во всю
    высоту · орбита — текст | орбита артефактов. На телефоне всё в одну колонку. */
+/* Первый экран — в сгиб: отступы секции ужаты (.6 сверху, .7 снизу), лид плотнее, список и цифры ближе к
+   кнопке. Цель — герой ≤ 900 px на 1440×900; фото с маской тянется до кромок теми же долями (ниже и в @media). */
+.блок--первый-экран { padding-top: calc(var(--отступ-секции) * .6); padding-bottom: calc(var(--отступ-секции) * .7); }
+.блок--первый-экран .кикер { margin-bottom: calc(var(--отступ-блока) * .6); }  .блок--первый-экран h1 { margin-bottom: .35em; }
+.блок--первый-экран .лид { line-height: 1.4; margin-bottom: .9em; }
+.блок--первый-экран .список-иконок { gap: .45em; margin-bottom: .9em; }
+.блок--первый-экран .первый-экран__доверие { margin-bottom: .6em; }
+.блок--первый-экран .цифры { margin-top: calc(var(--отступ-блока) * .75); }
 .первый-экран__текст > :last-child { margin-bottom: 0; }
-.первый-экран__действие { display: flex; flex-wrap: wrap; align-items: center; gap: .75em; margin: var(--отступ-блока) 0 .9em; }
+.первый-экран__действие { display: flex; flex-wrap: wrap; align-items: center; gap: .75em; margin: calc(var(--отступ-блока) * .8) 0 .75em; }
 .первый-экран__действие .кнопка { flex: 1 1 auto; }
 .первый-экран__доверие { display: flex; align-items: center; gap: .5em; }
 .первый-экран__фото { margin-top: var(--отступ-блока); }
 .первый-экран--постер .блок__внутри { width: min(100% - 2 * var(--отступ-блока), var(--ширина-колонки)); text-align: center; }
-.первый-экран--постер .кикер, .первый-экран--постер .первый-экран__действие, .первый-экран--постер .первый-экран__доверие { justify-content: center; }
+.первый-экран--постер .кикер, .первый-экран--постер .первый-экран__действие { justify-content: center; }
+/* Строка доверия в постере — строчный текст по центру, а не флекс: щит и перенесённая строка лицензии
+   на телефоне не разъезжаются по разным краям. */
+.первый-экран--постер .первый-экран__доверие { display: block; text-align: center; }
+.первый-экран--постер .первый-экран__доверие .иконка { vertical-align: middle; margin-right: .2em; }
 /* Ruling 18: в постере кикер без тире — при переносе оно отрывалось от центрированного текста; разрядки хватает. */
 .первый-экран--постер .кикер::before { display: none; }
 /* Ruling 18: список в постере — блок с левым краем, центрирован целиком: галочки у текста, а не у кромки. */
 .первый-экран--постер .список-иконок { display: inline-grid; text-align: left; }
 .первый-экран--постер .лид { margin-inline: auto; }
+/* В узкой колонке постера h1 чуть меньше и плотнее: три строки по полному кеглю на 1440 выталкивали цифры за сгиб. */
+.первый-экран--постер h1 { font-size: calc(var(--кегль-h1) * .9); line-height: 1; }
+/* Постер и на компьютере остаётся флексом по центру (сильнее сетки из @media); текучесть цифр — в базе .цифра. */
 .первый-экран--постер .цифры { display: flex; flex-wrap: wrap; justify-content: center; }
-.первый-экран--постер .цифра { flex: 1 1 7em; max-width: 14em; }
+.первый-экран--постер .цифра { max-width: 14em; padding-top: calc(var(--отступ-блока) * .6); padding-bottom: calc(var(--отступ-блока) * .6); }
 /* Фото с маской на телефоне — первым, во всю ширину и до верхней кромки секции: текст выходит из фото. */
 .первый-экран--фото .блок__внутри { display: grid; gap: 0; }
-.первый-экран--фото .первый-экран__фото { order: -1; margin: calc(-1 * var(--отступ-секции)) calc(-1 * var(--отступ-блока)) var(--отступ-блока); }
+.первый-экран--фото .первый-экран__фото { order: -1; margin: calc(-.6 * var(--отступ-секции)) calc(-1 * var(--отступ-блока)) var(--отступ-блока); }
 .пара { display: grid; gap: var(--отступ-блока); }
+.пара > :only-child { grid-column: 1 / -1; }   /* финал без таймера: текст на всю ширину, а не пустая половина */
 
 /* ── Атмосфера: пятна, сетка, зерно ── */
 .фон--пятна::before, .фон--пятна::after { content: ""; position: absolute; width: 60%; aspect-ratio: 1;
@@ -296,21 +321,23 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 @media (min-width: 900px) {
   .карточки { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .карточки--две { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .цифры { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .цифры { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .блок--первый-экран .список-иконок { gap: .65em; }
   .пара, .первый-экран--разворот .блок__внутри, .первый-экран--фото .блок__внутри, .первый-экран--орбита .блок__внутри {
     display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: calc(var(--отступ-блока) * 2.5); align-items: center; }
   .первый-экран__фото { margin-top: 0; order: 0; }
   .первый-экран__действие .кнопка { flex: 0 0 auto; }
   .первый-экран--фото .блок__внутри { align-items: stretch; }
-  /* Фото справа тянется до края окна (справа — расстояние от контейнера до края) и тает в сторону текста. */
+  /* Фото справа тянется до края окна (справа — расстояние от контейнера до края) и тает в сторону текста;
+     сверху и снизу — на те же доли отступа секции, что у героя (.6 и .7). */
   .первый-экран--фото .первый-экран__фото { order: 0;
-    margin: calc(-1 * var(--отступ-секции)) calc(-1 * max(var(--отступ-блока), (100vw - var(--ширина)) / 2)) calc(-1 * var(--отступ-секции)) 0; }
+    margin: calc(-.6 * var(--отступ-секции)) calc(-1 * max(var(--отступ-блока), (100vw - var(--ширина)) / 2)) calc(-.7 * var(--отступ-секции)) 0; }
   .первый-экран--фото .первый-экран__фото img { height: 100%; aspect-ratio: auto; }
   .первый-экран--фото .фото--маска img { mask-image: linear-gradient(to left, black 55%, transparent); -webkit-mask-image: linear-gradient(to left, black 55%, transparent); }
   /* Главная карточка тарифа приподнята над соседями: top, а не transform — не сбрасывается на :hover и при reduced-motion. */
   .карточка--главная { top: -.75em; box-shadow: var(--тень-глубокая); }
-  /* Цифра в трети узкой колонки (постер, орбита) — чуть меньше, чтобы «8 лет» не ломалось на две строки. */
-  .первый-экран--орбита .цифра__значение, .цифра.карточка .цифра__значение { font-size: calc(var(--кегль-цифра) * .78); }
+  /* Цифра в трети узкой колонки орбиты — чуть меньше, чтобы «8 лет» не ломалось на две строки (в карточке — база). */
+  .первый-экран--орбита .цифра__значение { font-size: calc(var(--кегль-цифра) * .78); }
   .первый-экран--орбита .блок__внутри { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .орбита { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, 1fr); aspect-ratio: 1;
     align-items: center; margin-top: 0; gap: calc(var(--отступ-блока) * .6); }
