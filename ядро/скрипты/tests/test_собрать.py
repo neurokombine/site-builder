@@ -39,6 +39,7 @@ class ЧистыеТесты(unittest.TestCase):
         профиль = json.loads((ФИКСТУРЫ / "профиль-образец" / "profile.json").read_text(encoding="utf-8"))
         html, н = собрать.начинка_связи("Написать", профиль, None)
         self.assertIn('href="https://t.me/пример"', html)
+        self.assertIn('class="кнопка кнопка--главная"', html)   # ровно так: ГЛАВНАЯ_КНОПКА и пульс в стили.css
         self.assertIsNone(н)
         with tempfile.TemporaryDirectory() as д:
             (Path(д) / "виджет.html").write_text("<script>виджет</script>", encoding="utf-8")
@@ -47,6 +48,7 @@ class ЧистыеТесты(unittest.TestCase):
             self.assertEqual(html, "<script>виджет</script>")
         html, н = собрать.начинка_связи("Написать", None, None)
         self.assertIn("#экран-контакты", html)
+        self.assertIn('class="кнопка кнопка--главная"', html)   # запасная — та же главная кнопка, не вторая
         self.assertEqual(н["уровень"], находки.ПОПРАВИТЬ)
 
     def test_заглушки(self):
@@ -63,6 +65,10 @@ class ЧистыеТесты(unittest.TestCase):
             self.assertLess(html.index('id="экран-1"'), html.index('id="экран-2"'))
             self.assertIn("--цвет-акцент", html)
             self.assertIn('href="https://t.me/пример"', html)
+            self.assertIn('<body class="с-липкой-кнопкой">', html)   # контракт Д: на телефоне кнопка под пальцем
+            self.assertIn('<div class="липкая-кнопка"><a class="кнопка кнопка--главная" href="https://t.me/пример">', html)
+            self.assertIn('<svg class="иконка"', html)
+            self.assertNotIn("<script>", html)   # таймера в образце нет — и JS в сайт не уезжает
             self.assertTrue((Path(д) / "style.css").exists())
             self.assertTrue((Path(д) / ".nojekyll").exists())
             self.assertIn("Disallow: /", (Path(д) / "robots.txt").read_text(encoding="utf-8"))
@@ -258,3 +264,64 @@ class ФиксВолнаТесты(unittest.TestCase):
             self.assertEqual(len(жёлтые), 1, н)
             self.assertEqual(жёлтые[0]["уровень"], находки.ПОПРАВИТЬ)
             self.assertIn("сайт.адрес", жёлтые[0]["чем_грозит"])
+
+
+class ДизайнV2Тесты(unittest.TestCase):
+    """Дизайн v2: четыре поля варианта, их проверка (🟡, не 🔴), светлота и атмосфера первого экрана из
+    полей, липкая кнопка и таймер в сборке, 🟡 когда экран 1 свёрстан не по той концепции."""
+
+    def test_дизайн_v2_поля_варианта_и_решений(self):
+        д = собрать.прочитать_дизайн(ФИКСТУРЫ / "работа-образец" / "дизайн.md")
+        self.assertEqual(д["варианты"][0]["концепция"], "разворот")
+        self.assertEqual(д["варианты"][1]["доминанта"], "тёмная")
+        self.assertEqual(д["решения_поля"], {"концепция": "разворот", "доминанта": "светлая",
+                                             "атмосфера": "чисто", "иконки": "тонкие"})
+        self.assertIn(":root", д["решения"])
+
+    def test_проверить_поля(self):
+        ок = {"концепция": "разворот", "доминанта": "светлая", "атмосфера": "чисто", "иконки": "тонкие"}
+        self.assertEqual(собрать.проверить_поля(ок, "Решения"), [])
+        н = собрать.проверить_поля({**ок, "концепция": "коллаж", "доминанта": ""}, "Вариант 2")
+        self.assertEqual((len(н), н[0]["что"], len(н[0]["строки"])), (1, "В дизайн.md поле не заполнено", 2))
+        self.assertIn("Вариант 2 · концепция: «коллаж» — можно: разворот, постер, фото, орбита", н[0]["строки"][0])
+        self.assertEqual(н[0]["уровень"], находки.ПОПРАВИТЬ)   # собирать не мешает
+
+    def test_применить_вариант(self):
+        html = ('<section class="блок блок--первый-экран первый-экран--постер светлый фон--сетка" '
+                'id="экран-1" data-тип="первый-экран" data-концепция="постер"><div>x</div></section>')
+        итог = собрать.применить_вариант(html, {"доминанта": "тёмная", "атмосфера": "пятна"})
+        self.assertIn('class="блок блок--первый-экран первый-экран--постер тёмный фон--пятна"', итог)
+        итог = собрать.применить_вариант(итог, {"доминанта": "светлая", "атмосфера": "чисто"})
+        self.assertIn('class="блок блок--первый-экран первый-экран--постер светлый"', итог)
+        self.assertEqual(собрать.применить_вариант(html, {}), html)
+
+    def test_липкая_кнопка_и_скрипт_таймера(self):
+        связь = '<a class="кнопка кнопка--главная" href="https://t.me/пример">Написать</a>'
+        html = "<html><body>\n<section>" + связь + "</section>\n</body></html>"
+        итог = собрать.липкая_кнопка(html, связь)
+        self.assertIn('<body class="с-липкой-кнопкой">', итог)
+        self.assertIn('<div class="липкая-кнопка">' + связь + "</div>\n</body>", итог)
+        self.assertEqual(собрать.липкая_кнопка(html, "<script>виджет</script>"), html)
+        self.assertEqual(собрать.скрипт_таймера(html), html)
+        с_таймером = собрать.скрипт_таймера(html.replace("<section>", '<section data-дедлайн="2030-12-31T23:59:00+03:00">'))
+        self.assertIn("<script>", с_таймером)
+        self.assertIn("data-дедлайн", с_таймером.split("<script>")[1])
+
+    def test_первый_экран_не_той_концепции_жёлтое(self):
+        with tempfile.TemporaryDirectory() as д:
+            работа = Path(д) / "работа"
+            import shutil; shutil.copytree(ФИКСТУРЫ / "работа-образец", работа)
+            дизайн = работа / "дизайн.md"
+            голова, решения = дизайн.read_text(encoding="utf-8").split("## Решения", 1)
+            дизайн.write_text(голова + "## Решения" + решения.replace(
+                "Концепция первого экрана: разворот", "Концепция первого экрана: постер"), encoding="utf-8")
+            _, н = собрать.собрать(работа)
+            self.assertNotIn(находки.ЧИНИТЬ, [x["уровень"] for x in н], н)
+            не_та = [x for x in н if x["что"] == "Первый экран не той концепции"]
+            self.assertEqual(len(не_та), 1, н)
+            self.assertIn("«разворот»", не_та[0]["строки"][0])
+            self.assertIn("«постер»", не_та[0]["строки"][0])
+            self.assertIn("01-первый-экран-постер.html", не_та[0]["чем_грозит"])
+            _, н = собрать.собрать(ФИКСТУРЫ / "работа-образец", куда=Path(д) / "сайт")
+            self.assertNotIn("Первый экран не той концепции", [x["что"] for x in н], н)
+            self.assertNotIn("В дизайн.md поле не заполнено", [x["что"] for x in н], н)
