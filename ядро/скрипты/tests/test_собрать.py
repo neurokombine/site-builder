@@ -148,3 +148,112 @@ class ПравкиРевьюТесты(unittest.TestCase):
             self.assertIn("Заголовок вкладки", строки)
             self.assertNotIn("Описание для поиска", строки)
             self.assertNotIn(находки.ЧИНИТЬ, [x["уровень"] for x in н])
+
+
+class ФиксВолнаТесты(unittest.TestCase):
+    """Фикс-волна этапов 6–7: относительный путь, ветки _токены и «нет экранов», сверка 21 имени,
+    og:image полным адресом."""
+
+    def _копия_образца(self, д: str) -> Path:
+        import shutil
+        работа = Path(д) / "работа"
+        shutil.copytree(ФИКСТУРЫ / "работа-образец", работа)
+        return работа
+
+    def test_относительный_путь_из_чужой_папки(self):
+        # п. 1: документированная команда `собрать.py сайты/<имя>` — путь относительный; без
+        # resolve() as_uri() падал трейсбеком. Запуск из временной папки, аргумент — «работа».
+        with tempfile.TemporaryDirectory() as д:
+            self._копия_образца(д)
+            р = subprocess.run([sys.executable, str(СКРИПТЫ / "собрать.py"), "работа", "--без-показа"],
+                               cwd=д, capture_output=True, text=True, timeout=120)
+            self.assertEqual(р.returncode, 0, р.stdout + р.stderr)
+            self.assertTrue((Path(д) / "работа" / "сайт" / "index.html").exists())
+
+    def test_нет_решений_при_двух_вариантах_красное(self):
+        with tempfile.TemporaryDirectory() as д:
+            работа = self._копия_образца(д)
+            дизайн = работа / "дизайн.md"
+            текст = дизайн.read_text(encoding="utf-8")
+            дизайн.write_text(текст[:текст.index("## Решения")], encoding="utf-8")
+            _, н = собрать.собрать(работа)
+            красные = [x for x in н if x["уровень"] == находки.ЧИНИТЬ]
+            self.assertEqual(len(красные), 1, н)
+            self.assertIn("Решения", красные[0]["что"])
+            self.assertIn("витриной", " ".join(красные[0]["строки"]))
+
+    def test_единственный_вариант_к_сведению(self):
+        with tempfile.TemporaryDirectory() as д:
+            работа = self._копия_образца(д)
+            дизайн = работа / "дизайн.md"
+            текст = дизайн.read_text(encoding="utf-8")
+            дизайн.write_text(текст[:текст.index("## Вариант 2")], encoding="utf-8")
+            путь, н = собрать.собрать(работа)
+            self.assertNotIn(находки.ЧИНИТЬ, [x["уровень"] for x in н], н)
+            взят = [x for x in н if x["что"] == "Взят единственный вариант"]
+            self.assertEqual(len(взят), 1, н)
+            self.assertEqual(взят[0]["уровень"], находки.К_СВЕДЕНИЮ)
+            self.assertIn("--цвет-акцент", путь.read_text(encoding="utf-8"))
+
+    def test_нет_экранов_красное(self):
+        with tempfile.TemporaryDirectory() as д:
+            работа = self._копия_образца(д)
+            for ф in (работа / "экраны").glob("*.html"):
+                ф.unlink()
+            _, н = собрать.собрать(работа)
+            красные = [x for x in н if x["уровень"] == находки.ЧИНИТЬ]
+            self.assertEqual([x["что"] for x in красные], ["Нет ни одного экрана"], н)
+
+    def test_имена_переменных_сверяются_со_стилями(self):
+        # п. 12: опечатка в имени раньше молча оставляла блок без цвета.
+        self.assertEqual(len(собрать.ПЕРЕМЕННЫЕ), 21)
+        with tempfile.TemporaryDirectory() as д:
+            работа = self._копия_образца(д)
+            дизайн = работа / "дизайн.md"
+            текст = дизайн.read_text(encoding="utf-8").replace("--цвет-акцент:", "--цвет-акцен:")
+            текст = текст.replace("--ширина: 1120px;", "--ширина: 1120px;  --свой-подложка: var(--цвет-фон-2);")
+            дизайн.write_text(текст, encoding="utf-8")
+            _, н = собрать.собрать(работа)
+            имена = [x for x in н if x["что"] == "Имена переменных расходятся со стили.css"]
+            self.assertEqual(len(имена), 1, н)
+            self.assertEqual(имена[0]["уровень"], находки.ПОПРАВИТЬ)
+            строки = " ".join(имена[0]["строки"])
+            self.assertIn("не хватает: --цвет-акцент", строки)
+            self.assertIn("лишние: --цвет-акцен", строки)
+            self.assertNotIn("--свой-подложка", строки)   # свои переменные — не лишние
+
+    def test_образец_без_жёлтого_про_имена(self):
+        with tempfile.TemporaryDirectory() as д:
+            _, н = собрать.собрать(ФИКСТУРЫ / "работа-образец", куда=Path(д))
+            self.assertNotIn("Имена переменных расходятся со стили.css", [x["что"] for x in н], н)
+
+    def _с_карточкой(self, д: str, адрес: str) -> tuple[str, list[dict]]:
+        import shutil
+        работа = self._копия_образца(д)
+        shutil.copytree(ФИКСТУРЫ / "профиль-образец", Path(д) / "профиль-образец")
+        профиль_файл = Path(д) / "профиль-образец" / "profile.json"
+        данные = json.loads(профиль_файл.read_text(encoding="utf-8"))
+        данные["сайт"]["адрес"] = адрес
+        профиль_файл.write_text(json.dumps(данные, ensure_ascii=False), encoding="utf-8")
+        поиск = работа / "поиск.md"
+        поиск.write_text(поиск.read_text(encoding="utf-8").replace("Картинка карточки: нет",
+                                                                    "Картинка карточки: img/card.jpg"),
+                         encoding="utf-8")
+        путь, н = собрать.собрать(работа)
+        return путь.read_text(encoding="utf-8"), н
+
+    def test_карточка_с_адресом_сайта_полным_адресом(self):
+        # п. 4: og:image по протоколу — полный адрес; относительный мессенджеры не показывают.
+        with tempfile.TemporaryDirectory() as д:
+            html, н = self._с_карточкой(д, "https://кто-то.github.io/moyo-delo/")
+            self.assertIn('<meta property="og:image" content="https://кто-то.github.io/moyo-delo/img/card.jpg">', html)
+            self.assertNotIn("Карточка в мессенджере без адреса сайта", [x["что"] for x in н], н)
+
+    def test_карточка_без_адреса_сайта_жёлтое(self):
+        with tempfile.TemporaryDirectory() as д:
+            html, н = self._с_карточкой(д, "")
+            self.assertIn('<meta property="og:image" content="img/card.jpg">', html)
+            жёлтые = [x for x in н if x["что"] == "Карточка в мессенджере без адреса сайта"]
+            self.assertEqual(len(жёлтые), 1, н)
+            self.assertEqual(жёлтые[0]["уровень"], находки.ПОПРАВИТЬ)
+            self.assertIn("сайт.адрес", жёлтые[0]["чем_грозит"])

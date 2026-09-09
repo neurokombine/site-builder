@@ -56,5 +56,28 @@ class ЧемОтличаетсяТесты(unittest.TestCase):
         self.assertIn("Снято", текст)
 
 
+class ФиксВолнаТесты(unittest.TestCase):
+    """Фикс-волна: относительный путь и 🔴 «нет первого экрана»."""
+
+    def test_относительный_путь_из_чужой_папки(self):
+        # п. 1: `витрина.py сайты/<имя> --без-показа` падал ValueError в as_uri() — снимки идут до показа.
+        with tempfile.TemporaryDirectory() as д:
+            shutil.copytree(ФИКСТУРЫ / "работа-образец", Path(д) / "работа")
+            р = subprocess.run([sys.executable, str(СКРИПТЫ / "витрина.py"), "работа", "--без-показа"],
+                               cwd=д, capture_output=True, text=True, timeout=180)
+            self.assertEqual(р.returncode, 0, р.stdout + р.stderr)
+            self.assertTrue((Path(д) / "работа" / "витрина" / "витрина.html").exists())
+
+    def test_нет_первого_экрана_красное(self):
+        with tempfile.TemporaryDirectory() as д:
+            shutil.copytree(ФИКСТУРЫ / "работа-образец", Path(д) / "работа")
+            for ф in (Path(д) / "работа" / "экраны").glob("01-*.html"):
+                ф.unlink()
+            путь, н = витрина.витрина(Path(д) / "работа")
+            красные = [x for x in н if x["уровень"] == находки.ЧИНИТЬ]
+            self.assertEqual([x["что"] for x in красные], ["Нет первого экрана"], н)
+            self.assertFalse(путь.exists())
+
+
 if __name__ == "__main__":
     unittest.main()

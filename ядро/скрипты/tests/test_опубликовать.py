@@ -1,5 +1,5 @@
 """Публикация: репозиторий сайта, что поедет, закрыть/открыть поиску, отправка, Pages через подменённый gh, откат."""
-import json, subprocess, sys, tempfile, unittest
+import contextlib, io, json, os, subprocess, sys, tempfile, unittest
 from pathlib import Path
 from unittest.mock import patch
 СКРИПТЫ = Path(__file__).resolve().parent.parent
@@ -71,8 +71,18 @@ class ПубликацияТесты(unittest.TestCase):
         self.assertTrue(any("repos/кто-то/moyo-delo/pages" in " ".join(в) for в in вызовы))
 
     def test_имя_полки_латиницей(self):
-        код = опубликовать.main_с_аргументами([str(self.сайт), "--завести", "моё-дело", "--выкладываем"])
+        вывод = io.StringIO()
+        with contextlib.redirect_stdout(вывод):
+            код = опубликовать.main_с_аргументами([str(self.сайт), "--завести", "моё-дело", "--выкладываем"])
         self.assertEqual(код, 2)
+        self.assertIn("строчн", вывод.getvalue())
+        # п. 5: заглавные — не отказ, имя приводится к строчным и дальше идёт оно
+        вывод = io.StringIO()
+        with patch.object(опубликовать, "gh_есть", lambda: False), contextlib.redirect_stdout(вывод):
+            код = опубликовать.main_с_аргументами([str(self.сайт), "--завести", "Moyo-Delo", "--выкладываем"])
+        self.assertEqual(код, 3)
+        self.assertIn("github.io/moyo-delo/", вывод.getvalue())
+        self.assertNotIn("Moyo-Delo", вывод.getvalue())
 
     def test_без_gh_ручной_путь(self):
         with patch.object(опубликовать, "gh_есть", lambda: False):
@@ -80,6 +90,9 @@ class ПубликацияТесты(unittest.TestCase):
         self.assertEqual(код, 3)
         self.assertIn("Settings", опубликовать.ручной_путь("moyo-delo"))
         self.assertIn("github.io/moyo-delo", опубликовать.ручной_путь("moyo-delo"))
+        # п. 6: без своего .git «git remote add origin» ушёл бы в репозиторий системы
+        self.assertIn(".git", опубликовать.ручной_путь("moyo-delo"))
+        self.assertTrue(опубликовать.репозиторий_есть(self.сайт))   # к моменту печати он уже есть
 
     def test_откат(self):
         опубликовать.завести_репозиторий(self.сайт)
@@ -195,3 +208,73 @@ class ПравкиРевьюТесты(unittest.TestCase):
         self.assertEqual(код, 2)
         лог = subprocess.run(["git", "log", "--oneline"], cwd=self.сайт, capture_output=True, text=True)
         self.assertNotEqual(лог.returncode, 0)   # коммитов ещё нет вовсе
+
+
+class ФиксВолнаТесты(unittest.TestCase):
+    """Фикс-волна: нейтральная подпись поверх глобальной, origin не на GitHub, --открыть-поиску
+    с отправкой, журнал без изменений."""
+
+    def setUp(self):
+        self._д = tempfile.TemporaryDirectory(); д = Path(self._д.name); self.addCleanup(self._д.cleanup)
+        self.работа = д / "моё-дело"; self.сайт = self.работа / "сайт"; self.сайт.mkdir(parents=True)
+        (self.сайт / "index.html").write_text(СТРАНИЦА, encoding="utf-8")
+        (self.сайт / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
+        (self.работа / "поиск.md").write_text("# Как нас находят\n\n- Заголовок вкладки: Проба\n- Статус: закрыт\n", encoding="utf-8")
+        self.полка = д / "полка.git"; self.полка.mkdir()
+        _git("init", "--bare", "-b", "main", cwd=self.полка)
+
+    def _своя_полка(self):
+        опубликовать.завести_репозиторий(self.сайт)
+        _git("remote", "add", "origin", str(self.полка), cwd=self.сайт)
+
+    def test_личная_почта_из_глобального_git_не_уезжает_в_историю(self):
+        # п. 7: у человека после М2 глобальные user.name/user.email есть — раньше они и уезжали
+        # в каждый коммит публичной полки. Глобальный конфиг подменяем файлом через GIT_CONFIG_GLOBAL.
+        глобальный = Path(self._д.name) / "gitconfig"
+        глобальный.write_text("[user]\n\tname = Личное Имя\n\temail = личная@почта-образец.рф\n", encoding="utf-8")
+        with patch.dict(os.environ, {"GIT_CONFIG_GLOBAL": str(глобальный)}):
+            self._своя_полка()
+            self.assertEqual(_git("config", "user.email", cwd=self.сайт).strip(), "личная@почта-образец.рф")
+            код, _ = опубликовать.отправить(self.сайт, "Первый экран")
+        self.assertEqual(код, 0)
+        self.assertEqual(_git("log", "-1", "--format=%ae", cwd=self.полка).strip(), "system@local")
+        self.assertEqual(_git("log", "-1", "--format=%an", cwd=self.полка).strip(), "Хозяин системы")
+
+    def test_origin_не_на_github_называется_адресом_а_не_отсутствием_полки(self):
+        # п. 10: после удачного push на не-GitHub origin печаталось «полки на GitHub нет».
+        self._своя_полка()
+        вывод = io.StringIO()
+        with contextlib.redirect_stdout(вывод):
+            код = опубликовать.main_с_аргументами([str(self.сайт), "--выкладываем"])
+        self.assertEqual(код, 0, вывод.getvalue())
+        self.assertIn(str(self.полка), вывод.getvalue())
+        self.assertIn("не на GitHub", вывод.getvalue())
+        self.assertNotIn("полки на GitHub нет", вывод.getvalue())
+        self.assertNotIn("полки на GitHub ещё нет", вывод.getvalue())
+        вывод = io.StringIO()
+        with contextlib.redirect_stdout(вывод):
+            self.assertEqual(опубликовать.main_с_аргументами([str(self.сайт), "--статус"]), 0)
+        self.assertIn("не на GitHub", вывод.getvalue())
+
+    def test_открыть_поиску_с_отправкой_попадает_в_коммит(self):
+        # п. 11: флаг обязан быть закоммичен до push — HEAD полки несёт index, follow.
+        self._своя_полка()
+        with contextlib.redirect_stdout(io.StringIO()):
+            код = опубликовать.main_с_аргументами([str(self.сайт), "--открыть-поиску", "--выкладываем"])
+        self.assertEqual(код, 0)
+        self.assertIn("index, follow", _git("show", "HEAD:index.html", cwd=self.полка))
+        self.assertIn("Allow: /", _git("show", "HEAD:robots.txt", cwd=self.полка))
+        журнал = (self.работа / "журнал.md").read_text(encoding="utf-8")
+        self.assertIn("открыт поиску", журнал)
+        self.assertIn("обновление отправлено на полку", журнал)
+
+    def test_без_изменений_журнал_не_врёт_про_отправку(self):
+        # п. 16: без изменений коммита нет — журнал говорит об этом, а не «отправлено».
+        self._своя_полка()
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(опубликовать.main_с_аргументами([str(self.сайт), "--выкладываем"]), 0)
+            self.assertEqual(опубликовать.main_с_аргументами([str(self.сайт), "--выкладываем"]), 0)
+        журнал = (self.работа / "журнал.md").read_text(encoding="utf-8")
+        self.assertEqual(журнал.count("обновление отправлено на полку"), 1)
+        self.assertIn("изменений не было", журнал)
+        self.assertEqual(_git("rev-list", "--count", "HEAD", cwd=self.полка).strip(), "1")

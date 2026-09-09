@@ -168,6 +168,18 @@ class ПроверкаСайтаТесты(unittest.TestCase):
         self.assertGreater(len(разметка["текст"]), 25_000, "фикстура должна быть длинной")
         self.assertTrue(проверить.найти_заглушки(разметка["текст"], разметка["заголовок"]))
 
+    def test_rel_ссылки_доезжает_из_разметки(self):
+        # п. 2, вторая половина: rel собирается в браузере — без него фильтр в Python слеп.
+        with tempfile.TemporaryDirectory() as временная:
+            страница = Path(временная) / "index.html"
+            страница.write_text(
+                "<html lang='ru'><head><title>Шрифты</title>"
+                "<link rel='preconnect' href='https://fonts.googleapis.com'>"
+                "</head><body><p>Текст</p></body></html>", encoding="utf-8")
+            разметка = проверить.снять_разметку(self.браузер, страница.resolve().as_uri())
+        ссылки = {с["сырой"]: с for с in разметка["ссылки"]}
+        self.assertEqual(ссылки["https://fonts.googleapis.com"]["rel"], "preconnect")
+
     def test_сравнение_с_референсом_показывает_обе_колонки(self):
         отчёт = self.грязный["отчёт"]
         self.assertIn("| Что | Ваш сайт | Референс |", отчёт)
@@ -221,6 +233,23 @@ class СсылкиТесты(unittest.TestCase):
         self.assertEqual(хорошие, [])
         self.assertEqual(пустая[0]["уровень"], проверить.ЧИНИТЬ)
         self.assertIn("без имени или номера", пустая[0]["строки"][0])
+
+    def test_служебные_link_не_проверяем(self):
+        # п. 2: preconnect к fonts.googleapis.com/gstatic.com — подсказка браузеру, а корни этих
+        # доменов отвечают 404: каждый сайт с веб-шрифтом получал два ложных 🟡.
+        def link(сырой, rel):
+            return {"тег": "link", "сырой": сырой, "адрес": сырой, "подпись": "", "rel": rel}
+        with patch.object(проверить, "открывается_ли", return_value=(False, "код 404")) as поход:
+            находки = проверить.находки_по_ссылкам(
+                [link("https://fonts.googleapis.com", "preconnect"),
+                 link("https://fonts.gstatic.com", "preconnect"),
+                 link("https://пример.рф/шрифт.woff2", "preload")], [], None)
+        поход.assert_not_called()
+        self.assertEqual(находки, [])
+        # а обычный stylesheet по-прежнему проверяется
+        with patch.object(проверить, "открывается_ли", return_value=(True, "код 200")) as поход:
+            проверить.находки_по_ссылкам([link("https://fonts.googleapis.com/css2?family=X", "stylesheet")], [], None)
+        поход.assert_called_once()
 
     def test_хост_не_откусывается(self):
         """`wa.me` начинается с «w» — домен должен остаться целым."""
@@ -397,6 +426,14 @@ class ВесИЗаглушкиТесты(unittest.TestCase):
         self.assertIn("«Lorem»", текст)
         self.assertIn("«+7 (000)»", текст)
         self.assertIn("…", текст, "рядом с заглушкой показываем кусок фразы")
+
+    def test_заглушки_шаблона_профиля_находятся(self):
+        # п. 3: значения из профили/_шаблон/profile.json — живая на вид мёртвая ссылка.
+        найденные = проверить.найти_заглушки(
+            "Пишите: https://t.me/имя_в_телеграме или на вы@пример.рф", "Контакты")
+        self.assertEqual(len(найденные), 2, найденные)
+        self.assertTrue(any("имя_в_телеграме" in н for н in найденные))
+        self.assertTrue(any("пример.рф" in н for н in найденные))
 
     def test_чистый_текст_заглушек_не_даёт(self):
         self.assertEqual(проверить.найти_заглушки("Чиним лодки у причала.", "Мастерская"), [])
