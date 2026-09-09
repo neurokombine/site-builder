@@ -27,7 +27,6 @@ from __future__ import annotations
 import argparse
 import http.server
 import json
-import re
 import sys
 import threading
 import urllib.error
@@ -424,7 +423,7 @@ def находки_по_ссылкам(ссылки: list[dict], якоря: lis
 
 def найти_заглушки(текст: str, заголовок: str) -> list[str]:
     """Слова из шаблона, оставшиеся в живом тексте, — с куском фразы вокруг."""
-    где = re.sub(r"\{\{ИКОНКА:[^}]*\}\}", "", f"{заголовок}\n{текст}")   # до T3: слот иконки ещё не инлайнится, T3 снимает
+    где = f"{заголовок}\n{текст}"
     низ = где.lower()
     найденные = []
     for метка in ЗАГЛУШКИ:
