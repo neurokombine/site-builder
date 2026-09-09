@@ -17,8 +17,8 @@ from находки import К_СВЕДЕНИЮ, ПОПРАВИТЬ, находк
   const ст = э => getComputedStyle(э), кегль = э => parseFloat(ст(э).fontSize);
   const тени = все.filter(э => ст(э).boxShadow !== 'none').length, градиенты = все.filter(э => ст(э).backgroundImage.includes('gradient')).length;
   const кегли = [...new Set(все.filter(isLeafText).map(э => Math.round(кегль(э) * 2) / 2))].sort((a, b) => a - b);
-  const секции = [...document.querySelectorAll('section.блок:not(.блок--подвал) .блок__внутри')]
-    .map(в => [...в.children].map(д => д.tagName.toLowerCase()).join('>'));
+  const секции = [...document.querySelectorAll('section.блок:not(.блок--подвал):not(.блок--первый-экран) .блок__внутри')]
+    .map(в => [...в.children].map(д => (д.getAttribute('class') || '').split(/\s+/)[0] || д.tagName.toLowerCase()).join('>'));
   const главных = [...document.querySelectorAll('section.блок')].map(с => с.querySelectorAll('.кнопка--главная').length);
   const маска = э => (ст(э).maskImage || ст(э).webkitMaskImage || 'none') !== 'none';
   const фото = [...document.querySelectorAll('img')].filter(isVisible).filter(и => {
@@ -58,7 +58,7 @@ def снять_дизайн(браузер, адрес: str) -> dict:
 
 def _дата_в_прошлом(строка: str) -> bool:
     try:
-        когда = datetime.fromisoformat(строка.strip())
+        когда = datetime.fromisoformat(строка.strip().replace("Z", "+00:00"))
     except ValueError:
         return True
     когда = когда if когда.tzinfo else когда.replace(tzinfo=глаза.МСК)
