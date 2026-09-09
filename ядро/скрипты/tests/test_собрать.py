@@ -302,6 +302,11 @@ class ДизайнV2Тесты(unittest.TestCase):
         self.assertIn('<body class="с-липкой-кнопкой">', итог)
         self.assertIn('<div class="липкая-кнопка">' + связь + "</div>\n</body>", итог)
         self.assertEqual(собрать.липкая_кнопка(html, "<script>виджет</script>"), html)
+        # атрибуты <body> остаются, чужой класс — тоже (ревью, minor 4)
+        self.assertIn('<body class="с-липкой-кнопкой" lang="ru">',
+                      собрать.липкая_кнопка(html.replace("<body>", '<body lang="ru">'), связь))
+        self.assertIn('<body class="с-липкой-кнопкой свой" lang="ru">',
+                      собрать.липкая_кнопка(html.replace("<body>", '<body class="свой" lang="ru">'), связь))
         self.assertEqual(собрать.скрипт_таймера(html), html)
         с_таймером = собрать.скрипт_таймера(html.replace("<section>", '<section data-дедлайн="2030-12-31T23:59:00+03:00">'))
         self.assertIn("<script>", с_таймером)
@@ -321,7 +326,26 @@ class ДизайнV2Тесты(unittest.TestCase):
             self.assertEqual(len(не_та), 1, н)
             self.assertIn("«разворот»", не_та[0]["строки"][0])
             self.assertIn("«постер»", не_та[0]["строки"][0])
+            self.assertIn("в дизайн.md → Решения", не_та[0]["строки"][0])
             self.assertIn("01-первый-экран-постер.html", не_та[0]["чем_грозит"])
+            # без «Решений» сравниваем с вариантом 1 — и так и говорим (ревью, minor 7)
+            текст = дизайн.read_text(encoding="utf-8")
+            дизайн.write_text(текст[:текст.index("## Решения")].replace(
+                "Концепция первого экрана: разворот", "Концепция первого экрана: постер", 1), encoding="utf-8")
+            _, н = собрать.собрать(работа)
+            не_та = [x for x in н if x["что"] == "Первый экран не той концепции"]
+            self.assertEqual(len(не_та), 1, н)
+            self.assertIn("в дизайн.md → Вариант 1", не_та[0]["строки"][0])
             _, н = собрать.собрать(ФИКСТУРЫ / "работа-образец", куда=Path(д) / "сайт")
             self.assertNotIn("Первый экран не той концепции", [x["что"] for x in н], н)
+            self.assertNotIn("В дизайн.md поле не заполнено", [x["что"] for x in н], н)
+
+    def test_без_дизайна_нет_второй_находки_о_полях(self):
+        # ревью, minor 8: нет файла — 🔴 от _токены уже есть, 🟡 «поле не заполнено» поверх не нужна
+        with tempfile.TemporaryDirectory() as д:
+            работа = Path(д) / "работа"
+            import shutil; shutil.copytree(ФИКСТУРЫ / "работа-образец", работа)
+            (работа / "дизайн.md").unlink()
+            _, н = собрать.собрать(работа)
+            self.assertIn(находки.ЧИНИТЬ, [x["уровень"] for x in н], н)
             self.assertNotIn("В дизайн.md поле не заполнено", [x["что"] for x in н], н)
