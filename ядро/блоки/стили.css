@@ -3,7 +3,8 @@
    `сайты/<имя>/дизайн.md` (раздел «Решения»).
 
    ⛔ Ни одного цвета, шрифта, кегля и крупного отступа литералом — только `var()` с одной из
-   тридцати двух переменных дизайн-системы и `color-mix(in srgb, <переменная> N%, transparent)`.
+   переменных дизайн-системы (их 44, полный список и источники — `ядро/дизайн/палитра-и-токены.md`)
+   и `color-mix(in srgb, <переменная> N%, transparent)`.
    Смена палитры — правка одного раздела «Решения», а не поход по файлам.
    ⭐ Телефон — первая версия: всё вне @media написано под узкий экран, а медиазапрос для
    компьютера только раскладывает колонки. Появления при прокрутке нет: движение — это пульс
@@ -11,7 +12,7 @@
    дрейф пятен, кольца, бегущая строка, лента роликов, зум сцены) — всё выключается при
    `prefers-reduced-motion: reduce`.
 
-   Тридцать две переменные — по строке смысла:
+   Тридцать две переменные исходной сетки — по строке смысла:
    --шрифт-заголовков, --шрифт-текста        два шрифта, у каждого запасной системный
    --цвет-фон, --цвет-фон-2                   светлая секция и её чередование
    --цвет-фон-карточки                        подложка карточки на светлом
@@ -21,15 +22,25 @@
    --цвет-линия                               рамки и разделители
    --цвет-тёмный-фон, --цвет-тёмный-текст     тёмная секция
    --цвет-стекло                              подложка стеклянной карточки на тёмном
-   --тень, --тень-глубокая                    мягкая тень карточки и глубокая — кнопки и мокапа
+   --тень, --тень-глубокая                    мягкая тень карточки и глубокая — карточки на тёмном
    --кегль-h1, --кегль-h2, --кегль-текст      вилки clamp(): телефон → компьютер
    --кегль-мелкий, --кегль-кикер              подписи и надзаголовок (на телефоне не мельче 13px)
    --кегль-цифра                              крупные цифры доказательств
    --разрядка-кикера                          разрядка надзаголовка (letter-spacing)
    --отступ-секции, --отступ-блока            воздух между секциями и внутри секции
    --ширина, --ширина-колонки                 ширина страницы и одной колонки текста
-   --радиус, --радиус-малый                   скругления карточек и мелочей (окно мокапа, ячейка)
+   --радиус, --радиус-малый                   скругления фото и мелочей (окно мокапа, таймер)
    --кнопка-радиус                            пилюля или прямоугольник
+
+   Двенадцать новых (задача 1, все двенадцать цветов профиля и глубина/скругления/шкала макетов —
+   подробно и с источником каждого значения в `ядро/дизайн/палитра-и-токены.md`):
+   --цвет-тёплый, --цвет-тёплый-мягкий        золото профиля: галочки, кольца, кромки, точки
+   --цвет-тёплый-тёмный                       ⚙️ не пишется в дизайн.md — вычисляет собрать.py
+   --цвет-тёмный-фон-2, --цвет-акцент-яркий   вторая тьма для градиента фона, самый яркий красный
+   --тень-чип, --тень-спутник, --тень-плиты   ещё три ступени глубины поверх тень/тень-глубокая
+   --радиус-карточки, --радиус-плитки         18 и 22 px — карточка и ячейка бенто, не «десятка» на всё
+   --радиус-телефон                           46 px — рамка телефона (была calc от общего радиуса)
+   --кегль-лид                                свой размер лида, не `calc(текст × 1.15)`
    --плавность, --длительность                кривая и время переходов */
 
 /* ── Основа и типографика ── */
@@ -39,10 +50,13 @@ body { font: var(--кегль-текст)/1.6 var(--шрифт-текста); co
        background: var(--цвет-фон); margin: 0; -webkit-font-smoothing: antialiased; }
 h1 { font-size: var(--кегль-h1); font-weight: 700; line-height: 1.05; letter-spacing: -0.025em; }
 h2 { font-size: var(--кегль-h2); font-weight: 700; line-height: 1.12; letter-spacing: -0.015em; }
-.лид { font-size: calc(var(--кегль-текст) * 1.15); line-height: 1.5; color: var(--цвет-текст-мягкий); }  .акцент { font-style: normal; color: var(--цвет-акцент); }
+.лид { font-size: var(--кегль-лид, var(--кегль-текст)); line-height: 1.55; color: var(--цвет-текст-мягкий); }  .акцент { font-style: normal; color: var(--цвет-акцент); }
 .блок { padding: var(--отступ-секции) 0; position: relative; overflow: hidden; }
 .блок__внутри { width: min(100% - 2 * var(--отступ-блока), var(--ширина)); margin: 0 auto; position: relative; }
-.тёмный { background: var(--цвет-тёмный-фон); color: var(--цвет-тёмный-текст); }
+/* Задача 1, правка 6: тёмный фон — не плоская заливка, а лёгкий градиент к второму тёмному
+   (макет linear-gradient(160deg, фон, фон-2 70%, фон)) — материал, а не однотонный прямоугольник. */
+.тёмный { background: linear-gradient(160deg, var(--цвет-тёмный-фон), var(--цвет-тёмный-фон-2, var(--цвет-тёмный-фон)) 70%, var(--цвет-тёмный-фон));
+  color: var(--цвет-тёмный-текст); }
 
 *, *::before, *::after { box-sizing: border-box; }
 img, video, iframe { max-width: 100%; height: auto; }
@@ -52,7 +66,7 @@ p, li, h1, h2, h3, dd, dt, summary, blockquote { overflow-wrap: break-word; }
 h1, h2, h3 { font-family: var(--шрифт-заголовков); margin: 0 0 .5em; }
 h3 { font-size: calc(var(--кегль-текст) * 1.25); font-weight: 700; line-height: 1.25; }
 p, ul, ol { margin: 0 0 1em; }  ul, ol { padding-left: 1.25em; }
-.лид { max-width: calc(var(--ширина-колонки) * 1.25); margin-bottom: 1.2em; }
+.лид { max-width: calc(var(--ширина-колонки) * .95); margin-bottom: 1.2em; }   /* задача 1: было 1.25 — лид тянулся в три строки */
 .мелкий { font-size: var(--кегль-мелкий); color: var(--цвет-текст-мягкий); }
 /* Акцентное слово в заголовке: цвет плюс маркерная подсветка под строкой. */
 .акцент { background: linear-gradient(transparent 62%, color-mix(in srgb, var(--цвет-акцент) 18%, transparent) 62%); }
@@ -67,7 +81,7 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
    выделение — цветом текста, акцент несёт подчёркивание, черту кикера, маркер под словом, иконки, бейджи и кнопку. */
 .тёмный a:not(.кнопка) { color: var(--цвет-тёмный-текст); text-decoration-color: var(--цвет-акцент); }
 .тёмный .акцент { color: var(--цвет-тёмный-текст); background: linear-gradient(transparent 62%, var(--цвет-акцент) 62%); }
-.тёмный .кикер { color: var(--цвет-тёмный-текст); }  .тёмный .кикер::before { background: var(--цвет-акцент); }
+.тёмный .кикер { color: var(--цвет-тёмный-текст); }  .тёмный .кикер::before { background: var(--цвет-тёплый, var(--цвет-акцент-тёмный)); }
 .тёмный .иконка, .тёмный .бейдж, .тёмный .цитата::before, .тёмный .вопрос > summary::after { color: var(--цвет-акцент); }
 .тёмный :focus-visible, .тёмный .кнопка:focus-visible, .тёмный .вопрос > summary:focus-visible { outline-color: var(--цвет-тёмный-текст); }
 
@@ -119,14 +133,16 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 /* ── Карточки: обычная, главная, стеклянная ── */
 /* Дословно из брифа; дополнения — ниже отдельными правилами, не сливать. */
 .карточки { display: grid; gap: var(--отступ-блока); }
-.карточка { padding: calc(var(--отступ-блока) * 1.25); border-radius: var(--радиус);
+.карточка { padding: calc(var(--отступ-блока) * 1.25); border-radius: var(--радиус-карточки, var(--радиус));
   background: var(--цвет-фон-карточки); border: 1px solid var(--цвет-линия); box-shadow: var(--тень);
   transition: transform var(--длительность) var(--плавность), box-shadow var(--длительность) var(--плавность); }
-.карточка:hover { transform: translateY(-3px); box-shadow: var(--тень-глубокая); }
+.карточка:hover { transform: translateY(-3px); box-shadow: var(--тень-чип, var(--тень)); }
 .карточка--главная { border-top: 3px solid var(--цвет-акцент); }
+/* Задача 1, правка 6: кромка стеклянной карточки — золотая волосяная линия (макет rgba(200,169,126,.28)),
+   не белёсая тёмный-текст 12% — иначе плита на тёмном не «лежит», а сливается с фоном. */
 .карточка--стекло { background: linear-gradient(180deg, var(--цвет-стекло),
     color-mix(in srgb, var(--цвет-стекло) 20%, transparent));
-  border: 1px solid color-mix(in srgb, var(--цвет-тёмный-текст) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 28%, transparent);
   backdrop-filter: blur(.9em); -webkit-backdrop-filter: blur(.9em); box-shadow: var(--тень-глубокая); }
 .карточки { margin-top: var(--отступ-блока); padding: 0; list-style: none; }
 .карточка { position: relative; min-width: 0; }
@@ -141,8 +157,11 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .цифры { display: grid; grid-template-columns: repeat(auto-fit, minmax(5em, 1fr)); gap: var(--отступ-блока); margin: var(--отступ-блока) 0 0; padding: 0; list-style: none; }
 .цифра { padding-left: 1em; border-left: 1px solid color-mix(in srgb, currentColor 25%, transparent); }
 .цифра__значение { display: block; font: 700 var(--кегль-цифра)/1 var(--шрифт-заголовков);
-  letter-spacing: -0.02em; color: var(--цвет-акцент); }
+  letter-spacing: -0.02em; color: var(--цвет-текст); }
 .тёмный .цифра__значение { color: var(--цвет-тёмный-текст); }  .цифра__подпись { display: block; margin-top: .35em; font-size: var(--кегль-мелкий); opacity: .8; }
+/* Задача 1, правка 1: акцентом — одна цифра из нескольких (класс на .цифра ставит блок-рецепт),
+   остальные цветом текста — иначе три красных числа спорят с кнопкой сильнее заголовка. */
+.цифра--ключ .цифра__значение { color: var(--цвет-акцент); }
 /* На телефоне три цифры стоят в ряд (ячейка от 5em, отступ слева уже), а не «две и одна»; от 900 px — ровно три колонки. */
 .цифра { flex: 1 1 5em; min-width: 0; padding-left: .7em; }
 /* Цифра в карточке (постер, услуги): карточка главнее линии слева, кегль чуть меньше — «от 3 000 ₽» не ломается на две строки. */
@@ -160,7 +179,7 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .тёмный .мокап figcaption h3 { color: var(--цвет-тёмный-текст); }
 /* Мокап — «окно» с полоской и тремя точками: скриншот работы, а не голая картинка. */
 .мокап { margin: 0; position: relative; padding-top: 1.4em; border-radius: var(--радиус-малый); overflow: hidden;
-  background: var(--цвет-фон-карточки); border: 1px solid var(--цвет-линия); box-shadow: var(--тень-глубокая); }
+  background: var(--цвет-фон-карточки); border: 1px solid var(--цвет-линия); box-shadow: var(--тень-плиты, var(--тень-глубокая)); }
 .мокап::before { content: ""; position: absolute; inset: 0 0 auto; height: 1.4em;
   background: color-mix(in srgb, var(--цвет-текст) 7%, var(--цвет-фон-карточки)); border-bottom: 1px solid var(--цвет-линия); }
 .мокап::after { content: ""; position: absolute; top: .45em; left: .6em; width: .5em; height: .5em; border-radius: 50%;
@@ -178,6 +197,10 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .список-иконок { display: grid; gap: .65em; margin: 0 0 1.2em; padding: 0; list-style: none; }
 .список-иконок li { display: flex; align-items: flex-start; gap: .65em; }
 .список-иконок .иконка { margin-top: .15em; }
+/* Задача 1, правка 6: галочки списка — золото, не акцент (макет их красным не красит нигде).
+   На светлом — тёмная ступень (контраст ≥4.5 против фона), на тёмном — чистый тёплый (уже ≥7:1). */
+.список-иконок .иконка { color: var(--цвет-тёплый-тёмный, var(--цвет-акцент-тёмный)); }
+.тёмный .список-иконок .иконка { color: var(--цвет-тёплый, var(--цвет-акцент-тёмный)); }
 
 /* ── Разделитель и цитата ── */
 .разделитель { height: 1px; border: 0; margin: var(--отступ-блока) 0; opacity: .7;
@@ -259,12 +282,14 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
    низ уходит под кромку и тает в маске. */
 .картинка--вырез, .картинка--живой-портрет { aspect-ratio: 3 / 4; }
 .картинка--вырез img, .картинка--живой-портрет img, .картинка--живой-портрет video { object-position: 50% 0;
-  position: relative; z-index: 1; mask-image: linear-gradient(to bottom, black 66%, transparent 96%); -webkit-mask-image: linear-gradient(to bottom, black 66%, transparent 96%); }
+  position: relative; z-index: 1; mask-image: linear-gradient(to bottom, black 66%, transparent 96%); -webkit-mask-image: linear-gradient(to bottom, black 66%, transparent 96%);
+  filter: drop-shadow(var(--тень-спутник, var(--тень-глубокая))); }   /* задача 1: фигура-вырез «лежит» на фоне, а не наклеена */
 .опора { position: absolute; left: 15%; bottom: 8%; width: 70%; aspect-ratio: 1; border-radius: 50%; pointer-events: none;
   filter: blur(2em); opacity: .6; animation: дрейф 30s ease-in-out infinite alternate;
   background: radial-gradient(circle, color-mix(in srgb, var(--цвет-акцент) 55%, transparent), transparent 70%); }
+/* Задача 1, правка 6: кольца золотом (макет — SVG-пунктир золотом), не текущим цветом секции. */
 .кольцо { position: absolute; left: 6%; top: 50%; width: 88%; aspect-ratio: 1; translate: 0 -50%; border-radius: 50%; pointer-events: none;
-  border: 1px dashed color-mix(in srgb, currentColor 30%, transparent); animation: вращение 60s linear infinite; }
+  border: 1px dashed color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 30%, transparent); animation: вращение 60s linear infinite; }
 .кольцо--2 { left: 18%; width: 64%; border-style: dotted; animation-duration: 90s; animation-direction: reverse; }
 .парит { animation: парение 8s ease-in-out infinite; }
 .парит--2 { animation-duration: 9s; animation-delay: -3s; }  .парит--3 { animation-duration: 7s; animation-delay: -5s; }
@@ -297,18 +322,18 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .звук__почему { display: inline-flex; align-items: center; gap: .5em; padding: .5em .9em; border-radius: 9em; white-space: nowrap; line-height: 1.25;
   font-size: var(--кегль-текст); color: var(--цвет-тёмный-текст); background: color-mix(in srgb, var(--цвет-тёмный-фон) 78%, transparent);
   border: 1px solid color-mix(in srgb, var(--цвет-акцент) 45%, transparent); backdrop-filter: blur(.6em); -webkit-backdrop-filter: blur(.6em); }
-.звук__почему::before { content: ""; width: .5em; height: .5em; border-radius: 50%; background: var(--цвет-акцент); animation: мерцание 1.6s ease-in-out infinite; }
+.звук__почему::before { content: ""; width: .5em; height: .5em; border-radius: 50%; background: var(--цвет-акцент-яркий, var(--цвет-акцент)); animation: мерцание 1.6s ease-in-out infinite; }
 .звук-блок[data-звук="вкл"] .звук__почему, .звук__почему-длинно { display: none; }
 .звук__подпись { white-space: nowrap; }
 .живое { position: absolute; top: 1em; left: 1em; z-index: 2; display: inline-flex; align-items: center; gap: .5em; padding: .3em .8em;
   border-radius: 9em; font-size: var(--кегль-мелкий); color: var(--цвет-тёмный-текст);
   background: color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent); backdrop-filter: blur(.5em); -webkit-backdrop-filter: blur(.5em); }
-.живое::before { content: ""; width: .5em; height: .5em; border-radius: 50%; background: var(--цвет-акцент); animation: мерцание 2s ease-in-out infinite; }
+.живое::before { content: ""; width: .5em; height: .5em; border-radius: 50%; background: var(--цвет-акцент-яркий, var(--цвет-акцент)); animation: мерцание 2s ease-in-out infinite; }
 .картинка--постер ~ .живое { display: none; }
 @keyframes мерцание { 50% { opacity: .3; } }
 /* Окно с экраном (афиша): бар с тремя точками и адресом, окно «дышит». Бегущая строка — пункты по кругу. */
 .окно { border-radius: var(--радиус-малый); overflow: hidden; background: var(--цвет-фон-карточки); border: 1px solid var(--цвет-линия);
-  box-shadow: var(--тень-глубокая); animation: дыхание 8s ease-in-out infinite; }
+  box-shadow: var(--тень-плиты, var(--тень-глубокая)); animation: дыхание 8s ease-in-out infinite; }
 .окно__бар { display: flex; align-items: center; gap: .4em; padding: .5em .8em; border-bottom: 1px solid var(--цвет-линия);
   background: color-mix(in srgb, var(--цвет-текст) 7%, var(--цвет-фон-карточки)); }
 .окно__бар i { width: .55em; height: .55em; border-radius: 50%; background: var(--цвет-акцент); opacity: .8; }
@@ -323,9 +348,11 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .бегущая-строка__лента span::after { content: "·"; margin-left: 2.5em; color: var(--цвет-акцент); }
 @keyframes бег { to { transform: translateX(-50%); } }
 /* Рамка телефона 9:16 (товар, мозаика): островок сверху, подпись — поверх нижней кромки экрана. */
-.рамка-телефона { position: relative; aspect-ratio: 9 / 16; padding: .55em; border-radius: calc(var(--радиус) * 1.6);
-  background: var(--цвет-тёмный-фон); box-shadow: var(--тень-глубокая); }
-.рамка-телефона__экран { position: relative; height: 100%; border-radius: calc(var(--радиус) * 1.3); overflow: hidden; background: var(--цвет-фон-2); }
+/* Задача 1: было calc(--радиус × 1.6) = 16 px при ширине рамки ≈ 440 px — «скруглённый прямоугольник»,
+   не телефон; макет — 46 px, свой токен, не производная от общего --радиус. */
+.рамка-телефона { position: relative; aspect-ratio: 9 / 16; padding: .55em; border-radius: var(--радиус-телефон, calc(var(--радиус) * 2));
+  background: var(--цвет-тёмный-фон); box-shadow: var(--тень-плиты, var(--тень-глубокая)); }
+.рамка-телефона__экран { position: relative; height: 100%; border-radius: calc(var(--радиус-телефон, calc(var(--радиус) * 2)) * .8); overflow: hidden; background: var(--цвет-фон-2); }
 .рамка-телефона__экран::before { content: ""; position: absolute; top: .5em; left: 36%; z-index: 2; width: 28%; height: .8em; border-radius: 9em; background: var(--цвет-тёмный-фон); }
 .рамка-телефона__экран::after { content: ""; position: absolute; inset: 60% 0 0; pointer-events: none;
   background: linear-gradient(to top, color-mix(in srgb, var(--цвет-тёмный-фон) 75%, transparent), transparent); }
@@ -338,13 +365,15 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .ряд-роликов .рамка-телефона--дубль, .ряд-роликов .рамка-телефона:nth-child(n + 5) { display: none; }
 /* Бенто: плитка из ячеек; на телефоне столбиком, картинка первой. */
 .бенто { display: grid; gap: var(--отступ-блока); }
-.бенто__ячейка { position: relative; padding: var(--отступ-блока); border-radius: var(--радиус); background: var(--цвет-фон-карточки); color: var(--цвет-текст);
+.бенто__ячейка { position: relative; padding: var(--отступ-блока); border-radius: var(--радиус-плитки, var(--радиус)); background: var(--цвет-фон-карточки); color: var(--цвет-текст);
   border: 1px solid var(--цвет-линия); box-shadow: var(--тень); transition: transform var(--длительность) var(--плавность), box-shadow var(--длительность) var(--плавность); }
-.бенто__ячейка:hover { transform: translateY(-3px); box-shadow: var(--тень-глубокая); }
+.бенто__ячейка:hover { transform: translateY(-3px); box-shadow: var(--тень-чип, var(--тень)); }
 .бенто__ячейка.тёмный { background: var(--цвет-тёмный-фон); color: var(--цвет-тёмный-текст); border-color: transparent; }
 .бенто__ячейка--главная { padding: var(--отступ-блока); }  .бенто__ячейка--главная h1 { font-size: calc(var(--кегль-h1) * .9); }   /* ячейка уже окна: h1 в три строки, не в четыре (F10) */
 .бенто .картинка { padding: 0; overflow: hidden; aspect-ratio: 4 / 3; order: -1; margin-top: 0; }
-.бенто .цифры { display: contents; }  .бенто .цифра { padding: var(--отступ-блока); border-left: 0; }  .бенто .цифра__значение { color: var(--цвет-акцент); }
+.бенто .цифры { display: contents; }  .бенто .цифра { position: relative; padding: var(--отступ-блока); border-left: 0; }  .бенто .цифра__значение { color: var(--цвет-акцент); }
+/* Задача 1, правка 6: золотая точка в углу ячейки — макет держит её на каждой цифре бенто. */
+.бенто .цифра::before { content: ""; position: absolute; top: .6em; right: .6em; width: .5em; height: .5em; border-radius: 50%; background: var(--цвет-тёплый, var(--цвет-акцент-тёмный)); }
 .первый-экран--бенто .список-иконок { margin-bottom: 0; }   /* список пунктов — сама ячейка: нижний отступ первого экрана ей не нужен */
 /* Орбита: вырез в кольцах, четыре спутника-карточки. На телефоне фигура первой — лицо в первом окне, — затем текст,
    спутники сеткой 2×2 после кнопок и цифры последними: .орбита и текст прозрачны для сетки (display: contents),
@@ -388,6 +417,10 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
   border-radius: 50%; pointer-events: none; filter: blur(2em); opacity: .55;
   background: radial-gradient(circle, color-mix(in srgb, var(--цвет-акцент) 45%, transparent), transparent 70%); }
 .фон--пятна::before { top: -20%; left: -15%; }  .фон--пятна::after { bottom: -25%; right: -10%; opacity: .35; }
+/* Задача 1, правка 6: пятна на светлой секции — тёплый лист (макет rgba(216,193,156,.55)), не красные
+   круги; на тёмной секции акцент остаётся (не трогаем — это отдельная, ещё не вынесенная правка). */
+.фон--пятна:not(.тёмный)::before, .фон--пятна:not(.тёмный)::after {
+  background: radial-gradient(circle, color-mix(in srgb, var(--цвет-тёплый-мягкий, var(--цвет-линия)) 55%, transparent), transparent 70%); }
 .фон--сетка::before { content: ""; position: absolute; inset: 0; pointer-events: none;
   background-image: linear-gradient(color-mix(in srgb, currentColor 9%, transparent) 1px, transparent 1px),
     linear-gradient(90deg, color-mix(in srgb, currentColor 9%, transparent) 1px, transparent 1px);
