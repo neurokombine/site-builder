@@ -23,7 +23,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import глаза  # noqa: E402
 from находки import вывод_в_utf8  # noqa: E402
-from проверить import вес_словами  # noqa: E402
 
 ШИРИНА = 1600
 КАЧЕСТВО = 82                # webp: на глаз не отличить от исходника, вес — в разы меньше
@@ -93,6 +92,7 @@ def построить_парсер() -> argparse.ArgumentParser:
 
 
 def main_с_аргументами(argv) -> int:
+    from проверить import вес_словами   # ленивый импорт: обложка → картинка → проверить → флаги_дизайна → обложка — цикл (GC 17)
     аргументы = построить_парсер().parse_args(argv)
     исходник = Path(аргументы.файл).expanduser()
     if not исходник.is_file():
