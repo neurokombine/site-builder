@@ -94,6 +94,25 @@ class Правила(unittest.TestCase):
                 self.assertTrue((своя / ссылка).resolve().is_file(), ссылка)
                 self.assertEqual((своя / ссылка).resolve().parent, витрина.ЗАГЛУШКИ.resolve())
 
+    def test_каталог_не_ломает_тип_видео(self):
+        """Задача 4: замена путей '"video/' → к_работе не должна трогать type="video/mp4" — иначе браузер не узнаёт
+        MIME-тип источника и пропускает его (живая сцена показывает только постер). src/poster переписываются как раньше."""
+        with tempfile.TemporaryDirectory() as д:
+            работа = _скопировать_образец(Path(д))
+            своя = Path(д) / "каталог" / "обложка-живая-сцена"
+            своя.mkdir(parents=True)
+            html = обложки._в_каталог(
+                '<video poster="video/golos-poster.jpg" data-телефон="video/zhivaya-telefon.mp4" '
+                'data-телефон-постер="video/zhivaya-telefon-poster.jpg">'
+                '<source src="video/golos.mp4" type="video/mp4"><source src="video/zhivaya.webm" type="video/webm">'
+                '</video>', работа, своя)
+            self.assertIn('type="video/mp4"', html)
+            self.assertIn('type="video/webm"', html)
+            self.assertIn('src="../../работа/video/golos.mp4"', html)
+            self.assertIn('poster="../../работа/video/golos-poster.jpg"', html)
+            self.assertIn('data-телефон="../../работа/video/zhivaya-telefon.mp4"', html)
+            self.assertIn('data-телефон-постер="../../работа/video/zhivaya-telefon-poster.jpg"', html)
+
     def test_без_палитры_красное(self):
         with tempfile.TemporaryDirectory() as д:
             работа = _скопировать_образец(Path(д))
