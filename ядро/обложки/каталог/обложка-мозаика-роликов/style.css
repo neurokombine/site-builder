@@ -1,0 +1,508 @@
+/* Стили всех блоков сразу — библиотека компонентов ядра. Один файл на страницу: он уезжает в
+   сайт/style.css как есть, а палитру и кегли в <style> страницы подставляет собрать.py из
+   `сайты/<имя>/дизайн.md` (раздел «Решения»).
+
+   ⛔ Ни одного цвета, шрифта, кегля и крупного отступа литералом — только `var()` с одной из
+   тридцати двух переменных дизайн-системы и `color-mix(in srgb, <переменная> N%, transparent)`.
+   Смена палитры — правка одного раздела «Решения», а не поход по файлам.
+   ⭐ Телефон — первая версия: всё вне @media написано под узкий экран, а медиазапрос для
+   компьютера только раскладывает колонки. Появления при прокрутке нет: движение — это пульс
+   главной кнопки, подъём карточки под курсором, плавные переходы и движение обложек (парение спутников,
+   дрейф пятен, кольца, бегущая строка, лента роликов, зум сцены) — всё выключается при
+   `prefers-reduced-motion: reduce`.
+
+   Тридцать две переменные — по строке смысла:
+   --шрифт-заголовков, --шрифт-текста        два шрифта, у каждого запасной системный
+   --цвет-фон, --цвет-фон-2                   светлая секция и её чередование
+   --цвет-фон-карточки                        подложка карточки на светлом
+   --цвет-текст, --цвет-текст-мягкий          основной текст и подписи
+   --цвет-акцент, --цвет-акцент-тёмный        акцент и его состояние под курсором
+   --цвет-на-акценте                          текст на кнопке
+   --цвет-линия                               рамки и разделители
+   --цвет-тёмный-фон, --цвет-тёмный-текст     тёмная секция
+   --цвет-стекло                              подложка стеклянной карточки на тёмном
+   --тень, --тень-глубокая                    мягкая тень карточки и глубокая — кнопки и мокапа
+   --кегль-h1, --кегль-h2, --кегль-текст      вилки clamp(): телефон → компьютер
+   --кегль-мелкий, --кегль-кикер              подписи и надзаголовок (на телефоне не мельче 13px)
+   --кегль-цифра                              крупные цифры доказательств
+   --разрядка-кикера                          разрядка надзаголовка (letter-spacing)
+   --отступ-секции, --отступ-блока            воздух между секциями и внутри секции
+   --ширина, --ширина-колонки                 ширина страницы и одной колонки текста
+   --радиус, --радиус-малый                   скругления карточек и мелочей (окно мокапа, ячейка)
+   --кнопка-радиус                            пилюля или прямоугольник
+   --плавность, --длительность                кривая и время переходов */
+
+/* ── Основа и типографика ── */
+/* Из брифа; дополнения — ниже отдельными правилами, не сливать. Веса нигде не выше 700: у шрифтов
+   заказаны только 400/600/700 (собрать.НАЧЕРТАНИЯ), 800–900 браузер дорисовывал бы сам (faux-bold). */
+body { font: var(--кегль-текст)/1.6 var(--шрифт-текста); color: var(--цвет-текст);
+       background: var(--цвет-фон); margin: 0; -webkit-font-smoothing: antialiased; }
+h1 { font-size: var(--кегль-h1); font-weight: 700; line-height: 1.05; letter-spacing: -0.025em; }
+h2 { font-size: var(--кегль-h2); font-weight: 700; line-height: 1.12; letter-spacing: -0.015em; }
+.лид { font-size: calc(var(--кегль-текст) * 1.15); line-height: 1.5; color: var(--цвет-текст-мягкий); }  .акцент { font-style: normal; color: var(--цвет-акцент); }
+.блок { padding: var(--отступ-секции) 0; position: relative; overflow: hidden; }
+.блок__внутри { width: min(100% - 2 * var(--отступ-блока), var(--ширина)); margin: 0 auto; position: relative; }
+.тёмный { background: var(--цвет-тёмный-фон); color: var(--цвет-тёмный-текст); }
+
+*, *::before, *::after { box-sizing: border-box; }
+img, video, iframe { max-width: 100%; height: auto; }
+[hidden] { display: none !important; }   /* сильнее display компонентов: таймер после дедлайна не показывает нули */
+/* Длинное слово (адрес, название) не должно распирать колонку: на телефоне это та самая прокрутка вбок. */
+p, li, h1, h2, h3, dd, dt, summary, blockquote { overflow-wrap: break-word; }
+h1, h2, h3 { font-family: var(--шрифт-заголовков); margin: 0 0 .5em; }
+h3 { font-size: calc(var(--кегль-текст) * 1.25); font-weight: 700; line-height: 1.25; }
+p, ul, ol { margin: 0 0 1em; }  ul, ol { padding-left: 1.25em; }
+.лид { max-width: calc(var(--ширина-колонки) * 1.25); margin-bottom: 1.2em; }
+.мелкий { font-size: var(--кегль-мелкий); color: var(--цвет-текст-мягкий); }
+/* Акцентное слово в заголовке: цвет плюс маркерная подсветка под строкой. */
+.акцент { background: linear-gradient(transparent 62%, color-mix(in srgb, var(--цвет-акцент) 18%, transparent) 62%); }
+a { color: var(--цвет-акцент); text-underline-offset: .15em; }
+/* Содержимое секции выше пятен, сетки и зерна (они — псевдоэлементы секции). */
+.блок__внутри { z-index: 1; }  .блок__внутри > :last-child { margin-bottom: 0; }
+.светлый { background: var(--цвет-фон); color: var(--цвет-текст); }  .светлый.второй { background: var(--цвет-фон-2); }
+.тёмный h1, .тёмный h2, .тёмный h3, .тёмный .цитата__кто b { color: var(--цвет-тёмный-текст); }
+.тёмный .лид, .тёмный .мелкий, .тёмный .цитата__кто, .тёмный .вопрос > p, .тёмный .контакт__что,
+.тёмный .фото figcaption, .тёмный .мокап figcaption { color: color-mix(in srgb, var(--цвет-тёмный-текст) 72%, transparent); }
+/* Акцент на тёмном — как есть (решение 10.09.2026): смешение акцента с белым даёт розовый. Ссылки, кикер и
+   выделение — цветом текста, акцент несёт подчёркивание, черту кикера, маркер под словом, иконки, бейджи и кнопку. */
+.тёмный a:not(.кнопка) { color: var(--цвет-тёмный-текст); text-decoration-color: var(--цвет-акцент); }
+.тёмный .акцент { color: var(--цвет-тёмный-текст); background: linear-gradient(transparent 62%, var(--цвет-акцент) 62%); }
+.тёмный .кикер { color: var(--цвет-тёмный-текст); }  .тёмный .кикер::before { background: var(--цвет-акцент); }
+.тёмный .иконка, .тёмный .бейдж, .тёмный .цитата::before, .тёмный .вопрос > summary::after { color: var(--цвет-акцент); }
+.тёмный :focus-visible, .тёмный .кнопка:focus-visible, .тёмный .вопрос > summary:focus-visible { outline-color: var(--цвет-тёмный-текст); }
+
+/* ── Кнопки: одна главная на экран ── */
+/* Без модификатора кнопка уже залита акцентом: слот связи ставит просто `кнопка`, и она не выглядит
+   голой. `кнопка--главная` добавляет глубокую тень и подъём, `кнопка--контур` снимает заливку. */
+.кнопка { background: var(--цвет-акцент); color: var(--цвет-на-акценте); }
+.кнопка:hover { background: var(--цвет-акцент-тёмный); }
+.кнопка:focus-visible { outline: 2px solid var(--цвет-акцент); outline-offset: 3px; }
+/* Дословно из брифа; дополнения — выше (заливка голой кнопки) и ниже (нажатие, контур, пульс героя), не сливать. */
+.кнопка { display: inline-flex; align-items: center; justify-content: center; gap: .5em;
+  min-height: 3em; padding: .8em 1.6em; border-radius: var(--кнопка-радиус);
+  font: 600 var(--кегль-текст)/1.2 var(--шрифт-текста); text-decoration: none; cursor: pointer;
+  border: 1px solid transparent; transition: transform var(--длительность) var(--плавность),
+  box-shadow var(--длительность) var(--плавность); }
+.кнопка--главная { background: var(--цвет-акцент); color: var(--цвет-на-акценте); box-shadow: var(--тень-глубокая); }
+.кнопка--главная:hover { transform: translateY(-2px); background: var(--цвет-акцент-тёмный); }
+.кнопка--контур { background: transparent; color: inherit; border-color: currentColor; }  .кнопка--пульс { animation: пульс-кнопки 2.4s ease-out infinite; }
+/* Главная кнопка на тёмном — чистый акцент со светлой кромкой (кромка — текст с прозрачностью, не акцент с белым). */
+.тёмный .кнопка--главная { background: var(--цвет-акцент); color: var(--цвет-на-акценте);
+  border-color: color-mix(in srgb, var(--цвет-тёмный-текст) 30%, transparent); }
+.тёмный .кнопка--главная:hover { background: var(--цвет-акцент-тёмный); }
+@keyframes пульс-кнопки {
+  0%   { box-shadow: var(--тень-глубокая), 0 0 0 0 color-mix(in srgb, var(--цвет-акцент) 45%, transparent); }
+  70%  { box-shadow: var(--тень-глубокая), 0 0 0 .8em color-mix(in srgb, var(--цвет-акцент) 0%, transparent); }
+  100% { box-shadow: var(--тень-глубокая), 0 0 0 0 color-mix(in srgb, var(--цвет-акцент) 0%, transparent); }
+}
+.кнопка--контур:hover { background: color-mix(in srgb, currentColor 8%, transparent); }
+.кнопка--пульс:hover { animation: none; }
+.кнопка:active { transform: translateY(0); }   /* после :hover главной, иначе нажатие на ней не видно */
+/* Правило 12: главная кнопка героя и липкой панели пульсирует сама — класс `--пульс` ей не нужен. */
+.первый-экран__действие .кнопка--главная, .липкая-кнопка .кнопка--главная { animation: пульс-кнопки 2.4s ease-out infinite; }
+.первый-экран__действие .кнопка--главная:hover, .липкая-кнопка .кнопка--главная:hover { animation: none; }
+.кнопка .иконка { color: inherit; width: 1.2em; height: 1.2em; }
+
+/* ── Кикер ── */
+.кикер { display: inline-flex; align-items: center; gap: .6em; margin-bottom: var(--отступ-блока);
+  font: 700 var(--кегль-кикер)/1 var(--шрифт-текста); letter-spacing: var(--разрядка-кикера);
+  text-transform: uppercase; color: var(--цвет-акцент); }
+.кикер::before { content: ""; flex: none; align-self: flex-start; margin-top: calc(.5em - 1px); width: 1.2em; height: 2px; background: currentColor; border-radius: 1px; }
+/* Бейдж — пилюля: «рекомендуем», «2 недели», «новое». На главной карточке тарифа висит на верхней кромке. */
+.бейдж { display: inline-flex; align-items: center; gap: .4em; padding: .35em .9em; border-radius: 9em;
+  font: 700 var(--кегль-мелкий)/1.2 var(--шрифт-текста); letter-spacing: .06em; text-transform: uppercase;
+  color: var(--цвет-акцент); background: color-mix(in srgb, var(--цвет-акцент) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-акцент) 25%, transparent); }
+.карточка--главная > .бейдж { position: absolute; top: -.9em; left: 50%; transform: translateX(-50%); white-space: nowrap;
+  color: var(--цвет-на-акценте); background: var(--цвет-акцент); border-color: transparent; box-shadow: var(--тень); }
+
+/* ── Карточки: обычная, главная, стеклянная ── */
+/* Дословно из брифа; дополнения — ниже отдельными правилами, не сливать. */
+.карточки { display: grid; gap: var(--отступ-блока); }
+.карточка { padding: calc(var(--отступ-блока) * 1.25); border-radius: var(--радиус);
+  background: var(--цвет-фон-карточки); border: 1px solid var(--цвет-линия); box-shadow: var(--тень);
+  transition: transform var(--длительность) var(--плавность), box-shadow var(--длительность) var(--плавность); }
+.карточка:hover { transform: translateY(-3px); box-shadow: var(--тень-глубокая); }
+.карточка--главная { border-top: 3px solid var(--цвет-акцент); }
+.карточка--стекло { background: linear-gradient(180deg, var(--цвет-стекло),
+    color-mix(in srgb, var(--цвет-стекло) 20%, transparent));
+  border: 1px solid color-mix(in srgb, var(--цвет-тёмный-текст) 12%, transparent);
+  backdrop-filter: blur(.9em); -webkit-backdrop-filter: blur(.9em); box-shadow: var(--тень-глубокая); }
+.карточки { margin-top: var(--отступ-блока); padding: 0; list-style: none; }
+.карточка { position: relative; min-width: 0; }
+.карточка > :last-child { margin-bottom: 0; }  .карточка h3 { margin-top: 0; }
+.карточка > .иконка { width: 2em; height: 2em; margin-bottom: .8em; }
+/* Обычная карточка на тёмной секции — лёгкая подложка, а не белое пятно; стеклянная живёт своей жизнью. */
+.тёмный .карточка:not(.карточка--стекло) { background: color-mix(in srgb, var(--цвет-тёмный-текст) 6%, transparent);
+  border-color: color-mix(in srgb, var(--цвет-тёмный-текст) 14%, transparent); }
+
+/* ── Цифры: полоса доказательств ── */
+/* Дословно из брифа; дополнения — ниже отдельными правилами, не сливать. */
+.цифры { display: flex; flex-wrap: wrap; gap: var(--отступ-блока); margin: var(--отступ-блока) 0 0; padding: 0; list-style: none; }
+.цифра { padding-left: 1em; border-left: 1px solid color-mix(in srgb, currentColor 25%, transparent); }
+.цифра__значение { display: block; font: 700 var(--кегль-цифра)/1 var(--шрифт-заголовков);
+  letter-spacing: -0.02em; color: var(--цвет-акцент); }
+.тёмный .цифра__значение { color: var(--цвет-тёмный-текст); }  .цифра__подпись { display: block; margin-top: .35em; font-size: var(--кегль-мелкий); opacity: .8; }
+/* На телефоне цифры текут: две в ряд, третья — во всю ширину, а не одна в полуширинной ячейке; от 900 px — сетка в три колонки. */
+.цифра { flex: 1 1 7em; min-width: 0; }
+/* Цифра в карточке (постер, услуги): карточка главнее линии слева, кегль чуть меньше — «от 3 000 ₽» не ломается на две строки. */
+.цифра.карточка { padding: var(--отступ-блока) .75em; border-left: 1px solid var(--цвет-линия); text-align: center; }
+.цифра.карточка--стекло { border-left-color: color-mix(in srgb, var(--цвет-тёмный-текст) 12%, transparent); }
+.карточка .цифра__значение { font-size: calc(var(--кегль-цифра) * .78); }
+
+/* ── Картинки: только в обёртках ── */
+.фото { margin: 0; border-radius: var(--радиус); overflow: hidden; box-shadow: var(--тень); }
+.фото img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+.фото--маска { border-radius: 0; box-shadow: none; }
+.фото--маска img { mask-image: linear-gradient(to bottom, black 70%, transparent 99%); -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 99%); }
+.фото figcaption, .мокап figcaption { padding: .7em 1em; font-size: var(--кегль-мелкий); color: var(--цвет-текст-мягкий); }
+.мокап figcaption h3 { color: var(--цвет-текст); }
+.тёмный .мокап figcaption h3 { color: var(--цвет-тёмный-текст); }
+/* Мокап — «окно» с полоской и тремя точками: скриншот работы, а не голая картинка. */
+.мокап { margin: 0; position: relative; padding-top: 1.4em; border-radius: var(--радиус-малый); overflow: hidden;
+  background: var(--цвет-фон-карточки); border: 1px solid var(--цвет-линия); box-shadow: var(--тень-глубокая); }
+.мокап::before { content: ""; position: absolute; inset: 0 0 auto; height: 1.4em;
+  background: color-mix(in srgb, var(--цвет-текст) 7%, var(--цвет-фон-карточки)); border-bottom: 1px solid var(--цвет-линия); }
+.мокап::after { content: ""; position: absolute; top: .45em; left: .6em; width: .5em; height: .5em; border-radius: 50%;
+  background: var(--цвет-акцент); box-shadow: .85em 0 0 color-mix(in srgb, var(--цвет-акцент) 55%, transparent),
+  1.7em 0 0 color-mix(in srgb, var(--цвет-акцент) 30%, transparent); }
+.мокап img, .мокап iframe { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border: 0; }
+.мокап iframe { aspect-ratio: 16 / 9; }   /* видео — в пропорции плеера, иначе в окне 16:10 остаются полосы */
+.аватар { width: 3.5em; height: 3.5em; border-radius: 50%; object-fit: cover; flex: none;
+  border: 2px solid var(--цвет-фон-карточки); box-shadow: var(--тень); }
+.пара__текст, .пара__фото { min-width: 0; }  .пара__фото img { display: block; width: 100%; border-radius: var(--радиус); }
+
+/* ── Иконки и список с иконками ── */
+.иконка { width: 1.5em; height: 1.5em; flex: none; color: var(--цвет-акцент); vertical-align: middle; }
+.иконка svg { display: block; width: 100%; height: 100%; }
+.список-иконок { display: grid; gap: .65em; margin: 0 0 1.2em; padding: 0; list-style: none; }
+.список-иконок li { display: flex; align-items: flex-start; gap: .65em; }
+.список-иконок .иконка { margin-top: .15em; }
+
+/* ── Разделитель и цитата ── */
+.разделитель { height: 1px; border: 0; margin: var(--отступ-блока) 0; opacity: .7;
+  background: linear-gradient(90deg, var(--цвет-акцент), var(--цвет-линия) 45%, transparent); }
+.тёмный .разделитель { background: linear-gradient(90deg, var(--цвет-акцент),
+  color-mix(in srgb, var(--цвет-тёмный-текст) 25%, transparent) 45%, transparent); }
+.цитата { margin: 0; padding: 0 0 0 1.2em; position: relative; font: italic 500 calc(var(--кегль-текст) * 1.3)/1.45 var(--шрифт-заголовков); }
+/* Кавычка висит в левом поле цитаты на уровне первой строки, а не отдельной строкой над текстом. */
+.цитата::before { content: "“"; position: absolute; left: 0; top: -.12em; font-size: 2.4em; line-height: 1;
+  color: var(--цвет-акцент); opacity: .45; }
+.цитата p { margin: 0 0 .6em; }
+.цитата__кто { display: flex; align-items: center; gap: .75em; margin-top: var(--отступ-блока);
+  font: 400 var(--кегль-мелкий)/1.4 var(--шрифт-текста); color: var(--цвет-текст-мягкий); }
+.цитата__кто b { display: block; color: var(--цвет-текст); font-weight: 700; }
+.карточка .цитата { font-size: calc(var(--кегль-текст) * 1.05); }   /* вторые цитаты не спорят с главной */
+
+/* ── Таймер: дни, часы, минуты (тикает таймер.js по data-дедлайн) ── */
+.таймер { display: inline-flex; gap: .6em; margin: var(--отступ-блока) 0; padding: 0; list-style: none; }
+.таймер__ячейка { min-width: 3.6em; padding: .6em .5em; text-align: center; border-radius: var(--радиус-малый);
+  background: color-mix(in srgb, currentColor 8%, transparent); border: 1px solid color-mix(in srgb, currentColor 16%, transparent); }
+.таймер__ячейка b { display: block; font: 700 calc(var(--кегль-цифра) * .7)/1 var(--шрифт-заголовков);
+  font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.таймер__ячейка span { display: block; margin-top: .3em; font-size: var(--кегль-мелкий); text-transform: uppercase;
+  letter-spacing: .08em; opacity: .7; }
+
+/* ── Шаги, вопросы, контакты ── */
+.шаги { list-style: none; margin: var(--отступ-блока) 0 0; padding: 0; display: grid; gap: var(--отступ-блока); }
+.шаг { position: relative; display: flex; gap: 1em; align-items: flex-start; }
+.шаг__номер { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.4em; height: 2.4em;
+  border-radius: 50%; background: var(--цвет-акцент); color: var(--цвет-на-акценте);
+  font: 700 var(--кегль-текст)/1 var(--шрифт-заголовков); box-shadow: var(--тень); }
+/* Нить от номера к номеру — шаги читаются как путь, а не как список. */
+.шаг:not(:last-child)::before { content: ""; position: absolute; left: 1.2em; top: 2.4em; bottom: calc(-1 * var(--отступ-блока));
+  width: 1px; background: color-mix(in srgb, currentColor 18%, transparent); }
+.шаг h3 { margin: .35em 0 .3em; }  .шаг p:last-child { margin-bottom: 0; }  .шаг .бейдж { margin-left: .5em; vertical-align: middle; }
+.вопрос { border-bottom: 1px solid var(--цвет-линия); padding: calc(var(--отступ-блока) * .6) 0; }
+.вопрос:first-of-type { border-top: 1px solid var(--цвет-линия); }
+.вопрос > summary { display: flex; align-items: center; justify-content: space-between; gap: 1em; cursor: pointer; list-style: none;
+  font: 700 calc(var(--кегль-текст) * 1.05)/1.35 var(--шрифт-заголовков); }
+.вопрос > summary::-webkit-details-marker { display: none; }
+.вопрос > summary::after { content: "+"; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 1.8em; height: 1.8em; border-radius: 50%; border: 1px solid var(--цвет-линия); color: var(--цвет-акцент);
+  font-weight: 400; transition: transform var(--длительность) var(--плавность); }
+.вопрос[open] > summary::after { transform: rotate(45deg); }
+.вопрос > summary:focus-visible { outline: 2px solid var(--цвет-акцент); outline-offset: 3px; border-radius: 3px; }
+.вопрос > p { margin: .7em 0 0; color: var(--цвет-текст-мягкий); max-width: calc(var(--ширина-колонки) * 1.25); }
+.контакт { display: flex; align-items: center; gap: .9em; padding: .9em 0; border-bottom: 1px solid var(--цвет-линия); }
+.контакт .иконка { width: 2.4em; height: 2.4em; padding: .55em; border-radius: var(--радиус-малый);
+  background: color-mix(in srgb, var(--цвет-акцент) 12%, transparent); }
+.контакт a { font-weight: 600; text-decoration: none; }  .контакт a:hover { text-decoration: underline; }
+.контакт__что { display: block; font-size: var(--кегль-мелкий); color: var(--цвет-текст-мягкий); }
+.тёмный .вопрос, .тёмный .контакт, .тёмный .вопрос > summary::after { border-color: color-mix(in srgb, var(--цвет-тёмный-текст) 14%, transparent); }
+
+/* ── Первый экран: одиннадцать схем ──
+   разворот — текст | фото до кромки · орбита — текст | вырез в кольцах и четыре спутника · сцена — фото во весь
+   экран, текст поверх · живая-сцена — то же с роликом и кнопкой звука · афиша-с-экраном — текст по центру, окно с экраном, бегущая строка · товар-крупно — текст |
+   товар в рамке телефона с бейджами · бенто — плитка · центр — вырез посередине, карточки по бокам · живая-обложка —
+   видео во весь экран · живой-портрет — альфа-видео в орбите · мозаика-роликов — текст по центру, ряд роликов.
+   Сторона — класс `сторона--слева` на секции, справа — умолчание. На телефоне у каждой схемы картинка попадает в
+   первое окно 390×844 и лицо видно целиком; scale() — только в @media компьютера (иначе 🔴 у глаза.py). */
+.блок--первый-экран { padding-top: calc(var(--отступ-секции) * .6); padding-bottom: calc(var(--отступ-секции) * .7); }
+.блок--первый-экран .кикер { margin-bottom: calc(var(--отступ-блока) * .6); }  .блок--первый-экран h1 { margin-bottom: .35em; }
+.блок--первый-экран .лид { line-height: 1.4; margin-bottom: .9em; }
+.блок--первый-экран .список-иконок { gap: .45em; margin-bottom: .9em; }
+.блок--первый-экран .первый-экран__доверие { margin-bottom: .6em; }
+.блок--первый-экран .цифры { margin-top: calc(var(--отступ-блока) * .75); }
+.первый-экран__текст { position: relative; z-index: 1; }  .первый-экран__текст > :last-child { margin-bottom: 0; }
+.первый-экран__действие { display: flex; flex-wrap: wrap; align-items: center; gap: .75em; margin: calc(var(--отступ-блока) * .8) 0 .75em; }
+.первый-экран__действие .кнопка { flex: 1 1 auto; }
+.первый-экран__доверие { display: flex; align-items: center; gap: .5em; }
+/* Картинка — общая обёртка: всё внутри вписано object-fit, лицо — в верхней трети (object-position). */
+.картинка { margin: 0; position: relative; }
+.картинка img, .картинка video { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+.первый-экран__картинка { margin-top: var(--отступ-блока); }
+.картинка--фото { aspect-ratio: 3 / 4; border-radius: var(--радиус); overflow: hidden; box-shadow: var(--тень); }
+.картинка--край { border-radius: 0; box-shadow: none; overflow: visible; }
+.картинка--край img { mask-image: linear-gradient(to bottom, black 68%, transparent 96%); -webkit-mask-image: linear-gradient(to bottom, black 68%, transparent 96%); }
+/* Вырез и живой портрет: фигура без фона вписана целиком (contain), стоит на нижней кромке, снизу тает. */
+.картинка--вырез, .картинка--живой-портрет { aspect-ratio: 3 / 4; }
+.картинка--вырез img, .картинка--живой-портрет img, .картинка--живой-портрет video { object-fit: contain; object-position: 50% 100%;
+  position: relative; z-index: 1; mask-image: linear-gradient(to bottom, black 66%, transparent 96%); -webkit-mask-image: linear-gradient(to bottom, black 66%, transparent 96%); }
+.опора { position: absolute; left: 15%; bottom: 8%; width: 70%; aspect-ratio: 1; border-radius: 50%; pointer-events: none;
+  filter: blur(2em); opacity: .6; animation: дрейф 30s ease-in-out infinite alternate;
+  background: radial-gradient(circle, color-mix(in srgb, var(--цвет-акцент) 55%, transparent), transparent 70%); }
+.кольцо { position: absolute; left: 6%; top: 50%; width: 88%; aspect-ratio: 1; translate: 0 -50%; border-radius: 50%; pointer-events: none;
+  border: 1px dashed color-mix(in srgb, currentColor 30%, transparent); animation: вращение 60s linear infinite; }
+.кольцо--2 { left: 18%; width: 64%; border-style: dotted; animation-duration: 90s; animation-direction: reverse; }
+.парит { animation: парение 8s ease-in-out infinite; }
+.парит--2 { animation-duration: 9s; animation-delay: -3s; }  .парит--3 { animation-duration: 7s; animation-delay: -5s; }
+.парит--4 { animation-duration: 8.5s; animation-delay: -1.5s; }
+.фон--пятна::before, .фон--пятна::after { animation: дрейф 28s ease-in-out infinite alternate; }  .фон--пятна::after { animation-delay: -9s; }
+@keyframes вращение { to { rotate: 360deg; } }
+@keyframes парение { 50% { transform: translateY(-.5em); } }
+@keyframes дрейф { 0% { translate: 0 0; scale: 1; } 50% { translate: 4% -5%; scale: 1.08; } 100% { translate: -3% 4%; scale: .96; } }
+/* Сцена, живая сцена и живая обложка: картинка во весь экран под текстом; затемнение снизу (на компьютере — со
+   стороны текста). Правила картинки — одним селектором на img и video (GC 21). */
+.первый-экран--сцена, .первый-экран--живая-сцена, .первый-экран--живая-обложка { min-height: 100svh; display: flex; align-items: flex-end; padding-top: calc(var(--отступ-секции) * 2.2); }
+.картинка--сцена, .картинка--видео, .картинка--видео-с-голосом { position: absolute; inset: 0; margin: 0; overflow: hidden; }
+.картинка--сцена img, .картинка--видео video, .картинка--видео img, .картинка--видео-с-голосом video, .картинка--видео-с-голосом img { object-position: 50% 15%; }
+.картинка--сцена::after, .картинка--видео::after, .картинка--видео-с-голосом::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top,
+  var(--цвет-тёмный-фон) 28%, color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent) 58%, transparent); }
+.картинка--видео img, .картинка--видео-с-голосом img, .картинка--живой-портрет img { display: none; }   /* постер показывает обложка.js, когда видео не идёт */
+.картинка--постер video { display: none; }  .картинка--постер img { display: block; }
+.картинка--мозаика.картинка--постер video { display: block; }   /* у мозаики нет img: стоящее видео с poster показывает постер само */
+/* Кнопка звука живой сцены: красная, как главная, пульс в противофазе к главной (-1.2s); под ней — почему сейчас
+   без звука; при звуке подпись прячется. Телефон: под подбородком справа, выше кикера. */
+.звук-блок { position: absolute; z-index: 4; right: 1em; top: 10.6em; display: grid; justify-items: end; gap: .5em; }
+.звук { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .6em; height: 3.25rem; padding: 0 1.25em 0 1em;
+  border-radius: var(--кнопка-радиус); border: 0; background: var(--цвет-акцент); color: var(--цвет-на-акценте); cursor: pointer;
+  font: 600 var(--кегль-текст)/1 var(--шрифт-заголовков); box-shadow: var(--тень-глубокая);
+  animation: пульс-кнопки 2.4s var(--плавность) -1.2s infinite; transition: background var(--длительность) var(--плавность), transform var(--длительность) var(--плавность); }
+.звук:hover { background: var(--цвет-акцент-тёмный); transform: translateY(-2px); }
+.звук svg { width: 1.4em; height: 1.4em; flex: none; }
+.звук[aria-pressed="true"] { animation: none; background: color-mix(in srgb, var(--цвет-тёмный-фон) 82%, transparent); color: var(--цвет-тёмный-текст);
+  border: 1px solid var(--цвет-акцент); backdrop-filter: blur(.6em); -webkit-backdrop-filter: blur(.6em); }
+.звук__почему { display: inline-flex; align-items: center; gap: .5em; padding: .5em .9em; border-radius: 9em; white-space: nowrap; line-height: 1.25;
+  font-size: var(--кегль-текст); color: var(--цвет-тёмный-текст); background: color-mix(in srgb, var(--цвет-тёмный-фон) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-акцент) 45%, transparent); backdrop-filter: blur(.6em); -webkit-backdrop-filter: blur(.6em); }
+.звук__почему::before { content: ""; width: .5em; height: .5em; border-radius: 50%; background: var(--цвет-акцент); animation: мерцание 1.6s ease-in-out infinite; }
+.звук-блок[data-звук="вкл"] .звук__почему, .звук__почему-длинно { display: none; }
+.звук__подпись { white-space: nowrap; }
+.живое { position: absolute; top: 1em; left: 1em; z-index: 2; display: inline-flex; align-items: center; gap: .5em; padding: .3em .8em;
+  border-radius: 9em; font-size: var(--кегль-мелкий); color: var(--цвет-тёмный-текст);
+  background: color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent); backdrop-filter: blur(.5em); -webkit-backdrop-filter: blur(.5em); }
+.живое::before { content: ""; width: .5em; height: .5em; border-radius: 50%; background: var(--цвет-акцент); animation: мерцание 2s ease-in-out infinite; }
+.картинка--постер ~ .живое { display: none; }
+@keyframes мерцание { 50% { opacity: .3; } }
+/* Окно с экраном (афиша): бар с тремя точками и адресом, окно «дышит». Бегущая строка — пункты по кругу. */
+.окно { border-radius: var(--радиус-малый); overflow: hidden; background: var(--цвет-фон-карточки); border: 1px solid var(--цвет-линия);
+  box-shadow: var(--тень-глубокая); animation: дыхание 8s ease-in-out infinite; }
+.окно__бар { display: flex; align-items: center; gap: .4em; padding: .5em .8em; border-bottom: 1px solid var(--цвет-линия);
+  background: color-mix(in srgb, var(--цвет-текст) 7%, var(--цвет-фон-карточки)); }
+.окно__бар i { width: .55em; height: .55em; border-radius: 50%; background: var(--цвет-акцент); opacity: .8; }
+.окно__бар i:nth-child(2) { opacity: .5; }  .окно__бар i:nth-child(3) { opacity: .3; }
+.окно__адрес { flex: 1; margin-left: .6em; padding: .15em .7em; border-radius: 9em; font-size: var(--кегль-мелкий); color: var(--цвет-текст-мягкий); background: var(--цвет-фон); }
+.картинка--мокап img { aspect-ratio: 16 / 10; object-position: 50% 0; }
+@keyframes дыхание { 50% { transform: translateY(-.5em); } }
+.бегущая-строка { overflow: hidden; margin-top: var(--отступ-блока); font-size: var(--кегль-мелкий); text-transform: uppercase; letter-spacing: var(--разрядка-кикера);
+  mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent); }
+.бегущая-строка__лента { display: flex; width: max-content; animation: бег 26s linear infinite; }
+.бегущая-строка__лента span { padding-right: 2.5em; white-space: nowrap; }
+.бегущая-строка__лента span::after { content: "·"; margin-left: 2.5em; color: var(--цвет-акцент); }
+@keyframes бег { to { transform: translateX(-50%); } }
+/* Рамка телефона 9:16 (товар, мозаика): островок сверху, подпись — поверх нижней кромки экрана. */
+.рамка-телефона { position: relative; aspect-ratio: 9 / 16; padding: .55em; border-radius: calc(var(--радиус) * 1.6);
+  background: var(--цвет-тёмный-фон); box-shadow: var(--тень-глубокая); }
+.рамка-телефона__экран { position: relative; height: 100%; border-radius: calc(var(--радиус) * 1.3); overflow: hidden; background: var(--цвет-фон-2); }
+.рамка-телефона__экран::before { content: ""; position: absolute; top: .5em; left: 36%; z-index: 2; width: 28%; height: .8em; border-radius: 9em; background: var(--цвет-тёмный-фон); }
+.рамка-телефона__экран::after { content: ""; position: absolute; inset: 60% 0 0; pointer-events: none;
+  background: linear-gradient(to top, color-mix(in srgb, var(--цвет-тёмный-фон) 75%, transparent), transparent); }
+.рамка-телефона__подпись { position: absolute; inset: auto .6em .6em; z-index: 2; margin: 0; text-align: center; color: var(--цвет-тёмный-текст); }
+.картинка--товар { width: min(60%, 16em); margin-inline: auto; text-align: center; }
+.картинка__бейдж { margin: .6em .3em 0 0; background: var(--цвет-фон-карточки); box-shadow: var(--тень); }   /* телефон: рядком под рамкой */
+/* Ряд роликов — та же figure, что и картинка--мозаика: на телефоне сетка 2×2 из первых четырёх (полоса с прокруткой ловится как «вылезает за экран»). */
+.картинка--мозаика, .ряд-роликов { overflow: hidden; }
+.ряд-роликов__лента { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--отступ-блока); }
+.ряд-роликов .рамка-телефона--дубль, .ряд-роликов .рамка-телефона:nth-child(n + 5) { display: none; }
+/* Бенто: плитка из ячеек; на телефоне столбиком, картинка первой. */
+.бенто { display: grid; gap: var(--отступ-блока); }
+.бенто__ячейка { position: relative; padding: var(--отступ-блока); border-radius: var(--радиус); background: var(--цвет-фон-карточки);
+  border: 1px solid var(--цвет-линия); box-shadow: var(--тень); transition: transform var(--длительность) var(--плавность), box-shadow var(--длительность) var(--плавность); }
+.бенто__ячейка:hover { transform: translateY(-3px); box-shadow: var(--тень-глубокая); }
+.бенто__ячейка.тёмный { background: var(--цвет-тёмный-фон); border-color: transparent; }
+.бенто__ячейка--главная { padding: calc(var(--отступ-блока) * 1.5); }
+.бенто .картинка { padding: 0; overflow: hidden; aspect-ratio: 4 / 3; order: -1; margin-top: 0; }
+.бенто .цифры { display: contents; }  .бенто .цифра { padding: var(--отступ-блока); border-left: 0; }
+.первый-экран--бенто .список-иконок { margin-bottom: 0; }   /* список пунктов — сама ячейка: нижний отступ первого экрана ей не нужен */
+/* Орбита: вырез в кольцах, четыре спутника-карточки; на телефоне спутники сеткой 2×2 под фигурой, цифры — после. */
+.орбита { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--отступ-блока); margin-top: var(--отступ-блока); order: 1; }
+.орбита .первый-экран__картинка { grid-column: 1 / -1; margin-top: 0; }
+.орбита__спутник { display: grid; justify-items: center; gap: .3em; text-align: center; padding: calc(var(--отступ-блока) * .8); }
+.орбита__спутник b { font-size: calc(var(--кегль-текст) * 1.1); line-height: 1.25; }  .орбита__спутник span { font-size: var(--кегль-мелкий); opacity: .8; }
+.орбита__спутник .иконка { width: 2em; height: 2em; margin: 0 auto .5em; }
+.первый-экран--орбита .блок__внутри, .первый-экран--живой-портрет .блок__внутри { display: grid; gap: 0; }
+.первый-экран--орбита .первый-экран__текст, .первый-экран--живой-портрет .первый-экран__текст { display: contents; }
+.первый-экран--орбита .цифры, .первый-экран--живой-портрет .цифры { order: 2; }
+/* Центр: кикер и заголовок сверху, фигура посередине, карточки по бокам (на телефоне — после лида и кнопки). */
+.центр__верх { text-align: center; }  .центр__верх .кикер { justify-content: center; }  .центр__верх .кикер::before { display: none; }
+.центр__бок { display: grid; gap: var(--отступ-блока); }
+.первый-экран--центр .блок__внутри { display: grid; gap: var(--отступ-блока); }
+.центр__бок--лево { display: contents; }
+.центр__бок--лево .лид { order: 1; }  .центр__бок--лево .первый-экран__действие { order: 2; }
+.первый-экран--центр .первый-экран__картинка { order: 3; width: min(100%, 22em); margin-inline: auto; }
+.центр__бок--лево .карточка { order: 4; }  .центр__бок--право { order: 5; }
+/* Разворот: на телефоне фото первым, до кромок и под верх секции; текст выходит из фото. */
+.первый-экран--разворот .блок__внутри { display: grid; gap: 0; }
+.первый-экран--разворот .первый-экран__картинка { order: -1; aspect-ratio: 4 / 5; margin: calc(-.6 * var(--отступ-секции)) calc(-1 * var(--отступ-блока)) -3em; }
+/* Афиша и мозаика: всё по центру в одну колонку. */
+.первый-экран--афиша-с-экраном .первый-экран__текст, .первый-экран--мозаика-роликов .первый-экран__текст { text-align: center; width: min(100%, calc(var(--ширина-колонки) * 1.3)); margin-inline: auto; }
+.первый-экран--афиша-с-экраном .кикер, .первый-экран--мозаика-роликов .кикер, .первый-экран--афиша-с-экраном .первый-экран__действие,
+.первый-экран--мозаика-роликов .первый-экран__действие { justify-content: center; }
+.первый-экран--афиша-с-экраном .кикер::before, .первый-экран--мозаика-роликов .кикер::before { display: none; }
+.первый-экран--афиша-с-экраном .первый-экран__доверие, .первый-экран--мозаика-роликов .первый-экран__доверие { justify-content: center; }
+.первый-экран--афиша-с-экраном h1, .первый-экран--мозаика-роликов h1 { font-size: calc(var(--кегль-h1) * .9); line-height: 1; }
+.первый-экран--афиша-с-экраном .лид, .первый-экран--мозаика-роликов .лид { margin-inline: auto; }
+.первый-экран--афиша-с-экраном .цифры { display: flex; flex-wrap: wrap; justify-content: center; }
+.картинка--мокап { width: min(100%, 40em); margin-inline: auto; }
+.пара { display: grid; gap: var(--отступ-блока); }
+.пара > :only-child { grid-column: 1 / -1; }   /* финал без таймера: текст на всю ширину, а не пустая половина */
+
+/* ── Атмосфера: пятна, сетка, зерно ── */
+.фон--пятна::before, .фон--пятна::after { content: ""; position: absolute; width: 60%; aspect-ratio: 1;
+  border-radius: 50%; pointer-events: none; filter: blur(2em); opacity: .55;
+  background: radial-gradient(circle, color-mix(in srgb, var(--цвет-акцент) 45%, transparent), transparent 70%); }
+.фон--пятна::before { top: -20%; left: -15%; }  .фон--пятна::after { bottom: -25%; right: -10%; opacity: .35; }
+.фон--сетка::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: linear-gradient(color-mix(in srgb, currentColor 9%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, currentColor 9%, transparent) 1px, transparent 1px);
+  background-size: 7.5em 7.5em;
+  mask-image: radial-gradient(ellipse, black 40%, transparent 80%); -webkit-mask-image: radial-gradient(ellipse, black 40%, transparent 80%); }
+.фон--зерно::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .12;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+/* ── Подвал ── */
+.блок--подвал { padding: var(--отступ-блока) 0; font-size: var(--кегль-мелкий); }
+.блок--подвал .блок__внутри { border-top: 1px solid var(--цвет-линия); padding-top: var(--отступ-блока); }
+.блок--подвал p { margin-bottom: .4em; }
+
+/* ── Липкая кнопка: только телефон ── */
+.липкая-кнопка { display: none; }
+@media (max-width: 600px) {
+  .липкая-кнопка { display: block; position: fixed; inset: auto 0 0; z-index: 90;
+    padding: .6em 1em calc(.6em + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--цвет-фон) 88%, transparent);
+    backdrop-filter: blur(.6em); -webkit-backdrop-filter: blur(.6em); border-top: 1px solid var(--цвет-линия); }
+  .липкая-кнопка .кнопка { width: 100%; min-height: 3.375rem; font-size: 1rem; }
+  /* Решение 11: снизу ещё и safe-area, иначе на iPhone подвал прячется под панелью. */
+  body.с-липкой-кнопкой { padding-bottom: calc(5em + env(safe-area-inset-bottom)); }
+}
+
+/* ── Планшет: карточки в две колонки, а не столбиком ── */
+@media (min-width: 600px) {
+  .карточки { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ── Компьютер: те же блоки в несколько колонок ── */
+@media (min-width: 900px) {
+  .карточки { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .карточки--две { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .цифры { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .блок--первый-экран .список-иконок { gap: .65em; }
+  .пара { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: calc(var(--отступ-блока) * 2.5); align-items: center; }
+  .первый-экран__действие .кнопка { flex: 0 0 auto; }
+  .первый-экран__картинка { margin-top: 0; }
+  .сторона--слева .первый-экран__текст { order: 2; }
+  .первый-экран--разворот .блок__внутри, .первый-экран--орбита .блок__внутри, .первый-экран--живой-портрет .блок__внутри,
+  .первый-экран--товар-крупно .блок__внутри { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+    gap: calc(var(--отступ-блока) * 2.5); align-items: center; }
+  .первый-экран--орбита .первый-экран__текст, .первый-экран--живой-портрет .первый-экран__текст { display: block; }
+  .первый-экран--разворот .блок__внутри { align-items: stretch; }
+  /* Фото разворота тянется до края окна и тает в сторону текста; сверху и снизу — на те же доли отступа секции. */
+  .первый-экран--разворот .первый-экран__картинка { order: 0; aspect-ratio: auto; min-height: 100%;
+    margin: calc(-.6 * var(--отступ-секции)) calc(-1 * max(var(--отступ-блока), (100vw - var(--ширина)) / 2)) calc(-.7 * var(--отступ-секции)) 0; }
+  .первый-экран--разворот .картинка--край img { mask-image: linear-gradient(to left, black 55%, transparent); -webkit-mask-image: linear-gradient(to left, black 55%, transparent); }
+  .сторона--слева.первый-экран--разворот .первый-экран__картинка { margin-right: 0; margin-left: calc(-1 * max(var(--отступ-блока), (100vw - var(--ширина)) / 2)); }
+  .сторона--слева.первый-экран--разворот .картинка--край img { mask-image: linear-gradient(to right, black 55%, transparent); -webkit-mask-image: linear-gradient(to right, black 55%, transparent); }
+  /* Сцена, живая сцена и живая обложка: текст в левой колонке, затемнение слева; зум — только здесь (телефон без scale). */
+  .первый-экран--сцена .блок__внутри, .первый-экран--живая-сцена .блок__внутри, .первый-экран--живая-обложка .блок__внутри { display: grid; grid-template-columns: minmax(0, .55fr) minmax(0, .45fr); }
+  /* Сцена на компьютере: кадр шире окна на 28 % и прижат к стороне текста — лицо (обычно в центре кадра) уходит на ~64 % ширины, из-под текста; при 100 % оно стояло под заголовком (замер макета 10.09). */
+  .картинка--сцена img, .картинка--видео video, .картинка--видео img, .картинка--видео-с-голосом video, .картинка--видео-с-голосом img { width: 128%; max-width: none; }
+  .картинка--сцена img { animation: зум 30s ease-in-out infinite alternate; }
+  .картинка--сцена::after, .картинка--видео::after, .картинка--видео-с-голосом::after { background: linear-gradient(to right, var(--цвет-тёмный-фон) 30%,
+    color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent) 43%, transparent 54%); }
+  .сторона--слева .картинка--сцена img, .сторона--слева .картинка--видео video, .сторона--слева .картинка--видео img,
+  .сторона--слева .картинка--видео-с-голосом video, .сторона--слева .картинка--видео-с-голосом img { margin-left: -28%; }
+  .сторона--слева .картинка--сцена::after, .сторона--слева .картинка--видео::after, .сторона--слева .картинка--видео-с-голосом::after { background: linear-gradient(to left, var(--цвет-тёмный-фон) 30%,
+    color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent) 43%, transparent 54%); }
+  .сторона--слева.первый-экран--сцена .первый-экран__текст, .сторона--слева.первый-экран--живая-сцена .первый-экран__текст,
+  .сторона--слева.первый-экран--живая-обложка .первый-экран__текст { grid-column: 2; }
+  /* Кнопка звука на компьютере: правый верх, от лица не ближе 5.6em (≈ 90 px); подпись в две строки до 17em. */
+  .звук-блок { right: 3.5em; top: 5.25em; gap: .6em; }
+  .звук { height: 3.5rem; padding: 0 1.6em 0 1.25em; letter-spacing: .01em; }
+  .звук__почему { font-size: calc(var(--кегль-текст) * .875); white-space: normal; max-width: 17em; text-align: right; border-radius: var(--радиус); align-items: flex-start; }
+  .звук__почему::before { margin-top: .35em; flex: none; }
+  .звук__почему-длинно { display: inline; }  .звук__почему-коротко { display: none; }
+  .сторона--слева .звук-блок { right: auto; left: 3.5em; justify-items: start; }  .сторона--слева .звук__почему { text-align: left; }
+  /* Орбита: фигура посередине квадрата, спутники по углам поверх колец. */
+  .орбита { display: block; aspect-ratio: 1; margin-top: 0; }
+  .орбита .первый-экран__картинка { position: absolute; inset: 0 14%; aspect-ratio: auto; }
+  .орбита__спутник { position: absolute; width: 42%; }
+  .орбита__спутник:nth-child(1 of .орбита__спутник) { top: 4%; left: 0; }  .орбита__спутник:nth-child(2 of .орбита__спутник) { top: 4%; right: 0; }
+  .орбита__спутник:nth-child(3 of .орбита__спутник) { bottom: 4%; left: 0; }  .орбита__спутник:nth-child(4 of .орбита__спутник) { bottom: 4%; right: 0; }
+  /* Товар: рамка крупнее, бейджи парят по краям рамки. */
+  .картинка--товар { width: min(100%, 22em); }
+  .картинка__бейдж { position: absolute; z-index: 2; margin: 0; }
+  .картинка__бейдж:nth-of-type(1) { top: 14%; left: -14%; }  .картинка__бейдж:nth-of-type(2) { top: 46%; right: -16%; }
+  .картинка__бейдж:nth-of-type(3) { bottom: 12%; left: -10%; }
+  /* Бенто 12 колонок: текст 1–8 в две строки, картинка 8–11, цифры 11–13 по строке, пункты — третья строка. */
+  .бенто { grid-template-columns: repeat(12, minmax(0, 1fr)); grid-auto-rows: minmax(8em, auto); }
+  .бенто__ячейка--главная { grid-column: 1 / 8; grid-row: 1 / 3; }
+  .бенто .картинка { grid-column: 8 / 11; grid-row: 1 / 3; aspect-ratio: auto; order: 0; }
+  .бенто .цифра { grid-column: 11 / 13; }
+  .бенто .цифра:nth-child(1) { grid-row: 1; }  .бенто .цифра:nth-child(2) { grid-row: 2; }  .бенто .цифра:nth-child(3) { grid-row: 3; }
+  .бенто__ячейка--пункты { grid-column: 1 / 11; grid-row: 3; }
+  .бенто__ячейка--пункты .список-иконок { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; }
+  /* Центр: фигура стоит на нижней кромке посередине, боковые колонки по 28 %. */
+  .первый-экран--центр .блок__внутри { display: block; min-height: 40em; }
+  .центр__верх { width: min(100%, calc(var(--ширина-колонки) * 1.4)); margin-inline: auto; }
+  .первый-экран--центр .первый-экран__картинка { position: absolute; left: 50%; bottom: 0; width: 30em; margin-left: -15em; }
+  .центр__бок { position: absolute; top: 34%; width: 28%; }
+  .центр__бок--лево { display: grid; left: 0; }  .центр__бок--право { right: 0; }
+  /* Мозаика: лента плывёт влево, дубли включены, чётные рамки ниже; под курсором — пауза. */
+  .ряд-роликов { mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent); }
+  .ряд-роликов__лента { display: flex; width: max-content; gap: 0; animation: дрейф-ленты 30s linear infinite; }
+  .ряд-роликов:hover .ряд-роликов__лента { animation-play-state: paused; }
+  .ряд-роликов .рамка-телефона, .ряд-роликов .рамка-телефона--дубль, .ряд-роликов .рамка-телефона:nth-child(n + 5) { display: block; width: 13em; margin-right: var(--отступ-блока); }
+  .ряд-роликов .рамка-телефона:nth-child(even) { transform: translateY(1.2em); }
+  /* Главная карточка тарифа приподнята над соседями: top, а не transform — не сбрасывается на :hover и при reduced-motion. */
+  .карточка--главная { top: -.75em; box-shadow: var(--тень-глубокая); }
+  .таймер__ячейка { min-width: 4.4em; }
+}
+
+@keyframes зум { to { scale: 1.06; } }
+@keyframes дрейф-ленты { to { transform: translateX(-50%); } }
+
+/* Всё, что движется в этом файле, здесь выключается: пульс (три селектора), переходы кнопки, карточки и
+   плюсика вопроса, подъём под курсором. Новую анимацию или transition — сразу добавлять и сюда. */
+@media (prefers-reduced-motion: reduce) {
+  .кнопка--пульс { animation: none; }  .кнопка, .карточка { transition: none; }
+  .кнопка--главная:hover, .карточка:hover { transform: none; }
+  .первый-экран__действие .кнопка--главная, .липкая-кнопка .кнопка--главная { animation: none; }
+  .вопрос > summary::after { transition: none; }
+  .парит, .опора, .кольцо, .окно, .бегущая-строка__лента, .ряд-роликов__лента, .картинка--сцена img, .живое::before,
+  .фон--пятна::before, .фон--пятна::after, .звук, .звук__почему::before { animation: none; }
+  .бенто__ячейка, .звук { transition: none; }  .бенто__ячейка:hover, .звук:hover { transform: none; }
+  /* Живая сцена без движения: видео не запускаем и не показываем, стоит постер, кнопка звука не нужна. */
+  .картинка--видео-с-голосом video, .звук-блок { display: none; }  .картинка--видео-с-голосом img { display: block; }
+}
