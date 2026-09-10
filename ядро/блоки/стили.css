@@ -138,13 +138,13 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 
 /* ── Цифры: полоса доказательств ── */
 /* Дословно из брифа; дополнения — ниже отдельными правилами, не сливать. */
-.цифры { display: flex; flex-wrap: wrap; gap: var(--отступ-блока); margin: var(--отступ-блока) 0 0; padding: 0; list-style: none; }
+.цифры { display: grid; grid-template-columns: repeat(auto-fit, minmax(5em, 1fr)); gap: var(--отступ-блока); margin: var(--отступ-блока) 0 0; padding: 0; list-style: none; }
 .цифра { padding-left: 1em; border-left: 1px solid color-mix(in srgb, currentColor 25%, transparent); }
 .цифра__значение { display: block; font: 700 var(--кегль-цифра)/1 var(--шрифт-заголовков);
   letter-spacing: -0.02em; color: var(--цвет-акцент); }
 .тёмный .цифра__значение { color: var(--цвет-тёмный-текст); }  .цифра__подпись { display: block; margin-top: .35em; font-size: var(--кегль-мелкий); opacity: .8; }
-/* На телефоне цифры текут: две в ряд, третья — во всю ширину, а не одна в полуширинной ячейке; от 900 px — сетка в три колонки. */
-.цифра { flex: 1 1 7em; min-width: 0; }
+/* На телефоне три цифры стоят в ряд (ячейка от 5em, отступ слева уже), а не «две и одна»; от 900 px — ровно три колонки. */
+.цифра { flex: 1 1 5em; min-width: 0; padding-left: .7em; }
 /* Цифра в карточке (постер, услуги): карточка главнее линии слева, кегль чуть меньше — «от 3 000 ₽» не ломается на две строки. */
 .цифра.карточка { padding: var(--отступ-блока) .75em; border-left: 1px solid var(--цвет-линия); text-align: center; }
 .цифра.карточка--стекло { border-left-color: color-mix(in srgb, var(--цвет-тёмный-текст) 12%, transparent); }
@@ -239,7 +239,7 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
    Сторона — класс `сторона--слева` на секции, справа — умолчание. На телефоне у каждой схемы картинка попадает в
    первое окно 390×844 и лицо видно целиком; scale() — только в @media компьютера (иначе 🔴 у глаза.py). */
 .блок--первый-экран { padding-top: calc(var(--отступ-секции) * .6); padding-bottom: calc(var(--отступ-секции) * .7); }
-.блок--первый-экран .кикер { margin-bottom: calc(var(--отступ-блока) * .6); }  .блок--первый-экран h1 { margin-bottom: .35em; }
+.блок--первый-экран .кикер { margin-bottom: calc(var(--отступ-блока) * .6); }  .блок--первый-экран h1 { margin-bottom: .35em; text-wrap: balance; }
 .блок--первый-экран .лид { line-height: 1.4; margin-bottom: .9em; }
 .блок--первый-экран .список-иконок { gap: .45em; margin-bottom: .9em; }
 .блок--первый-экран .первый-экран__доверие { margin-bottom: .6em; }
@@ -255,9 +255,10 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .картинка--фото { aspect-ratio: 3 / 4; border-radius: var(--радиус); overflow: hidden; box-shadow: var(--тень); }
 .картинка--край { border-radius: 0; box-shadow: none; overflow: visible; }
 .картинка--край img { mask-image: linear-gradient(to bottom, black 68%, transparent 96%); -webkit-mask-image: linear-gradient(to bottom, black 68%, transparent 96%); }
-/* Вырез и живой портрет: фигура без фона вписана целиком (contain), стоит на нижней кромке, снизу тает. */
+/* Вырез и живой портрет: фигура без фона показана от макушки (cover, верх) — так вырез с воздухом по бокам не мельчает,
+   низ уходит под кромку и тает в маске. */
 .картинка--вырез, .картинка--живой-портрет { aspect-ratio: 3 / 4; }
-.картинка--вырез img, .картинка--живой-портрет img, .картинка--живой-портрет video { object-fit: contain; object-position: 50% 100%;
+.картинка--вырез img, .картинка--живой-портрет img, .картинка--живой-портрет video { object-position: 50% 0;
   position: relative; z-index: 1; mask-image: linear-gradient(to bottom, black 66%, transparent 96%); -webkit-mask-image: linear-gradient(to bottom, black 66%, transparent 96%); }
 .опора { position: absolute; left: 15%; bottom: 8%; width: 70%; aspect-ratio: 1; border-radius: 50%; pointer-events: none;
   filter: blur(2em); opacity: .6; animation: дрейф 30s ease-in-out infinite alternate;
@@ -283,8 +284,8 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .картинка--постер video { display: none; }  .картинка--постер img { display: block; }
 .картинка--мозаика.картинка--постер video { display: block; }   /* у мозаики нет img: стоящее видео с poster показывает постер само */
 /* Кнопка звука живой сцены: красная, как главная, пульс в противофазе к главной (-1.2s); под ней — почему сейчас
-   без звука; при звуке подпись прячется. Телефон: под подбородком справа, выше кикера. */
-.звук-блок { position: absolute; z-index: 4; right: 1em; top: 10.6em; display: grid; justify-items: end; gap: .5em; }
+   без звука; при звуке подпись прячется. Телефон: ниже подбородка справа (лицо занимает верхнюю треть окна), выше кикера. */
+.звук-блок { position: absolute; z-index: 4; right: 1em; top: 17em; display: grid; justify-items: end; gap: .5em; }
 .звук { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .6em; height: 3.25rem; padding: 0 1.25em 0 1em;
   border-radius: var(--кнопка-радиус); border: 0; background: var(--цвет-акцент); color: var(--цвет-на-акценте); cursor: pointer;
   font: 600 var(--кегль-текст)/1 var(--шрифт-заголовков); box-shadow: var(--тень-глубокая);
@@ -337,26 +338,31 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .ряд-роликов .рамка-телефона--дубль, .ряд-роликов .рамка-телефона:nth-child(n + 5) { display: none; }
 /* Бенто: плитка из ячеек; на телефоне столбиком, картинка первой. */
 .бенто { display: grid; gap: var(--отступ-блока); }
-.бенто__ячейка { position: relative; padding: var(--отступ-блока); border-radius: var(--радиус); background: var(--цвет-фон-карточки);
+.бенто__ячейка { position: relative; padding: var(--отступ-блока); border-radius: var(--радиус); background: var(--цвет-фон-карточки); color: var(--цвет-текст);
   border: 1px solid var(--цвет-линия); box-shadow: var(--тень); transition: transform var(--длительность) var(--плавность), box-shadow var(--длительность) var(--плавность); }
 .бенто__ячейка:hover { transform: translateY(-3px); box-shadow: var(--тень-глубокая); }
-.бенто__ячейка.тёмный { background: var(--цвет-тёмный-фон); border-color: transparent; }
-.бенто__ячейка--главная { padding: calc(var(--отступ-блока) * 1.5); }
+.бенто__ячейка.тёмный { background: var(--цвет-тёмный-фон); color: var(--цвет-тёмный-текст); border-color: transparent; }
+.бенто__ячейка--главная { padding: var(--отступ-блока); }  .бенто__ячейка--главная h1 { font-size: calc(var(--кегль-h1) * .9); }   /* ячейка уже окна: h1 в три строки, не в четыре (F10) */
 .бенто .картинка { padding: 0; overflow: hidden; aspect-ratio: 4 / 3; order: -1; margin-top: 0; }
-.бенто .цифры { display: contents; }  .бенто .цифра { padding: var(--отступ-блока); border-left: 0; }
+.бенто .цифры { display: contents; }  .бенто .цифра { padding: var(--отступ-блока); border-left: 0; }  .бенто .цифра__значение { color: var(--цвет-акцент); }
 .первый-экран--бенто .список-иконок { margin-bottom: 0; }   /* список пунктов — сама ячейка: нижний отступ первого экрана ей не нужен */
-/* Орбита: вырез в кольцах, четыре спутника-карточки; на телефоне спутники сеткой 2×2 под фигурой, цифры — после. */
-.орбита { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--отступ-блока); margin-top: var(--отступ-блока); order: 1; }
-.орбита .первый-экран__картинка { grid-column: 1 / -1; margin-top: 0; }
-.орбита__спутник { display: grid; justify-items: center; gap: .3em; text-align: center; padding: calc(var(--отступ-блока) * .8); }
+/* Орбита: вырез в кольцах, четыре спутника-карточки. На телефоне фигура первой — лицо в первом окне, — затем текст,
+   спутники сеткой 2×2 после кнопок и цифры последними: .орбита и текст прозрачны для сетки (display: contents),
+   сетка в две колонки — сам .блок__внутри; на компьютере .орбита снова блок-квадрат со спутниками по углам. */
+.орбита { display: contents; }
+.орбита .первый-экран__картинка { order: -1; width: min(100%, 22em); aspect-ratio: 4 / 3; margin: 0 auto var(--отступ-блока); }
+.орбита__спутник { order: 1; margin-top: var(--отступ-блока); display: grid; justify-items: center; gap: .3em; text-align: center; padding: calc(var(--отступ-блока) * .8); }
 .орбита__спутник b { font-size: calc(var(--кегль-текст) * 1.1); line-height: 1.25; }  .орбита__спутник span { font-size: var(--кегль-мелкий); opacity: .8; }
 .орбита__спутник .иконка { width: 2em; height: 2em; margin: 0 auto .5em; }
-.первый-экран--орбита .блок__внутри, .первый-экран--живой-портрет .блок__внутри { display: grid; gap: 0; }
+.первый-экран--орбита .блок__внутри, .первый-экран--живой-портрет .блок__внутри { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--отступ-блока); row-gap: 0; }
 .первый-экран--орбита .первый-экран__текст, .первый-экран--живой-портрет .первый-экран__текст { display: contents; }
+.первый-экран--орбита .первый-экран__текст > *, .первый-экран--живой-портрет .первый-экран__текст > *, .орбита .первый-экран__картинка { grid-column: 1 / -1; }
 .первый-экран--орбита .цифры, .первый-экран--живой-портрет .цифры { order: 2; }
 /* Центр: кикер и заголовок сверху, фигура посередине, карточки по бокам (на телефоне — после лида и кнопки). */
 .центр__верх { text-align: center; }  .центр__верх .кикер { justify-content: center; }  .центр__верх .кикер::before { display: none; }
 .центр__бок { display: grid; gap: var(--отступ-блока); }
+.центр__бок > .карточка { display: flex; align-items: flex-start; gap: .75em; }  .центр__бок > .карточка > .иконка { margin: .1em 0 0; }
+.центр__бок > .карточка b { font-size: calc(var(--кегль-текст) * .9); line-height: 1.35; }
 .первый-экран--центр .блок__внутри { display: grid; gap: var(--отступ-блока); }
 .центр__бок--лево { display: contents; }
 .центр__бок--лево .лид { order: 1; }  .центр__бок--лево .первый-экран__действие { order: 2; }
@@ -406,6 +412,9 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
   .липкая-кнопка .кнопка { width: 100%; min-height: 3.375rem; font-size: 1rem; }
   /* Решение 11: снизу ещё и safe-area, иначе на iPhone подвал прячется под панелью. */
   body.с-липкой-кнопкой { padding-bottom: calc(5em + env(safe-area-inset-bottom)); }
+  /* Сцена прижимает текст к низу окна — без этого отступа её кнопки встают ровно под липкую. */
+  body.с-липкой-кнопкой .первый-экран--сцена, body.с-липкой-кнопкой .первый-экран--живая-сцена,
+  body.с-липкой-кнопкой .первый-экран--живая-обложка { padding-bottom: calc(var(--отступ-секции) * .7 + 5em + env(safe-area-inset-bottom)); }
 }
 
 /* ── Планшет: карточки в две колонки, а не столбиком ── */
@@ -436,28 +445,32 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
   .сторона--слева.первый-экран--разворот .картинка--край img { mask-image: linear-gradient(to right, black 55%, transparent); -webkit-mask-image: linear-gradient(to right, black 55%, transparent); }
   /* Сцена, живая сцена и живая обложка: текст в левой колонке, затемнение слева; зум — только здесь (телефон без scale). */
   .первый-экран--сцена .блок__внутри, .первый-экран--живая-сцена .блок__внутри, .первый-экран--живая-обложка .блок__внутри { display: grid; grid-template-columns: minmax(0, .55fr) minmax(0, .45fr); }
-  /* Сцена на компьютере: кадр шире окна на 28 % и прижат к стороне текста — лицо (обычно в центре кадра) уходит на ~64 % ширины, из-под текста; при 100 % оно стояло под заголовком (замер макета 10.09). */
-  .картинка--сцена img, .картинка--видео video, .картинка--видео img, .картинка--видео-с-голосом video, .картинка--видео-с-голосом img { width: 128%; max-width: none; }
+  /* Сцена на компьютере: кадр шире окна на 28 % и отодвинут от стороны текста на 12 % — лицо (обычно в центре кадра) уходит на ~75 % ширины,
+     за край затемнения (0 % на 68 %); при 100 % оно стояло под заголовком, при 128 % без сдвига лид ложился на светлую одежду (ревью T6). */
+  .картинка--сцена img, .картинка--видео video, .картинка--видео img, .картинка--видео-с-голосом video, .картинка--видео-с-голосом img { width: 128%; max-width: none; margin-left: 12%; }
   .картинка--сцена img { animation: зум 30s ease-in-out infinite alternate; }
-  .картинка--сцена::after, .картинка--видео::after, .картинка--видео-с-голосом::after { background: linear-gradient(to right, var(--цвет-тёмный-фон) 30%,
-    color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent) 43%, transparent 54%); }
+  .картинка--сцена::after, .картинка--видео::after, .картинка--видео-с-голосом::after { background: linear-gradient(to right, var(--цвет-тёмный-фон) 44%,
+    color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent) 56%, transparent 68%); }
   .сторона--слева .картинка--сцена img, .сторона--слева .картинка--видео video, .сторона--слева .картинка--видео img,
-  .сторона--слева .картинка--видео-с-голосом video, .сторона--слева .картинка--видео-с-голосом img { margin-left: -28%; }
-  .сторона--слева .картинка--сцена::after, .сторона--слева .картинка--видео::after, .сторона--слева .картинка--видео-с-голосом::after { background: linear-gradient(to left, var(--цвет-тёмный-фон) 30%,
-    color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent) 43%, transparent 54%); }
+  .сторона--слева .картинка--видео-с-голосом video, .сторона--слева .картинка--видео-с-голосом img { margin-left: -40%; }
+  .сторона--слева .картинка--сцена::after, .сторона--слева .картинка--видео::after, .сторона--слева .картинка--видео-с-голосом::after { background: linear-gradient(to left, var(--цвет-тёмный-фон) 44%,
+    color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent) 56%, transparent 68%); }
   .сторона--слева.первый-экран--сцена .первый-экран__текст, .сторона--слева.первый-экран--живая-сцена .первый-экран__текст,
   .сторона--слева.первый-экран--живая-обложка .первый-экран__текст { grid-column: 2; }
-  /* Кнопка звука на компьютере: правый верх, от лица не ближе 5.6em (≈ 90 px); подпись в две строки до 17em. */
-  .звук-блок { right: 3.5em; top: 5.25em; gap: .6em; }
+  /* Кнопка звука на компьютере: правый низ — лицо всегда в верхней части кадра (data-лицо), а после сдвига кадра на 12 % правый верх лёг
+     на волосы (ревью T6); подпись в две строки до 17em. */
+  .звук-блок { right: 3.5em; top: auto; bottom: 3.5em; gap: .6em; }
   .звук { height: 3.5rem; padding: 0 1.6em 0 1.25em; letter-spacing: .01em; }
   .звук__почему { font-size: calc(var(--кегль-текст) * .875); white-space: normal; max-width: 17em; text-align: right; border-radius: var(--радиус); align-items: flex-start; }
   .звук__почему::before { margin-top: .35em; flex: none; }
   .звук__почему-длинно { display: inline; }  .звук__почему-коротко { display: none; }
   .сторона--слева .звук-блок { right: auto; left: 3.5em; justify-items: start; }  .сторона--слева .звук__почему { text-align: left; }
-  /* Орбита: фигура посередине квадрата, спутники по углам поверх колец. */
-  .орбита { display: block; aspect-ratio: 1; margin-top: 0; }
-  .орбита .первый-экран__картинка { position: absolute; inset: 0 14%; aspect-ratio: auto; }
-  .орбита__спутник { position: absolute; width: 42%; }
+  /* Орбита: фигура посередине квадрата (макушка чуть выше него), спутники по углам поверх колец; плашка «живой портрет» — под квадратом,
+     не на карточке. */
+  .орбита { display: block; position: relative; aspect-ratio: 1; }
+  .орбита .первый-экран__картинка { position: absolute; inset: -6% 10% 0; width: auto; aspect-ratio: auto; margin: 0; order: 0; }
+  .орбита__спутник { position: absolute; width: 38%; margin: 0; }
+  .орбита .живое { top: auto; bottom: -2.4em; left: 50%; translate: -50% 0; }
   .орбита__спутник:nth-child(1 of .орбита__спутник) { top: 4%; left: 0; }  .орбита__спутник:nth-child(2 of .орбита__спутник) { top: 4%; right: 0; }
   .орбита__спутник:nth-child(3 of .орбита__спутник) { bottom: 4%; left: 0; }  .орбита__спутник:nth-child(4 of .орбита__спутник) { bottom: 4%; right: 0; }
   /* Товар: рамка крупнее, бейджи парят по краям рамки. */
@@ -467,18 +480,19 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
   .картинка__бейдж:nth-of-type(3) { bottom: 12%; left: -10%; }
   /* Бенто 12 колонок: текст 1–8 в две строки, картинка 8–11, цифры 11–13 по строке, пункты — третья строка. */
   .бенто { grid-template-columns: repeat(12, minmax(0, 1fr)); grid-auto-rows: minmax(8em, auto); }
-  .бенто__ячейка--главная { grid-column: 1 / 8; grid-row: 1 / 3; }
+  .бенто__ячейка--главная { grid-column: 1 / 8; grid-row: 1 / 3; padding: calc(var(--отступ-блока) * 1.5); }  .бенто__ячейка--главная h1 { font-size: var(--кегль-h1); }
   .бенто .картинка { grid-column: 8 / 11; grid-row: 1 / 3; aspect-ratio: auto; order: 0; }
   .бенто .цифра { grid-column: 11 / 13; }
   .бенто .цифра:nth-child(1) { grid-row: 1; }  .бенто .цифра:nth-child(2) { grid-row: 2; }  .бенто .цифра:nth-child(3) { grid-row: 3; }
   .бенто__ячейка--пункты { grid-column: 1 / 11; grid-row: 3; }
   .бенто__ячейка--пункты .список-иконок { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; }
-  /* Центр: фигура стоит на нижней кромке посередине, боковые колонки по 28 %. */
-  .первый-экран--центр .блок__внутри { display: block; min-height: 40em; }
-  .центр__верх { width: min(100%, calc(var(--ширина-колонки) * 1.4)); margin-inline: auto; }
-  .первый-экран--центр .первый-экран__картинка { position: absolute; left: 50%; bottom: 0; width: 30em; margin-left: -15em; }
-  .центр__бок { position: absolute; top: 34%; width: 28%; }
-  .центр__бок--лево { display: grid; left: 0; }  .центр__бок--право { right: 0; }
+  /* Центр: секция во всё окно; заголовок во всю ширину, под ним сетка «колонка 32 % · фигура · колонка 32 %»: колонки идут в потоке сразу под
+     заголовком (h1 в три строки их не задевает), фигура — от макушки до низа секции; колонки не тянутся по высоте, иначе карточки распухают. */
+  .первый-экран--центр { display: grid; min-height: 100svh; }
+  .первый-экран--центр .блок__внутри { grid-template-columns: 32% minmax(0, 1fr) 32%; grid-template-rows: auto 1fr; min-height: 40em; }
+  .центр__верх { grid-column: 1 / -1; width: min(100%, calc(var(--ширина-колонки) * 2)); margin-inline: auto; }
+  .первый-экран--центр .первый-экран__картинка { grid-column: 2; grid-row: 2; width: auto; aspect-ratio: auto; margin: 0 0 calc(-.7 * var(--отступ-секции)); }
+  .центр__бок { grid-row: 2; align-self: start; }  .центр__бок--лево { display: grid; grid-column: 1; }  .центр__бок--право { grid-column: 3; }
   /* Мозаика: лента плывёт влево, дубли включены, чётные рамки ниже; под курсором — пауза. */
   .ряд-роликов { mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent); }
   .ряд-роликов__лента { display: flex; width: max-content; gap: 0; animation: дрейф-ленты 30s linear infinite; }
