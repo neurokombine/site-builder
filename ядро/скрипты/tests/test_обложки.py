@@ -173,6 +173,22 @@ class ВБраузере(unittest.TestCase):
             self.assertIn('src="img/силуэт.svg"', (Path(д) / "витрина" / "обложка-разворот" / "index.html").read_text(encoding="utf-8"))
             self.assertIn("силуэт", путь.read_text(encoding="utf-8"))
 
+    def test_визитке_с_альфа_роликом_рекомендуют_живой_портрет(self):
+        """Сквозное ревью 3 (дыра T4): у визитки в video/ только portret-vyrez.webm — mp4 нет, но живой портрет рекомендуется через обложки()."""
+        with tempfile.TemporaryDirectory() as д:
+            работа = _скопировать_образец(Path(д))
+            shutil.rmtree(работа / "video")
+            (работа / "video").mkdir()
+            for имя in ("portret-vyrez.webm", "portret-vyrez-poster.png"):
+                (работа / "video" / имя).write_bytes(b"")
+            путь, н = обложки.обложки(работа, куда=Path(д) / "витрина", браузер=self.браузер)
+            self.assertFalse(находки.есть_красное(н), н)
+            текст = путь.read_text(encoding="utf-8")
+            портрет = текст.split("· живой-портрет</h2>")[1].split("</section>")[0]
+            self.assertIn("рекомендую — вырез с движением уже есть", портрет)
+            self.assertNotIn("рекомендую", текст.split("· живая-сцена</h2>")[1].split("</section>")[0])   # речи нет — живая сцена не рекомендуется
+            self.assertIn('<source src="video/portret-vyrez.webm"', (Path(д) / "витрина" / "обложка-живой-портрет" / "index.html").read_text(encoding="utf-8"))
+
     def test_cli_без_показа(self):
         with tempfile.TemporaryDirectory() as д:
             работа = _скопировать_образец(Path(д))
