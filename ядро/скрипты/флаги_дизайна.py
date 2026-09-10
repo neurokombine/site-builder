@@ -27,7 +27,7 @@ from находки import К_СВЕДЕНИЮ, ПОПРАВИТЬ, находк
   const фото = [...document.querySelectorAll('img')].filter(isVisible).filter(и => {
     const р = и.parentElement;
     return !(маска(и) || маска(р) || parseFloat(ст(и).borderRadius) > 0 || parseFloat(ст(р).borderRadius) > 0
-             || и.classList.contains('аватар') || и.closest('.мокап'));
+             || и.classList.contains('аватар') || и.closest('.мокап, .картинка'));
   }).length;
   const т = document.querySelector('[data-дедлайн]');
   const ячейки = т ? [...т.querySelectorAll('.таймер__ячейка b')] : [];   // без ячеек every() дал бы true
