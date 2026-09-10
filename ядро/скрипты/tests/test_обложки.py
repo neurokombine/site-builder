@@ -1,4 +1,5 @@
 """обложки.py: подбор картинок под тип, все схемы набора на текстах, палитре и картинке; каталог без копий медиа."""
+import re
 import shutil
 import subprocess
 import sys
@@ -10,6 +11,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "ядро" / "скрипты"))
+import витрина  # noqa: E402
 import глаза  # noqa: E402
 import находки  # noqa: E402
 import обложки  # noqa: E402
@@ -72,6 +74,25 @@ class Правила(unittest.TestCase):
             self.assertEqual(к["мозаика-роликов"]["ролики"], [("rolik-1", "rolik-1-poster.jpg"), ("rolik-2", "rolik-2-poster.jpg"), ("rolik-3", "кадр.svg")])
             пусто = обложки.картинки_для_схем(работа / "нет", "визитка", {"фото": "", "видео": "", "постер": ""})
             self.assertEqual((пусто["разворот"]["фото"], пусто["живой-портрет"]["видео"], пусто["орбита"]["лицо"]), ("", "", "50,22"))
+            self.assertEqual(tuple(обложки.картинки_для_схем(работа, "нет-такого", {"фото": "", "видео": "", "постер": ""})), ВИЗИТКА)   # чужой пресет → визитка, не FileNotFoundError
+
+    def test_каталог_заглушки_ведут_в_ядро(self):
+        """В каталоге медиа — по ссылке в папку работы, а силуэт и кадр — в ядро/блоки/заглушки: в папке примера их нет."""
+        with tempfile.TemporaryDirectory() as д:
+            работа = _скопировать_образец(Path(д))
+            своя = Path(д) / "каталог" / "обложка-разворот"
+            своя.mkdir(parents=True)
+            html = обложки._в_каталог('<img src="img/пример.svg"><img src="img/силуэт.svg"><video poster="video/кадр.svg">'
+                                      '<source src="video/пример.mp4"><img src="video/кадр.svg">', работа, своя)
+            self.assertIn('src="../../работа/img/пример.svg"', html)
+            self.assertIn('src="../../работа/video/пример.mp4"', html)
+            self.assertNotIn("работа/img/силуэт.svg", html)
+            self.assertNotIn("работа/video/кадр.svg", html)
+            ссылки = re.findall(r'"([^"]*(?:силуэт|кадр)\.svg)"', html)
+            self.assertEqual(len(ссылки), 3)
+            for ссылка in ссылки:
+                self.assertTrue((своя / ссылка).resolve().is_file(), ссылка)
+                self.assertEqual((своя / ссылка).resolve().parent, витрина.ЗАГЛУШКИ.resolve())
 
     def test_без_палитры_красное(self):
         with tempfile.TemporaryDirectory() as д:
@@ -131,6 +152,13 @@ class ВБраузере(unittest.TestCase):
             self.assertFalse((папка / "img").exists())
             self.assertIn('poster="../../работа/video/', (Path(д) / "каталог" / "обложка-живая-сцена" / "index.html").read_text(encoding="utf-8"))
             self.assertTrue((папка / "компьютер.jpg").is_file())
+            for схема in ВИЗИТКА:   # заглушки никогда не ведут в папку работы; если есть — файл существует
+                своя = Path(д) / "каталог" / f"обложка-{схема}"
+                html = (своя / "index.html").read_text(encoding="utf-8")
+                self.assertNotIn("работа/img/силуэт.svg", html)
+                self.assertNotIn("работа/video/кадр.svg", html)
+                for ссылка in re.findall(r'"([^"]*(?:силуэт|кадр)\.svg)"', html):
+                    self.assertTrue((своя / ссылка).resolve().is_file(), ссылка)
             текст = путь.read_text(encoding="utf-8")
             self.assertIn("Каталог схем первого экрана", текст)
             self.assertIn("обложки.py сайты/", текст)
