@@ -12,8 +12,7 @@
     видео.setAttribute("poster", видео.getAttribute("data-телефон-постер") || видео.getAttribute("poster"));
     var кадр = фигура.querySelector("img");
     if (кадр) { кадр.src = видео.getAttribute("poster"); }
-    var источник = видео.querySelector("source[type='video/mp4']") || видео.querySelector("source");
-    источник.src = видео.getAttribute("data-телефон"); источник.type = "video/mp4"; видео.load();
+    видео.src = видео.getAttribute("data-телефон"); видео.load();   // src элемента сильнее <source>: иначе браузер с WebM оставит горизонтальный ролик
   }
   if (тихо) { document.querySelectorAll(".первый-экран__картинка video").forEach(function (в) { в.pause(); в.removeAttribute("autoplay"); }); }
   if (тихо || (альфа && (сафари || !видео.canPlayType('video/webm; codecs="vp9"')))) { постер(); return; }

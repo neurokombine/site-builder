@@ -9,7 +9,7 @@
     кнопка.setAttribute("aria-pressed", звук ? "true" : "false");
     кнопка.setAttribute("aria-label", звук ? "Выключить звук" : "Включить звук");
     подпись.textContent = звук ? "Выключить звук" : "Включить звук";
-    вкл.hidden = !звук; выкл.hidden = звук;
+    if (вкл && выкл) { вкл.toggleAttribute("hidden", !звук); выкл.toggleAttribute("hidden", звук); }   // svg <path>: свойства hidden нет
     блок.setAttribute("data-звук", звук ? "вкл" : "выкл");
   }
   function тихо() { видео.muted = true; видео.loop = true; состояние(false); var п = видео.play(); if (п && п.catch) { п.catch(function () {}); } }
