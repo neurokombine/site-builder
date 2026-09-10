@@ -63,6 +63,17 @@ class Картинка(unittest.TestCase):
             with Image.open(путь) as к:
                 self.assertEqual(к.mode, "RGBA")
 
+    def test_непрозрачный_png_это_фото(self):   # починка T3: RGBA без единого прозрачного пикселя — фото, не вырез
+        with tempfile.TemporaryDirectory() as д:
+            фото = Path(д) / "foto.png"
+            Image.new("RGBA", (800, 600), (200, 150, 100, 255)).save(фото)
+            self.assertEqual(обложка.фокус(фото), обложка.ФОКУС_ФОТО)
+            self.assertEqual(обложка.касается_краёв(фото), ["не вырез"])
+            ф = вырез_png(Path(д) / "figura.png")                        # настоящий вырез: альфа доезжает до webp кропа
+            with Image.open(обложка.кроп_телефон(ф, Path(д) / "img")) as к:
+                self.assertEqual(к.mode, "RGBA")
+                self.assertEqual(к.getchannel("A").getextrema(), (0, 255))
+
     def test_обложка_не_тянет_проверить(self):   # GC 17: цикл через картинка → проверить закрыт ленивым импортом
         р = subprocess.run([sys.executable, "-c", "import sys; sys.path.insert(0, 'ядро/скрипты'); import обложка; "
                             "print('проверить' in sys.modules, 'собрать' in sys.modules)"], cwd=ROOT, capture_output=True, text=True)

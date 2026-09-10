@@ -33,10 +33,13 @@ from находки import вывод_в_utf8  # noqa: E402
 
 
 def _альфа(картинка: Image.Image):
-    """Маска непрозрачного (альфа выше порога); у картинки без альфы — None."""
+    """Маска непрозрачного (альфа выше порога); у картинки без альфы — None, полностью непрозрачная RGBA — тоже фото."""
     if картинка.mode != "RGBA":
         return None
-    return картинка.getchannel("A").point(lambda а: 255 if а > ПОРОГ_АЛЬФЫ else 0)
+    альфа = картинка.getchannel("A")
+    if альфа.getextrema()[0] > ПОРОГ_АЛЬФЫ:   # ни одного прозрачного пикселя: PNG из Preview, Figma, скриншот
+        return None
+    return альфа.point(lambda а: 255 if а > ПОРОГ_АЛЬФЫ else 0)
 
 
 def _рамка(файл: Path) -> tuple[Image.Image, tuple | None]:
