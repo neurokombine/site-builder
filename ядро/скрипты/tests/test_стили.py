@@ -12,10 +12,22 @@ import собрать  # noqa: E402
 КЛАССЫ = ("блок блок__внутри кнопка кнопка--главная кнопка--контур кнопка--пульс кикер акцент лид карточка "
           "карточка--стекло карточка--главная цифры цифра__значение цифра__подпись фото мокап аватар иконка "
           "список-иконок бейдж разделитель цитата таймер таймер__ячейка липкая-кнопка с-липкой-кнопкой фон--пятна "
-          "фон--сетка фон--зерно орбита орбита__спутник первый-экран--разворот первый-экран--постер "
-          "первый-экран--фото первый-экран--орбита "
-          "цифра шаг шаг__номер вопрос контакт мелкий пара цитата__кто орбита__центр светлый второй тёмный "
-          "первый-экран__текст первый-экран__фото первый-экран__действие первый-экран__доверие шаги фото--маска").split()
+          "фон--сетка фон--зерно орбита орбита__спутник первый-экран--разворот первый-экран--орбита "
+          "первый-экран--сцена первый-экран--живая-сцена первый-экран--афиша-с-экраном первый-экран--товар-крупно первый-экран--бенто "
+          "первый-экран--центр первый-экран--живая-обложка первый-экран--живой-портрет первый-экран--мозаика-роликов "
+          "первый-экран__картинка картинка картинка--фото картинка--край картинка--вырез картинка--живой-портрет "
+          "картинка--сцена картинка--видео картинка--видео-с-голосом картинка--мокап картинка--товар картинка--мозаика "
+          "картинка--постер картинка__бейдж живое опора кольцо парит окно окно__бар окно__адрес бегущая-строка "
+          "бегущая-строка__лента рамка-телефона рамка-телефона__экран рамка-телефона__подпись ряд-роликов ряд-роликов__лента "
+          "рамка-телефона--дубль бенто бенто__ячейка бенто__ячейка--главная бенто__ячейка--пункты центр__верх центр__бок "
+          "сторона--слева звук-блок звук звук__подпись звук__почему звук__почему-длинно звук__почему-коротко "
+          "цифра шаг шаг__номер вопрос контакт мелкий пара цитата__кто светлый второй тёмный "
+          "первый-экран__текст первый-экран__действие первый-экран__доверие шаги фото--маска").split()
+ОБЛОЖКА_JS = ROOT / "ядро" / "блоки" / "обложка.js"
+ЗВУК_JS = ROOT / "ядро" / "блоки" / "звук.js"
+РОЗОВОЕ = re.compile(r"color-mix\(in srgb, var\(--цвет-акцент\) \d+%, var\(--цвет-(?!акцент)")
+ГАСИТСЯ = ("парит", "опора", "кольцо", "окно", "бегущая-строка__лента", "ряд-роликов__лента", "звук",
+           "картинка--сцена img", "живое::before", "фон--пятна::before", "бенто__ячейка", "картинка--видео-с-голосом video")
 ПЕРЕМЕННЫЕ = ("--радиус-малый --тень --тень-глубокая --плавность --длительность --цвет-стекло --цвет-фон-карточки "
               "--кегль-кикер --кегль-цифра --разрядка-кикера --ширина-колонки").split()
 
@@ -66,6 +78,67 @@ class Стили(unittest.TestCase):
                 текст = файл.read_text(encoding="utf-8", errors="ignore")
                 for слово in ("IntersectionObserver", "animation-timeline"):
                     self.assertNotIn(слово, текст, f"{файл}: {слово}")
+
+    def test_нет_розового(self):   # решение 10.09.2026: акцент на тёмном как есть, смешение с белым даёт розовый
+        self.assertEqual(РОЗОВОЕ.findall(self.тело), [])
+        self.assertRegex(self.тело, r"\.тёмный \.кнопка--главная \{[^}]*background: var\(--цвет-акцент\)")
+
+    def test_картинки_вписаны_и_обложка_js(self):
+        self.assertRegex(self.тело, r"\.картинка img, \.картинка video \{[^}]*object-fit: cover")
+        self.assertNotIn("object-fit: fill", self.тело)
+        self.assertLessEqual(len(self.css.splitlines()), 660)
+        js = ОБЛОЖКА_JS.read_text(encoding="utf-8")
+        self.assertLessEqual(len(js.splitlines()), 40)
+        for слово in ("data-телефон", "prefers-reduced-motion", "canPlayType", "картинка--постер", ".catch("):
+            self.assertIn(слово, js)
+        звук = ЗВУК_JS.read_text(encoding="utf-8")
+        self.assertLessEqual(len(звук.splitlines()), 30)
+        for слово in ("muted = false", "loop = false", "currentTime = 0", '"ended"', "visibilitychange", "aria-pressed", "data-звук"):
+            self.assertIn(слово, звук)
+        self.assertNotIn("Date.now", js + звук)
+
+    def test_reduced_motion_гасит_обложки(self):
+        хвост = self.css[self.css.index("@media (prefers-reduced-motion"):]
+        for имя in ГАСИТСЯ:
+            self.assertIn(имя, хвост, f"{имя} не выключен при reduced-motion")
+
+
+class ВБраузере(unittest.TestCase):
+    """Акцент на тёмном — ровно цвет текста у .акцент и ровно акцент у кнопки: розовый не собирается."""
+    @classmethod
+    def setUpClass(cls):
+        import tempfile
+        from playwright.sync_api import sync_playwright
+        import глаза
+        cls._временная = tempfile.TemporaryDirectory()
+        cls._playwright = sync_playwright().start()
+        cls.браузер = глаза.запустить_браузер(cls._playwright)
+        токены = собрать.прочитать_дизайн(ROOT / "ядро/скрипты/tests/фикстуры/работа-образец/дизайн.md")["решения"]
+        cls.путь = Path(cls._временная.name) / "index.html"
+        cls.путь.write_text(
+            '<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>Проба</title>'
+            f"<style>{СТИЛИ.read_text(encoding='utf-8')}\n{токены}</style></head><body>"
+            '<section class="блок тёмный" id="экран-1"><div class="блок__внутри"><p class="кикер">Кикер</p>'
+            '<h1>Заголовок <em class="акцент">с акцентом</em></h1><a class="кнопка кнопка--главная" href="#">Кнопка</a>'
+            '<i id="текст" style="color: var(--цвет-тёмный-текст)"></i><i id="акцент" style="color: var(--цвет-акцент)"></i>'
+            "</div></section></body></html>", encoding="utf-8")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.браузер.close()
+        cls._playwright.stop()
+        cls._временная.cleanup()
+
+    def test_на_тёмном_акцент_не_розовеет(self):
+        стр = self.браузер.new_page()
+        стр.goto(self.путь.as_uri())
+        self.assertEqual(стр.evaluate("s => getComputedStyle(document.querySelector('.акцент')).color"),
+                         стр.evaluate("s => getComputedStyle(document.querySelector('#текст')).color"))
+        self.assertEqual(стр.evaluate("s => getComputedStyle(document.querySelector('.кнопка--главная')).backgroundColor"),
+                         стр.evaluate("s => getComputedStyle(document.querySelector('#акцент')).color"))
+        self.assertEqual(стр.evaluate("s => getComputedStyle(document.querySelector('.кикер')).color"),
+                         стр.evaluate("s => getComputedStyle(document.querySelector('#текст')).color"))
+        стр.close()
 
 if __name__ == "__main__":
     unittest.main()
