@@ -26,7 +26,7 @@
 
 | Роль | Что делает | Claude Code | Codex | Kimi Code |
 |---|---|---|---|---|
-| `screen-builder` (v2) | верстает **один экран**: экран 1 — копия `01-первый-экран-<концепция>.html` по «Решения» дизайн.md, остальные — по типу из `блоки.md`; показывает человеку вызывающий | `.claude/agents/` | `.codex/agents/*.toml` | `.kimi-code/agents/*.md` |
+| `screen-builder` (v3) | верстает **один экран**: экран 1 — копия `01-первый-экран-<схема>.html` по «Решения» дизайн.md, картинка обязательна, остальные — по типу из `блоки.md`; показывает человеку вызывающий | `.claude/agents/` | `.codex/agents/*.toml` | `.kimi-code/agents/*.md` |
 | `site-checker` | приёмка собранного сайта **свежим взглядом** | `.claude/agents/` | `.codex/agents/*.toml` | `.kimi-code/agents/*.md` |
 
 **Codex:** роли зарегистрированы в `.codex/config.toml`, вызываются инструментом `spawn_agent`;
