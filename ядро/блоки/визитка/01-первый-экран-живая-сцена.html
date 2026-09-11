@@ -1,4 +1,8 @@
 <section class="блок блок--первый-экран первый-экран--живая-сцена тёмный" id="экран-{{НОМЕР}}" data-тип="первый-экран" data-схема="живая-сцена" data-картинка="видео-с-голосом">
+  <header class="шапка">
+    <a class="шапка__лого" href="#">{{ЗНАК}}</a>
+    <span class="шапка__лиц">{{ИКОНКА:щит}}<span>{{ДОВЕРИЕ_ШАПКИ}}</span></span>
+  </header>
   <figure class="картинка картинка--видео-с-голосом первый-экран__картинка"><video autoplay muted loop playsinline preload="auto" poster="video/{{ПОСТЕР}}" data-лицо="{{ЛИЦО}}" aria-label="{{ПОДПИСЬ_ФОТО}}"><source src="video/{{ВИДЕО}}.mp4" type="video/mp4"></video><img src="video/{{ПОСТЕР}}" alt="{{ПОДПИСЬ_ФОТО}}" data-лицо="{{ЛИЦО}}"></figure>
   <div class="звук-блок" data-звук="выкл">
     <button class="звук" type="button" aria-pressed="false" aria-label="Включить звук"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path class="звук__вкл" hidden d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13"/><path class="звук__выкл" d="M16 9l5 6M21 9l-5 6"/></svg><span class="звук__подпись">Включить звук</span></button>
@@ -11,6 +15,7 @@
       <p class="лид">{{ПОДЗАГОЛОВОК}}</p>
       <div class="первый-экран__действие">{{СВЯЗЬ:Написать}}</div>
       <p class="мелкий первый-экран__доверие">{{ИКОНКА:щит}} {{ДОВЕРИЕ}}</p>
+      <p class="мелкий первый-экран__когда">{{ИКОНКА:часы}} {{КОГДА}}</p>
     </div>
   </div>
 </section>
