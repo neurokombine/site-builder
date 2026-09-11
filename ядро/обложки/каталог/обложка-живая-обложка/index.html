@@ -29,7 +29,7 @@
   --тень-глубокая: 0 24px 60px color-mix(in srgb, #0D1B2A 35%, transparent);
   --тень-спутник: 0 30px 60px color-mix(in srgb, #0D1B2A 60%, transparent);
   --тень-плиты: 0 40px 100px color-mix(in srgb, #0D1B2A 70%, transparent);
-  --кегль-h1: clamp(46px, 5.3vw, 53px);
+  --кегль-h1: 33px;
   --кегль-h2: clamp(24px, 4vw, 36px);
   --кегль-текст: clamp(16px, 1.4vw, 20px);
   --кегль-лид: clamp(17px, 1.4vw, 21px);
@@ -45,6 +45,9 @@
   --кнопка-радиус: 10px;
   --плавность: cubic-bezier(.2, .7, .2, 1);  --длительность: .25s;
 }
+@media (min-width: 900px) {
+  :root { --кегль-h1: clamp(44px, 4vw, 58px); }
+}
 </style>
 </head>
 <body class="с-липкой-кнопкой">
@@ -54,7 +57,7 @@
     <a class="шапка__лого" href="#">НейроВидеоСтудия</a>
     <span class="шапка__лиц"><svg class="иконка" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
   <path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6L12 3z"/>
-</svg><span>Лицензия № Л035-01261-30/01053865</span></span>
+</svg><span><span class="полн">Лицензия № Л035-01261-30/01053865</span><span class="кратко">№ Л035-01261-30/01053865</span></span></span>
   </header>
   <figure class="картинка картинка--видео первый-экран__картинка"><video autoplay muted loop playsinline preload="metadata" poster="../../пример-студия/video/zhivaya-poster.jpg" data-телефон="../../пример-студия/video/zhivaya-telefon.mp4" data-телефон-постер="../../пример-студия/video/zhivaya-telefon-poster.jpg" data-лицо="50,22" aria-label="НейроВидеоСтудия: вы научитесь делать видео из ничего"><source src="../../пример-студия/video/zhivaya.webm" type="video/webm"><source src="../../пример-студия/video/zhivaya.mp4" type="video/mp4"></video><img src="../../пример-студия/video/zhivaya-poster.jpg" alt="НейроВидеоСтудия: вы научитесь делать видео из ничего" data-лицо="50,22"></figure>
   <span class="живое">живая обложка · без звука</span>
