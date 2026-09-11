@@ -19,23 +19,29 @@
   --шрифт-текста: 'Open Sans', Verdana, system-ui, sans-serif;
   --цвет-фон: #FAF8F5;  --цвет-фон-2: #F5F0EB;  --цвет-фон-карточки: #FAF8F5;
   --цвет-текст: #2B2B33;  --цвет-текст-мягкий: #5A5A66;
-  --цвет-акцент: #C62828;  --цвет-акцент-тёмный: #6B1520;  --цвет-на-акценте: #FAF8F5;
+  --цвет-акцент: #C62828;  --цвет-акцент-тёмный: #6B1520;  --цвет-акцент-яркий: #D32F2F;  --цвет-на-акценте: #FAF8F5;
   --цвет-линия: #E6DED3;
-  --цвет-тёмный-фон: #0D1B2A;  --цвет-тёмный-текст: #FAF8F5;
-  --цвет-стекло: color-mix(in srgb, #FAF8F5 8%, transparent);
-  --тень: 0 10px 30px color-mix(in srgb, #0D1B2A 12%, transparent);
-  --тень-глубокая: 0 22px 48px color-mix(in srgb, #0D1B2A 22%, transparent);
-  --кегль-h1: clamp(30px, 5vw, 48px);
+  --цвет-тёмный-фон: #0D1B2A;  --цвет-тёмный-фон-2: #1A1A2E;  --цвет-тёмный-текст: #FAF8F5;
+  --цвет-тёплый: #C8A97E;  --цвет-тёплый-мягкий: #D8C19C;
+  --цвет-стекло: color-mix(in srgb, #0D1B2A 86%, transparent);
+  --тень: 0 12px 34px color-mix(in srgb, #0D1B2A 6%, transparent);
+  --тень-чип: 0 10px 30px color-mix(in srgb, #0D1B2A 12%, transparent);
+  --тень-глубокая: 0 24px 60px color-mix(in srgb, #0D1B2A 35%, transparent);
+  --тень-спутник: 0 30px 60px color-mix(in srgb, #0D1B2A 60%, transparent);
+  --тень-плиты: 0 40px 100px color-mix(in srgb, #0D1B2A 70%, transparent);
+  --кегль-h1: clamp(46px, 5.3vw, 53px);
   --кегль-h2: clamp(24px, 4vw, 36px);
   --кегль-текст: clamp(16px, 1.4vw, 20px);
+  --кегль-лид: clamp(17px, 1.4vw, 21px);
   --кегль-мелкий: 14px;
   --кегль-кикер: clamp(14px, 1.1vw, 15px);
-  --кегль-цифра: clamp(32px, 4.5vw, 56px);
-  --разрядка-кикера: .22em;
+  --кегль-цифра: 30px;
+  --разрядка-кикера: .03em;
   --отступ-секции: clamp(40px, 6vw, 72px);
   --отступ-блока: clamp(14px, 2vw, 24px);
   --ширина: 1120px;  --ширина-колонки: 560px;
   --радиус: 10px;  --радиус-малый: 6px;
+  --радиус-карточки: 18px;  --радиус-плитки: 22px;  --радиус-телефон: 46px;
   --кнопка-радиус: 10px;
   --плавность: cubic-bezier(.2, .7, .2, 1);  --длительность: .25s;
 }
@@ -44,6 +50,12 @@
 <body class="с-липкой-кнопкой">
 <a id="экран-контакты" aria-hidden="true"></a>
 <section class="блок блок--первый-экран первый-экран--сцена тёмный фон--пятна" id="экран-1" data-тип="первый-экран" data-схема="сцена" data-картинка="фото">
+  <header class="шапка">
+    <a class="шапка__лого" href="#">НейроВидеоСтудия</a>
+    <span class="шапка__лиц"><svg class="иконка" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6L12 3z"/>
+</svg><span>Лицензия № Л035-01261-30/01053865</span></span>
+  </header>
   <figure class="картинка картинка--сцена первый-экран__картинка"><picture><source media="(max-width: 899px)" srcset="../../пример-студия/img/stsena-16x9-telefon.webp"><img src="../../пример-студия/img/stsena-16x9.webp" alt="НейроВидеоСтудия: вы научитесь делать видео из ничего" data-лицо="50,22" fetchpriority="high"></picture></figure>
   <div class="блок__внутри">
     <div class="первый-экран__текст">
@@ -51,10 +63,24 @@
       <h1>НейроВидеоСтудия: вы научитесь делать видео из <em class="акцент">ничего</em></h1>
       <p class="лид">Из фотографии товара, из одной идеи, из собственного лица. И продавать этим: себя или свою работу</p>
       <div class="первый-экран__действие"><a class="кнопка кнопка--главная" href="#экран-контакты">Хочу в студию</a> <a class="кнопка кнопка--контур" href="#экран-2">Подробнее</a></div>
+      <ul class="цифры">
+        <li class="цифра"><b class="цифра__значение">13</b><span class="цифра__подпись">модулей</span></li>
+        <li class="цифра"><b class="цифра__значение">87</b><span class="цифра__подпись">уроков</span></li>
+        <li class="цифра"><b class="цифра__значение">12</b><span class="цифра__подпись">недель</span></li>
+      </ul>
       <p class="мелкий первый-экран__доверие"><svg class="иконка" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
   <path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6L12 3z"/>
 </svg> Ваш вопрос — ответ в тот же день</p>
     </div>
+  </div>
+  <div class="карточка карточка--стекло первый-экран__регалии парит">
+    <p class="карточка__имя">Натэла Зубченко</p>
+    <p class="карточка__роль">продюсер онлайн-школы · тележурналист</p>
+    <ul class="карточка__опоры">
+      <li>22 года на ТВ</li>
+      <li>две премии ТЭФИ</li>
+      <li></li>
+    </ul>
   </div>
 </section>
 

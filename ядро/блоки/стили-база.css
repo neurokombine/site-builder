@@ -1,6 +1,14 @@
-/* Стили всех блоков сразу — библиотека компонентов ядра. Один файл на страницу: он уезжает в
-   сайт/style.css как есть, а палитру и кегли в <style> страницы подставляет собрать.py из
-   `сайты/<имя>/дизайн.md` (раздел «Решения»).
+/* Общая база — типографика, кнопки, карточки и двенадцать деталей первого экрана (переносимые
+   компоненты: чип, шапка, хвост, галка, пятно, остров, рамка телефона, плей, плашка, нода,
+   спутник, ячейка). Композиция самих одиннадцати схем первого экрана — в соседнем файле
+   `стили-первый-экран.css`; `собрать.py` склеивает оба в один `style.css` сайта, в этом порядке.
+
+   Задача 6, 10.09.2026: файл был один (`стили.css`, 660 строк — потолок теста), одиннадцать схем
+   в него было уже не дописать. Раздел по назначению: здесь — то, что используют и другие блоки
+   (02–09), не только первый экран (карточки, цифры, кнопки, иконки, таймер, атмосфера, подвал,
+   липкая кнопка) плюс двенадцать «деталей» из `ядро/дизайн/детали.md`, которые снаружи выглядят
+   как первоэкранные, но задуманы переносимыми компонентами. Все анимации (`@keyframes`) — тоже
+   здесь: используются с обеих сторон склейки, а объявлять их дважды незачем.
 
    ⛔ Ни одного цвета, шрифта, кегля и крупного отступа литералом — только `var()` с одной из
    переменных дизайн-системы (их 44, полный список и источники — `ядро/дизайн/палитра-и-токены.md`)
@@ -8,9 +16,8 @@
    Смена палитры — правка одного раздела «Решения», а не поход по файлам.
    ⭐ Телефон — первая версия: всё вне @media написано под узкий экран, а медиазапрос для
    компьютера только раскладывает колонки. Появления при прокрутке нет: движение — это пульс
-   главной кнопки, подъём карточки под курсором, плавные переходы и движение обложек (парение спутников,
-   дрейф пятен, кольца, бегущая строка, лента роликов, зум сцены) — всё выключается при
-   `prefers-reduced-motion: reduce`.
+   главной кнопки, подъём карточки под курсором, плавные переходы и парение/дрейф деталей —
+   всё выключается при `prefers-reduced-motion: reduce`.
 
    Тридцать две переменные исходной сетки — по строке смысла:
    --шрифт-заголовков, --шрифт-текста        два шрифта, у каждого запасной системный
@@ -80,7 +87,11 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
    и было запрещено верно), а обычным solid var() поверх тёмного фона. Маркерная плашка под словом
    убрана везде — в макетах её нет ни на светлом, ни на тёмном. */
 .тёмный a:not(.кнопка) { color: var(--цвет-тёмный-текст); text-decoration-color: var(--цвет-акцент); }
-.тёмный .акцент { color: var(--цвет-акцент-яркий, var(--цвет-акцент)); }
+/* Фикс-раунд 1 задачи 6: во всех пяти сверенных макетах на тёмном ключе акцентное слово h1
+   золотое (переменная «тёплый»), не ярко-красное — было "яркий" (акцент-яркий держит другой
+   смысл, блик "живое"/точка звука, не цвет акцентного слова заголовка). Светлые схемы (`.акцент`
+   без `.тёмный`, выше по каскаду) остаются красными — там макет держит переменную «акцент-ср». */
+.тёмный .акцент { color: var(--цвет-тёплый, var(--цвет-акцент)); }
 .тёмный .иконка, .тёмный .бейдж, .тёмный .цитата::before, .тёмный .вопрос > summary::after { color: var(--цвет-акцент); }
 .тёмный :focus-visible, .тёмный .кнопка:focus-visible, .тёмный .вопрос > summary:focus-visible { outline-color: var(--цвет-тёмный-текст); }
 
@@ -103,11 +114,6 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .тёмный .кнопка--главная { background: var(--цвет-акцент); color: var(--цвет-на-акценте);
   border-color: color-mix(in srgb, var(--цвет-тёмный-текст) 30%, transparent); }
 .тёмный .кнопка--главная:hover { background: var(--цвет-акцент-тёмный); }
-@keyframes пульс-кнопки {
-  0%   { box-shadow: var(--тень-глубокая), 0 0 0 0 color-mix(in srgb, var(--цвет-акцент) 45%, transparent); }
-  70%  { box-shadow: var(--тень-глубокая), 0 0 0 .8em color-mix(in srgb, var(--цвет-акцент) 0%, transparent); }
-  100% { box-shadow: var(--тень-глубокая), 0 0 0 0 color-mix(in srgb, var(--цвет-акцент) 0%, transparent); }
-}
 .кнопка--контур:hover { background: color-mix(in srgb, currentColor 8%, transparent); }
 .кнопка--пульс:hover { animation: none; }
 .кнопка:active { transform: translateY(0); }   /* после :hover главной, иначе нажатие на ней не видно */
@@ -128,8 +134,12 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .кикер .иконка, .кикер svg { width: 1em; height: 1em; flex: none; color: currentColor; }
 .тёмный .кикер { background: transparent; padding: 0; border: 0; letter-spacing: .06em;
   color: var(--цвет-тёплый, var(--цвет-акцент-тёмный)); }
-.тёмный .кикер::before { content: ""; flex: none; width: 1.75em; height: 2px; border-radius: 2px;
-  background: var(--цвет-акцент-яркий, var(--цвет-акцент)); }
+/* Фикс-раунд 2 задачи 6, макет: `.кикер::before{width:28px;height:2px;background:тёплый}` (переменная «тёплый») —
+   черта того же золота, что и текст кикера рядом (было акцент-яркий — другой смысл, красная).
+   Ширина в `em` от кегля кикера (14-15px на обоих концах вилки токена) — 2em даёт ~28-30px, макетные
+   28px на обоих концах, не одно найденное совпадение на глаз. */
+.тёмный .кикер::before { content: ""; flex: none; width: 2em; height: 2px; border-radius: 2px;
+  background: var(--цвет-тёплый, var(--цвет-акцент-тёмный)); }
 .тёмный .кикер--пилюля { padding: .5625em .875em; letter-spacing: var(--разрядка-кикера);
   background: color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 35%, transparent); }
@@ -142,7 +152,10 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
   border: 1px solid color-mix(in srgb, var(--цвет-акцент) 25%, transparent); }
 .карточка--главная > .бейдж { position: absolute; top: -.9em; left: 50%; transform: translateX(-50%); white-space: nowrap;
   color: var(--цвет-на-акценте); background: var(--цвет-акцент); border-color: transparent; box-shadow: var(--тень); }
-/* ── Чип: пилюля-подпись на фото (не на всю ширину — inline-flex по содержимому). Задача 5, макет строка 54. */
+
+/* ── Деталь «чип»: пилюля-подпись на фото (не на всю ширину — inline-flex по содержимому).
+   Задача 5, макет строка 54; задача 6 — перенесена сюда из общего файла, класс не переносимый ни в
+   какую конкретную схему первого экрана. */
 .чип { display: inline-flex; align-items: center; gap: .5em; padding: .5625em .875em; border-radius: 9em;
   font-size: 1em; line-height: 1.25; color: var(--цвет-текст);
   background: color-mix(in srgb, var(--цвет-фон) 90%, transparent);
@@ -155,12 +168,20 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .тёмный .чип { color: var(--цвет-тёмный-текст); background: color-mix(in srgb, var(--цвет-тёмный-фон) 72%, transparent);
   border-color: color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 40%, transparent);
   box-shadow: 0 .625em 1.875em color-mix(in srgb, var(--цвет-тёмный-фон) 45%, transparent); }
-/* ── Шапка первого экрана: знак слева, строка доверия справа (не «шапка сайта» — деталь композиции,
-   поля — ядро/прототип-поля-первого-экрана.md § 1-2). Задача 5, макет строки 21-28. */
+
+/* ── Деталь «шапка»: знак слева, строка доверия справа (не «шапка сайта» — деталь композиции
+   первого экрана, поля — ядро/прототип-поля-первого-экрана.md § 1-2). Задача 5, макет строки 21-28. */
 .шапка { height: 3.5em; display: flex; align-items: center; justify-content: space-between; gap: .625em;
   padding: 0 1em; position: relative; z-index: 6; border-bottom: 1px solid var(--цвет-линия); background: var(--цвет-фон); }
-.шапка__лого { display: flex; align-items: center; gap: .5em; font: 700 .9375em/1 var(--шрифт-заголовков); white-space: nowrap; color: inherit; }
-.шапка__лого img { width: 1.875em; height: 1.875em; border-radius: 50%;
+/* Фикс-раунд 1 задачи 6: подчёркивание убрано (макет — без него, была обычная `a` из общей типографики).
+   Фикс-раунд 2: пробовал decorативный кружок-заглушку слева от названия вместо картинки — на снимке
+   читается как пустая дырка (бежевый круг ни о чём), хуже, чем совсем без него. Контракт прототипа
+   даёт «знак» только строкой, слота под файл-логотип нет — заводить его ради кружка не стал (новое
+   поле контракта — решение отдельной волны, не точечный фикс трёх схем). Правило замены при пустом
+   поле здесь — «нет картинки → нет и места под картинку»: `.шапка__лого img` остаётся в стилях
+   готовым на случай, если экран-строитель конкретного сайта вручную вставит свою картинку в разметку. */
+.шапка__лого { display: flex; align-items: center; gap: .5em; font: 700 .9375em/1 var(--шрифт-заголовков); white-space: nowrap; color: inherit; text-decoration: none; }
+.шапка__лого img { width: 1.875em; height: 1.875em; border-radius: 50%; flex: none;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 45%, transparent); }
 .шапка__лиц { font-size: .6875em; line-height: 1.2; display: flex; align-items: center; justify-content: flex-end;
   gap: .3125em; text-align: right; max-width: 9.375em; opacity: .85; }
@@ -207,7 +228,8 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .цифра.карточка--стекло { border-left-color: color-mix(in srgb, var(--цвет-тёмный-текст) 12%, transparent); }
 .карточка .цифра__значение { font-size: calc(var(--кегль-цифра) * .78); }
 
-/* ── Картинки: только в обёртках ── */
+/* ── Картинки: только в обёртках (общие — фото, мокап, аватар, дуэт «пара»; картинка первого
+   экрана и её кропы под каждую схему — в стили-первый-экран.css) ── */
 .фото { margin: 0; border-radius: var(--радиус); overflow: hidden; box-shadow: var(--тень); }
 .фото img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
 .фото--маска { border-radius: 0; box-shadow: none; }
@@ -228,6 +250,9 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .аватар { width: 3.5em; height: 3.5em; border-radius: 50%; object-fit: cover; flex: none;
   border: 2px solid var(--цвет-фон-карточки); box-shadow: var(--тень); }
 .пара__текст, .пара__фото { min-width: 0; }  .пара__фото img { display: block; width: 100%; border-radius: var(--радиус); }
+/* Пара — дуэт «текст | фото» (о себе, финал без таймера): общий компонент, не только первый экран. */
+.пара { display: grid; gap: var(--отступ-блока); }
+.пара > :only-child { grid-column: 1 / -1; }   /* финал без таймера: текст на всю ширину, а не пустая половина */
 
 /* ── Иконки и список с иконками ── */
 .иконка { width: 1.5em; height: 1.5em; flex: none; color: var(--цвет-акцент); vertical-align: middle; }
@@ -238,9 +263,9 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 /* Задача 1, правка 6: галочки списка — золото, не акцент (макет их красным не красит нигде).
    На светлом — тёмная ступень (контраст ≥4.5 против фона), на тёмном — чистый тёплый (уже ≥7:1). */
 .список-иконок .иконка { color: var(--цвет-тёплый-тёмный, var(--цвет-акцент-тёмный)); }
-/* Галка — задача 5: кружок 19px золотом с галочкой внутри (макет строки 35-36), не крупная контурная
-   иконка из набора 60 — она рядом со строчными буквами, а не спорит с кнопкой размером. Кладётся вместо
-   {{ИКОНКА:галочка}} в списке .список-иконок там, где схема просит этот компактный маркер. */
+/* Деталь «галка» — задача 5: кружок 19px золотом с галочкой внутри (макет строки 35-36), не крупная
+   контурная иконка из набора 60 — она рядом со строчными буквами, а не спорит с кнопкой размером.
+   Кладётся вместо {{ИКОНКА:галочка}} в списке .список-иконок там, где схема просит этот маркер. */
 .галка { position: relative; flex: none; width: 1.1875em; height: 1.1875em; border-radius: 50%; margin-top: .15em;
   background: var(--цвет-тёплый, var(--цвет-акцент-тёмный)); }
 .галка::after { content: ""; position: absolute; left: .40625em; top: .21875em; width: .25em; height: .5em;
@@ -299,137 +324,45 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .контакт__что { display: block; font-size: var(--кегль-мелкий); color: var(--цвет-текст-мягкий); }
 .тёмный .вопрос, .тёмный .контакт, .тёмный .вопрос > summary::after { border-color: color-mix(in srgb, var(--цвет-тёмный-текст) 14%, transparent); }
 
-/* ── Первый экран: одиннадцать схем ──
-   разворот — текст | фото до кромки · орбита — текст | вырез в кольцах и четыре спутника · сцена — фото во весь
-   экран, текст поверх · живая-сцена — то же с роликом и кнопкой звука · афиша-с-экраном — текст по центру, окно с экраном, бегущая строка · товар-крупно — текст |
-   товар в рамке телефона с бейджами · бенто — плитка · центр — вырез посередине, карточки по бокам · живая-обложка —
-   видео во весь экран · живой-портрет — альфа-видео в орбите · мозаика-роликов — текст по центру, ряд роликов.
-   Сторона — класс `сторона--слева` на секции, справа — умолчание. На телефоне у каждой схемы картинка попадает в
-   первое окно 390×844 и лицо видно целиком; scale() — только в @media компьютера (иначе 🔴 у глаза.py). */
-.блок--первый-экран { padding-top: calc(var(--отступ-секции) * .6); padding-bottom: calc(var(--отступ-секции) * .7); }
-.блок--первый-экран .кикер { margin-bottom: calc(var(--отступ-блока) * .6); }  .блок--первый-экран h1 { margin-bottom: .35em; text-wrap: balance; }
-.блок--первый-экран .лид { line-height: 1.4; margin-bottom: .9em; }
-.блок--первый-экран .список-иконок { gap: .45em; margin-bottom: .9em; }
-.блок--первый-экран .первый-экран__доверие { margin-bottom: .6em; }
-.блок--первый-экран .цифры { margin-top: calc(var(--отступ-блока) * .75); }
-.первый-экран__текст { position: relative; z-index: 1; }  .первый-экран__текст > :last-child { margin-bottom: 0; }
-.первый-экран__действие { display: flex; flex-wrap: wrap; align-items: center; gap: .75em; margin: calc(var(--отступ-блока) * .8) 0 .75em; }
-.первый-экран__действие .кнопка { flex: 1 1 auto; }
-.первый-экран__доверие { display: flex; align-items: center; gap: .5em; }
-/* Картинка — общая обёртка: всё внутри вписано object-fit, лицо — в верхней трети (object-position). */
-.картинка { margin: 0; position: relative; }
-.картинка img, .картинка video { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
-.первый-экран__картинка { margin-top: var(--отступ-блока); }
-.картинка--фото { aspect-ratio: 3 / 4; border-radius: var(--радиус); overflow: hidden; box-shadow: var(--тень); }
-.картинка--край { border-radius: 0; box-shadow: none; overflow: visible; }
-.картинка--край img { mask-image: linear-gradient(to bottom, black 68%, transparent 96%); -webkit-mask-image: linear-gradient(to bottom, black 68%, transparent 96%); }
-/* Вырез и живой портрет: фигура без фона показана от макушки (cover, верх) — так вырез с воздухом по бокам не мельчает,
-   низ уходит под кромку и тает в маске. */
-.картинка--вырез, .картинка--живой-портрет { aspect-ratio: 3 / 4; }
-.картинка--вырез img, .картинка--живой-портрет img, .картинка--живой-портрет video { object-position: 50% 0;
-  position: relative; z-index: 1; mask-image: linear-gradient(to bottom, black 66%, transparent 96%); -webkit-mask-image: linear-gradient(to bottom, black 66%, transparent 96%);
-  filter: drop-shadow(var(--тень-спутник, var(--тень-глубокая))); }   /* задача 1: фигура-вырез «лежит» на фоне, а не наклеена */
-.опора { position: absolute; left: 15%; bottom: 8%; width: 70%; aspect-ratio: 1; border-radius: 50%; pointer-events: none;
-  filter: blur(2em); opacity: .6; animation: дрейф 30s ease-in-out infinite alternate;
-  background: radial-gradient(circle, color-mix(in srgb, var(--цвет-акцент) 55%, transparent), transparent 70%); }
-/* Задача 1, правка 6: кольца золотом (макет — SVG-пунктир золотом), не текущим цветом секции. */
-.кольцо { position: absolute; left: 6%; top: 50%; width: 88%; aspect-ratio: 1; translate: 0 -50%; border-radius: 50%; pointer-events: none;
-  border: 1px dashed color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 30%, transparent); animation: вращение 60s linear infinite; }
-.кольцо--2 { left: 18%; width: 64%; border-style: dotted; animation-duration: 90s; animation-direction: reverse; }
-/* Нода — задача 5, макет строки 81-82: искры на орбите/центре/живом-портрете, положение — inline style
-   left/top в процентах на самой схеме (next: у неё нет универсального места). */
-.нода { position: absolute; width: .375em; height: .375em; border-radius: 50%; pointer-events: none;
-  background: var(--цвет-акцент-яркий, var(--цвет-акцент));
-  box-shadow: 0 0 .75em color-mix(in srgb, var(--цвет-акцент-яркий, var(--цвет-акцент)) 80%, transparent);
-  animation: мерцание 4s ease-in-out infinite; }
-.нода--2 { animation-delay: -1.3s; background: var(--цвет-тёплый, var(--цвет-акцент-тёмный));
-  box-shadow: 0 0 .75em color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 90%, transparent); }
-.нода--3 { animation-delay: -2.6s; }
+/* ── Деталь «хвост»: вторая, мельче набранная часть заголовка h1 (задача 5, макет строка 110).
+   На телефоне (умолчание) отдельной строкой, на компьютере — продолжает предложение инлайн (média
+   900px ниже). Схема, которой хвост нужен блоком и на компьютере, переопределяет display сама. */
+.блок--первый-экран h1 .хвост { display: block; margin-top: .5em; font-size: .66em; font-weight: 600; line-height: 1.28; letter-spacing: 0; }
+
+/* ── Утилита «парит»: лёгкое покачивание, которое схемы навешивают на свои чипы и спутники сами. */
 .парит { animation: парение 8s ease-in-out infinite; }
 .парит--2 { animation-duration: 9s; animation-delay: -3s; }  .парит--3 { animation-duration: 7s; animation-delay: -5s; }
 .парит--4 { animation-duration: 8.5s; animation-delay: -1.5s; }
-.фон--пятна::before, .фон--пятна::after { animation: дрейф 28s ease-in-out infinite alternate; }  .фон--пятна::after { animation-delay: -9s; }
-/* Пятно — задача 5, макет строка 67: настоящий HTML-элемент (не псевдоэлемент фона), размер, положение и
-   номер модификатора `--N` пишет схема своим селектором в этом же файле — здесь только форма и движение. */
+
+/* ── Деталь «пятно»: настоящий HTML-элемент (не псевдоэлемент фона) — задача 5, макет строка 67.
+   Размер, положение и номер модификатора `--N` пишет схема своим селектором в стили-первый-экран.css —
+   здесь только форма и движение. Отдельно от `.фон--пятна` (декоратор атмосферы, ниже) — разные
+   механики, макет использует именно эту. */
 .пятно { position: absolute; border-radius: 50%; pointer-events: none; filter: blur(2.5em);
   animation: дрейф 28s ease-in-out infinite alternate;
   background: color-mix(in srgb, var(--цвет-тёплый-мягкий, var(--цвет-линия)) 55%, transparent); }
 .тёмный .пятно { background: color-mix(in srgb, var(--цвет-акцент) 70%, transparent); }
-@keyframes вращение { to { rotate: 360deg; } }
-@keyframes парение { 50% { transform: translateY(-.5em); } }
-@keyframes дрейф { 0% { translate: 0 0; scale: 1; } 50% { translate: 4% -5%; scale: 1.08; } 100% { translate: -3% 4%; scale: .96; } }
-/* Хвост — задача 5, макет строка 110: вторая, мельче набранная часть заголовка. На телефоне (умолчание)
-   отдельной строкой, на компьютере — как в разворот/бенто, продолжает предложение инлайн. */
-.блок--первый-экран h1 .хвост { display: block; margin-top: .5em; font-size: .66em; font-weight: 600; line-height: 1.28; letter-spacing: 0; }
-/* Сцена, живая сцена и живая обложка: картинка во весь экран под текстом; затемнение снизу (на компьютере — со
-   стороны текста). Правила картинки — одним селектором на img и video (GC 21). */
-.первый-экран--сцена, .первый-экран--живая-сцена, .первый-экран--живая-обложка { min-height: 100svh; display: flex; align-items: flex-end; padding-top: calc(var(--отступ-секции) * 2.2); }
-.картинка--сцена, .картинка--видео, .картинка--видео-с-голосом { position: absolute; inset: 0; margin: 0; overflow: hidden; }
-.картинка--сцена img, .картинка--видео video, .картинка--видео img, .картинка--видео-с-голосом video, .картинка--видео-с-голосом img { object-position: 50% 15%; }
-.картинка--сцена::after, .картинка--видео::after, .картинка--видео-с-голосом::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top,
-  var(--цвет-тёмный-фон) 28%, color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent) 58%, transparent); }
-.картинка--видео img, .картинка--видео-с-голосом img, .картинка--живой-портрет img { display: none; }   /* постер показывает обложка.js, когда видео не идёт */
-.картинка--постер video { display: none; }  .картинка--постер img { display: block; }
-.картинка--мозаика.картинка--постер video { display: block; }   /* у мозаики нет img: стоящее видео с poster показывает постер само */
-/* Кнопка звука живой сцены: красная, как главная, пульс в противофазе к главной (-1.2s); под ней — почему сейчас
-   без звука; при звуке подпись прячется. Телефон: ниже подбородка справа (лицо занимает верхнюю треть окна), выше кикера. */
-.звук-блок { position: absolute; z-index: 4; right: 1em; top: 17em; display: grid; justify-items: end; gap: .5em; }
-.звук { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .6em; height: 3.25rem; padding: 0 1.25em 0 1em;
-  border-radius: var(--кнопка-радиус); border: 0; background: var(--цвет-акцент); color: var(--цвет-на-акценте); cursor: pointer;
-  font: 600 var(--кегль-текст)/1 var(--шрифт-заголовков); box-shadow: var(--тень-глубокая);
-  animation: пульс-кнопки 2.4s var(--плавность) -1.2s infinite; transition: background var(--длительность) var(--плавность), transform var(--длительность) var(--плавность); }
-.звук:hover { background: var(--цвет-акцент-тёмный); transform: translateY(-2px); }
-.звук svg { width: 1.4em; height: 1.4em; flex: none; }
-.звук[aria-pressed="true"] { animation: none; background: color-mix(in srgb, var(--цвет-тёмный-фон) 82%, transparent); color: var(--цвет-тёмный-текст);
-  border: 1px solid var(--цвет-акцент); backdrop-filter: blur(.6em); -webkit-backdrop-filter: blur(.6em); }
-.звук__почему { display: inline-flex; align-items: center; gap: .5em; padding: .5em .9em; border-radius: 9em; white-space: nowrap; line-height: 1.25;
-  font-size: var(--кегль-текст); color: var(--цвет-тёмный-текст); background: color-mix(in srgb, var(--цвет-тёмный-фон) 78%, transparent);
-  border: 1px solid color-mix(in srgb, var(--цвет-акцент) 45%, transparent); backdrop-filter: blur(.6em); -webkit-backdrop-filter: blur(.6em); }
-.звук__почему::before { content: ""; width: .5em; height: .5em; border-radius: 50%; background: var(--цвет-акцент-яркий, var(--цвет-акцент)); animation: мерцание 1.6s ease-in-out infinite; }
-.звук-блок[data-звук="вкл"] .звук__почему, .звук__почему-длинно { display: none; }
-.звук__подпись { white-space: nowrap; }
-.живое { position: absolute; top: 1em; left: 1em; z-index: 2; display: inline-flex; align-items: center; gap: .5em; padding: .3em .8em;
-  border-radius: 9em; font-size: var(--кегль-мелкий); color: var(--цвет-тёмный-текст);
-  background: color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent); backdrop-filter: blur(.5em); -webkit-backdrop-filter: blur(.5em); }
-.живое::before { content: ""; width: .5em; height: .5em; border-radius: 50%; background: var(--цвет-акцент-яркий, var(--цвет-акцент)); animation: мерцание 2s ease-in-out infinite; }
-.картинка--постер ~ .живое { display: none; }
-@keyframes мерцание { 50% { opacity: .3; } }
-/* Окно с экраном (афиша): бар с тремя точками и адресом, окно «дышит». Бегущая строка — пункты по кругу. */
-.окно { border-radius: var(--радиус-малый); overflow: hidden; background: var(--цвет-фон-карточки); border: 1px solid var(--цвет-линия);
-  box-shadow: var(--тень-плиты, var(--тень-глубокая)); animation: дыхание 8s ease-in-out infinite; }
-.окно__бар { display: flex; align-items: center; gap: .4em; padding: .5em .8em; border-bottom: 1px solid var(--цвет-линия);
-  background: color-mix(in srgb, var(--цвет-текст) 7%, var(--цвет-фон-карточки)); }
-.окно__бар i { width: .55em; height: .55em; border-radius: 50%; background: var(--цвет-акцент); opacity: .8; }
-.окно__бар i:nth-child(2) { opacity: .5; }  .окно__бар i:nth-child(3) { opacity: .3; }
-.окно__адрес { flex: 1; margin-left: .6em; padding: .15em .7em; border-radius: 9em; font-size: var(--кегль-мелкий); color: var(--цвет-текст-мягкий); background: var(--цвет-фон); }
-.картинка--мокап img { aspect-ratio: 16 / 10; object-position: 50% 0; }
-@keyframes дыхание { 50% { transform: translateY(-.5em); } }
-.бегущая-строка { overflow: hidden; margin-top: var(--отступ-блока); font-size: var(--кегль-мелкий); letter-spacing: var(--разрядка-кикера);
-  mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent); }
-.бегущая-строка__лента { display: flex; width: max-content; animation: бег 26s linear infinite; }
-.бегущая-строка__лента span { padding-right: 2.5em; white-space: nowrap; }
-.бегущая-строка__лента span::after { content: "·"; margin-left: 2.5em; color: var(--цвет-акцент); }
-@keyframes бег { to { transform: translateX(-50%); } }
-/* Рамка телефона 9:16 (товар, мозаика): островок сверху, подпись — поверх нижней кромки экрана. */
-/* Задача 1: было calc(--радиус × 1.6) = 16 px при ширине рамки ≈ 440 px — «скруглённый прямоугольник»,
-   не телефон; макет — 46 px, свой токен, не производная от общего --радиус. */
-/* Задача 5: золотая волосяная окантовка рамки добавлена в тень (macет — inset 0 0 0 1.5px rgba(тёплый,.32)) — рамка
-   без неё «пустая» на тёмном фоне точно так же, как карточка--стекло без своей кромки. */
+
+/* ── Деталь «рамка» (устройство) — телефон 9:16 (товар, мозаика): островок сверху, подпись —
+   поверх нижней кромки экрана. Задача 1: было calc(--радиус × 1.6) = 16 px при ширине рамки ≈ 440 px —
+   «скруглённый прямоугольник», не телефон; макет — 46 px, свой токен. Задача 5: золотая волосяная
+   окантовка добавлена в тень (macет — inset 0 0 0 1.5px rgba(тёплый,.32)) — рамка без неё «пустая»
+   на тёмном фоне точно так же, как карточка--стекло без своей кромки. */
 .рамка-телефона { position: relative; aspect-ratio: 9 / 16; padding: .55em; border-radius: var(--радиус-телефон, calc(var(--радиус) * 2));
   background: var(--цвет-тёмный-фон); box-shadow: var(--тень-плиты, var(--тень-глубокая)),
     inset 0 0 0 .09375em color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 32%, transparent); }
 .рамка-телефона__экран { position: relative; height: 100%; border-radius: calc(var(--радиус-телефон, calc(var(--радиус) * 2)) * .8); overflow: hidden; background: var(--цвет-фон-2); }
-/* Остров — задача 5, макет строка 101 (мозаика): динамик сверху рамки, рисуется сам (::before, разметку
-   не трогаем), `.остров` — для схем со своим элементом. Фикс-раунд 1 п.4: дефолт — мозаика (вариант-10);
-   товар-крупно (вариант-5, константа 96×26/р14/отступ10) — готовый модификатор `--крупный`, волна 2 просто
-   приклеит класс, этот файл трогать не придётся. */
+/* Деталь «остров» — задача 5, макет строка 101 (мозаика): динамик сверху рамки, рисуется сам
+   (::before, разметку схемы не трогаем), `.остров` — для схем со своим элементом. Дефолт — числа
+   мозаики (вариант-10); товар-крупно (вариант-5) — готовый модификатор `--крупный`. */
 .рамка-телефона__экран::before, .остров { content: ""; position: absolute; z-index: 2; top: .5em; left: 50%;
   translate: -50% 0; width: 3.875em; height: 1.125em; border-radius: .625em; background: var(--цвет-тёмный-фон); }
 .остров--крупный { width: 6em; height: 1.625em; border-radius: .875em; top: .625em; }
 .рамка-телефона__экран::after { content: ""; position: absolute; inset: 60% 0 0; pointer-events: none;
   background: linear-gradient(to top, color-mix(in srgb, var(--цвет-тёмный-фон) 75%, transparent), transparent); }
-/* Плей — задача 5 фикс-раунд 1 п.2: три макета — 64px/вариант-5 и 52px/вариант-6 без тени, пульс всегда ·
-   46px/вариант-10 с тенью 0 14 34@60%(тёмный-фон), без пульса. Дефолт — вариант-10, остальные — модификаторами. */
+/* Деталь «плей» — задача 5 фикс-раунд 1 п.2: три макета — 64px/вариант-5 и 52px/вариант-6 без тени,
+   пульс всегда · 46px/вариант-10 с тенью 0 14 34@60%(тёмный-фон), без пульса. Умолчание — вариант-10,
+   остальные — модификаторами. */
 .плей { position: absolute; z-index: 3; display: grid; place-items: center; width: 2.875em; height: 2.875em;
   border-radius: 50%; background: var(--цвет-акцент-тёмный); color: var(--цвет-тёмный-текст);
   box-shadow: 0 .875em 2.125em color-mix(in srgb, var(--цвет-тёмный-фон) 60%, transparent); }
@@ -440,39 +373,26 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 .плей--большой { width: 4em; height: 4em; }  .плей--средний { width: 3.25em; height: 3.25em; }
 .плей--большой svg, .плей--большой .иконка { width: 1.625em; height: 1.625em; margin-left: .1875em; }
 .плей--средний svg, .плей--средний .иконка { width: 1.375em; height: 1.375em; margin-left: .1875em; }
-/* Плашка — задача 5, макет строка 102 (мозаика): подпись поверх нижней кромки кадра, слева, вторая строка мельче. */
+/* Деталь «плашка» — задача 5, макет строка 102 (мозаика): подпись поверх нижней кромки кадра,
+   слева, вторая строка мельче. Отдельного класса `.плашка` не заводили — подпись всегда внутри рамки. */
 .рамка-телефона__подпись { position: absolute; inset: auto .6em .6em; z-index: 2; margin: 0; text-align: left;
   font: 600 var(--кегль-текст)/1.25 var(--шрифт-заголовков); color: var(--цвет-тёмный-текст); }
 .рамка-телефона__подпись small { display: block; margin-top: .2em;
   font: 400 var(--кегль-мелкий)/1.3 var(--шрифт-текста); color: color-mix(in srgb, var(--цвет-тёмный-текст) 72%, transparent); }
-.картинка--товар { width: min(60%, 16em); margin-inline: auto; text-align: center; }
-.картинка__бейдж { margin: .6em .3em 0 0; background: var(--цвет-фон-карточки); box-shadow: var(--тень); }   /* телефон: рядком под рамкой */
-/* Ряд роликов — та же figure, что и картинка--мозаика: на телефоне сетка 2×2 из первых четырёх (полоса с прокруткой ловится как «вылезает за экран»). */
-.картинка--мозаика, .ряд-роликов { overflow: hidden; }
-.ряд-роликов__лента { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--отступ-блока); }
-.ряд-роликов .рамка-телефона--дубль, .ряд-роликов .рамка-телефона:nth-child(n + 5) { display: none; }
-/* Бенто: плитка из ячеек; на телефоне столбиком, картинка первой. */
-.бенто { display: grid; gap: var(--отступ-блока); }
-.бенто__ячейка { position: relative; padding: var(--отступ-блока); border-radius: var(--радиус-плитки, var(--радиус)); background: var(--цвет-фон-карточки); color: var(--цвет-текст);
-  border: 1px solid var(--цвет-линия); box-shadow: var(--тень); transition: transform var(--длительность) var(--плавность), box-shadow var(--длительность) var(--плавность); }
-.бенто__ячейка:hover { transform: translateY(-3px); box-shadow: var(--тень-чип, var(--тень)); }
-.бенто__ячейка.тёмный { background: var(--цвет-тёмный-фон); color: var(--цвет-тёмный-текст); border-color: transparent; }
-.бенто__ячейка--главная { padding: var(--отступ-блока); }  .бенто__ячейка--главная h1 { font-size: calc(var(--кегль-h1) * .9); }   /* ячейка уже окна: h1 в три строки, не в четыре (F10) */
-.бенто .картинка { padding: 0; overflow: hidden; aspect-ratio: 4 / 3; order: -1; margin-top: 0; }
-.бенто .цифры { display: contents; }  .бенто .цифра { position: relative; padding: var(--отступ-блока); border-left: 0; }  .бенто .цифра__значение { color: var(--цвет-акцент); }
-/* Задача 1, правка 6: золотая точка в углу ячейки — макет держит её на каждой цифре бенто. */
-.бенто .цифра::before { content: ""; position: absolute; top: .6em; right: .6em; width: .5em; height: .5em; border-radius: 50%; background: var(--цвет-тёплый, var(--цвет-акцент-тёмный)); }
-.первый-экран--бенто .список-иконок { margin-bottom: 0; }   /* список пунктов — сама ячейка: нижний отступ первого экрана ей не нужен */
-/* Орбита: вырез в кольцах, четыре спутника-карточки. На телефоне фигура первой — лицо в первом окне, — затем текст,
-   спутники сеткой 2×2 после кнопок и цифры последними: .орбита и текст прозрачны для сетки (display: contents),
-   сетка в две колонки — сам .блок__внутри; на компьютере .орбита снова блок-квадрат со спутниками по углам. */
-.орбита { display: contents; }
-.орбита .первый-экран__картинка { order: -1; width: min(100%, 22em); aspect-ratio: 4 / 3; margin: 0 auto var(--отступ-блока); }
-.орбита__спутник { order: 1; margin-top: var(--отступ-блока); display: grid; justify-items: center; gap: .3em; text-align: center; padding: calc(var(--отступ-блока) * .8); }
-.орбита__спутник b { font-size: calc(var(--кегль-текст) * 1.1); line-height: 1.25; }  .орбита__спутник span { font-size: var(--кегль-мелкий); opacity: .8; }
-.орбита__спутник .иконка { width: 2em; height: 2em; margin: 0 auto .5em; }
-/* Спутник — задача 5, макет строки 105-113: строка «иконка-плашка + текст», сама карточка-плита — модификатор
-   `карточка карточка--стекло` (тот же тёмный «лежащий» плинт, что и у карточки-автора, а не своя копия фона). */
+
+/* ── Деталь «нода» — задача 5, макет строки 81-82: искры на орбите/центре/живом-портрете, положение —
+   inline style left/top в процентах на самой схеме (у неё нет универсального места). */
+.нода { position: absolute; width: .375em; height: .375em; border-radius: 50%; pointer-events: none;
+  background: var(--цвет-акцент-яркий, var(--цвет-акцент));
+  box-shadow: 0 0 .75em color-mix(in srgb, var(--цвет-акцент-яркий, var(--цвет-акцент)) 80%, transparent);
+  animation: мерцание 4s ease-in-out infinite; }
+.нода--2 { animation-delay: -1.3s; background: var(--цвет-тёплый, var(--цвет-акцент-тёмный));
+  box-shadow: 0 0 .75em color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 90%, transparent); }
+.нода--3 { animation-delay: -2.6s; }
+
+/* ── Деталь «спутник» — задача 5, макет строки 105-113: строка «иконка-плашка + текст», сама
+   карточка-плита — модификатор `карточка карточка--стекло` (тот же тёмный «лежащий» плинт, что и у
+   карточки-автора, а не своя копия фона). */
 .спутник { position: relative; display: flex; align-items: flex-start; gap: .75em; width: 100%; }
 .спутник__икон { flex: none; width: 2.5em; height: 2.5em; border-radius: .75em; display: grid; place-items: center;
   background: color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 16%, transparent); color: var(--цвет-тёплый, var(--цвет-акцент-тёмный)); }
@@ -482,39 +402,24 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
   color: color-mix(in srgb, var(--цвет-тёмный-текст) 70%, transparent); }
 .спутник__шкала { position: absolute; left: 1em; right: 1em; bottom: -1px; height: 2px; border-radius: 2px; opacity: .8;
   background: linear-gradient(90deg, var(--цвет-акцент-яркий, var(--цвет-акцент)), var(--цвет-тёплый, var(--цвет-акцент-тёмный))); }
-.первый-экран--орбита .блок__внутри, .первый-экран--живой-портрет .блок__внутри { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--отступ-блока); row-gap: 0; }
-.первый-экран--орбита .первый-экран__текст, .первый-экран--живой-портрет .первый-экран__текст { display: contents; }
-.первый-экран--орбита .первый-экран__текст > *, .первый-экран--живой-портрет .первый-экран__текст > *, .орбита .первый-экран__картинка { grid-column: 1 / -1; }
-/* Центр: кикер и заголовок сверху, фигура посередине, карточки по бокам (на телефоне — после лида и кнопки). */
-.центр__верх { text-align: center; }  .центр__верх .кикер { justify-content: center; }  .центр__верх .кикер::before { display: none; }
-.центр__бок { display: grid; gap: var(--отступ-блока); }
-.центр__бок > .карточка { display: flex; align-items: flex-start; gap: .75em; }  .центр__бок > .карточка > .иконка { margin: .1em 0 0; }
-.центр__бок > .карточка b { font-size: calc(var(--кегль-текст) * .9); line-height: 1.35; }
-.первый-экран--центр .блок__внутри { display: grid; gap: var(--отступ-блока); }
-.центр__бок--лево { display: contents; }
-.центр__бок--лево .лид { order: 1; }  .центр__бок--лево .первый-экран__действие { order: 2; }
-.первый-экран--центр .первый-экран__картинка { order: 3; width: min(100%, 22em); margin-inline: auto; }
-.центр__бок--лево .карточка { order: 4; }  .центр__бок--право { order: 5; }
-/* Разворот: на телефоне фото первым, до кромок и под верх секции; текст выходит из фото. */
-.первый-экран--разворот .блок__внутри { display: grid; gap: 0; }
-.первый-экран--разворот .первый-экран__картинка { order: -1; aspect-ratio: 4 / 5; margin: calc(-.6 * var(--отступ-секции)) calc(-1 * var(--отступ-блока)) -3em; }
-/* Афиша и мозаика: всё по центру в одну колонку. */
-.первый-экран--афиша-с-экраном .первый-экран__текст, .первый-экран--мозаика-роликов .первый-экран__текст { text-align: center; width: min(100%, calc(var(--ширина-колонки) * 1.3)); margin-inline: auto; }
-.первый-экран--афиша-с-экраном .кикер, .первый-экран--мозаика-роликов .кикер, .первый-экран--афиша-с-экраном .первый-экран__действие,
-.первый-экран--мозаика-роликов .первый-экран__действие { justify-content: center; }
-.первый-экран--афиша-с-экраном .кикер::before, .первый-экран--мозаика-роликов .кикер::before { display: none; }
-.первый-экран--афиша-с-экраном .первый-экран__доверие, .первый-экран--мозаика-роликов .первый-экран__доверие { justify-content: center; }
-.первый-экран--афиша-с-экраном h1, .первый-экран--мозаика-роликов h1 { font-size: calc(var(--кегль-h1) * .9); line-height: 1; }
-.первый-экран--афиша-с-экраном .лид, .первый-экран--мозаика-роликов .лид { margin-inline: auto; }
-.первый-экран--афиша-с-экраном .цифры { display: flex; flex-wrap: wrap; justify-content: center; }
-.картинка--мокап { width: min(100%, 28em); margin-inline: auto; }   /* окно целиком в первом окне ноутбука 1440×900: шире — низ уезжает за сгиб */
-.пара { display: grid; gap: var(--отступ-блока); }
-.пара > :only-child { grid-column: 1 / -1; }   /* финал без таймера: текст на всю ширину, а не пустая половина */
 
-/* ── Атмосфера: пятна, сетка, зерно ── */
+/* ── Деталь «ячейка»: уже была правильной (радиус, тень, точка на цифре — на нужных токенах) под
+   именем `.бенто__ячейка` — раскладка самой плитки бенто (сколько колонок, где картинка и цифры) —
+   в стили-первый-экран.css, это только облик одной ячейки. */
+.бенто__ячейка { position: relative; padding: var(--отступ-блока); border-radius: var(--радиус-плитки, var(--радиус)); background: var(--цвет-фон-карточки); color: var(--цвет-текст);
+  border: 1px solid var(--цвет-линия); box-shadow: var(--тень); transition: transform var(--длительность) var(--плавность), box-shadow var(--длительность) var(--плавность); }
+.бенто__ячейка:hover { transform: translateY(-3px); box-shadow: var(--тень-чип, var(--тень)); }
+.бенто__ячейка.тёмный { background: var(--цвет-тёмный-фон); color: var(--цвет-тёмный-текст); border-color: transparent; }
+/* Задача 1, правка 6: золотая точка в углу ячейки — макет держит её на каждой цифре бенто. */
+.бенто .цифра::before { content: ""; position: absolute; top: .6em; right: .6em; width: .5em; height: .5em; border-radius: 50%; background: var(--цвет-тёплый, var(--цвет-акцент-тёмный)); }
+
+/* ── Атмосфера: пятна, сетка, зерно — декоратор любой секции (`data-атмосфера`, не только первого
+   экрана), ставит собрать.py классом `фон--пятна`/`фон--сетка`/`фон--зерно` на секцию. ── */
 .фон--пятна::before, .фон--пятна::after { content: ""; position: absolute; width: 60%; aspect-ratio: 1;
   border-radius: 50%; pointer-events: none; filter: blur(2em); opacity: .55;
-  background: radial-gradient(circle, color-mix(in srgb, var(--цвет-акцент) 45%, transparent), transparent 70%); }
+  background: radial-gradient(circle, color-mix(in srgb, var(--цвет-акцент) 45%, transparent), transparent 70%);
+  animation: дрейф 28s ease-in-out infinite alternate; }
+.фон--пятна::after { animation-delay: -9s; }
 .фон--пятна::before { top: -20%; left: -15%; }  .фон--пятна::after { bottom: -25%; right: -10%; opacity: .35; }
 /* Задача 1, правка 6: пятна на светлой секции — тёплый лист (макет rgba(216,193,156,.55)), не красные
    круги; на тёмной секции акцент остаётся (не трогаем — это отдельная, ещё не вынесенная правка). */
@@ -543,9 +448,6 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
   .липкая-кнопка .кнопка { width: 100%; min-height: 3.375rem; font-size: 1rem; }
   /* Решение 11: снизу ещё и safe-area, иначе на iPhone подвал прячется под панелью. */
   body.с-липкой-кнопкой { padding-bottom: calc(5em + env(safe-area-inset-bottom)); }
-  /* Сцена прижимает текст к низу окна — без этого отступа её кнопки встают ровно под липкую. */
-  body.с-липкой-кнопкой .первый-экран--сцена, body.с-липкой-кнопкой .первый-экран--живая-сцена,
-  body.с-липкой-кнопкой .первый-экран--живая-обложка { padding-bottom: calc(var(--отступ-секции) * .7 + 5em + env(safe-area-inset-bottom)); }
 }
 
 /* ── Планшет: карточки в две колонки, а не столбиком ── */
@@ -553,108 +455,47 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
   .карточки { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-/* ── Компьютер: те же блоки в несколько колонок ── */
+/* ── Компьютер: база — карточки, цифры, детали (шапка, чип, хвост, остров), пара, таймер ── */
 @media (min-width: 900px) {
   .карточки { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .карточки--две { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .цифры { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .блок--первый-экран .список-иконок { gap: .65em; }
   .блок--первый-экран h1 .хвост { display: inline; margin-top: 0; }   /* задача 5: на компьютере хвост продолжает предложение, как в разворот/бенто */
   .шапка { padding: 0 3.5em; gap: .75em; }
   .шапка__лого { font-size: 1em; gap: .625em; }  .шапка__лого img { width: 2em; height: 2em; }
   .шапка__лиц { font-size: .8125em; max-width: none; }  .шапка__лиц .полн { display: inline; }
   .чип { font-size: .875em; }
   .пара { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: calc(var(--отступ-блока) * 2.5); align-items: center; }
-  .первый-экран__действие .кнопка { flex: 0 0 auto; }
-  .первый-экран__картинка { margin-top: 0; }
-  .сторона--слева .первый-экран__текст { order: 2; }
-  .первый-экран--афиша-с-экраном h1 { font-size: calc(var(--кегль-h1) * .8); }   /* заголовок ниже — окно с экраном выше сгиба */
-  .первый-экран--разворот .блок__внутри, .первый-экран--орбита .блок__внутри, .первый-экран--живой-портрет .блок__внутри,
-  .первый-экран--товар-крупно .блок__внутри { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
-    gap: calc(var(--отступ-блока) * 2.5); align-items: center; }
-  .первый-экран--орбита .первый-экран__текст, .первый-экран--живой-портрет .первый-экран__текст { display: block; }
-  .первый-экран--разворот .блок__внутри { align-items: stretch; }
-  /* Фото разворота тянется до края окна и тает в сторону текста; сверху и снизу — на те же доли отступа секции. */
-  .первый-экран--разворот .первый-экран__картинка { order: 0; aspect-ratio: auto; min-height: 100%;
-    margin: calc(-.6 * var(--отступ-секции)) calc(-1 * max(var(--отступ-блока), (100vw - var(--ширина)) / 2)) calc(-.7 * var(--отступ-секции)) 0; }
-  .первый-экран--разворот .картинка--край img { mask-image: linear-gradient(to left, black 55%, transparent); -webkit-mask-image: linear-gradient(to left, black 55%, transparent); }
-  .сторона--слева.первый-экран--разворот .первый-экран__картинка { margin-right: 0; margin-left: calc(-1 * max(var(--отступ-блока), (100vw - var(--ширина)) / 2)); }
-  .сторона--слева.первый-экран--разворот .картинка--край img { mask-image: linear-gradient(to right, black 55%, transparent); -webkit-mask-image: linear-gradient(to right, black 55%, transparent); }
-  /* Сцена, живая сцена и живая обложка: текст в левой колонке, затемнение слева; зум — только здесь (телефон без scale). */
-  .первый-экран--сцена .блок__внутри, .первый-экран--живая-сцена .блок__внутри, .первый-экран--живая-обложка .блок__внутри { display: grid; grid-template-columns: minmax(0, .55fr) minmax(0, .45fr); }
-  /* Сцена на компьютере: кадр шире окна на 28 % и отодвинут от стороны текста на 12 % — лицо (обычно в центре кадра) уходит на ~75 % ширины,
-     за край затемнения (0 % на 68 %); при 100 % оно стояло под заголовком, при 128 % без сдвига лид ложился на светлую одежду (ревью T6). */
-  .картинка--сцена img, .картинка--видео video, .картинка--видео img, .картинка--видео-с-голосом video, .картинка--видео-с-голосом img { width: 128%; max-width: none; margin-left: 12%; }
-  .картинка--сцена img { animation: зум 30s ease-in-out infinite alternate; }
-  .картинка--сцена::after, .картинка--видео::after, .картинка--видео-с-голосом::after { background: linear-gradient(to right, var(--цвет-тёмный-фон) 44%,
-    color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent) 56%, transparent 68%); }
-  .сторона--слева .картинка--сцена img, .сторона--слева .картинка--видео video, .сторона--слева .картинка--видео img,
-  .сторона--слева .картинка--видео-с-голосом video, .сторона--слева .картинка--видео-с-голосом img { margin-left: -40%; }
-  .сторона--слева .картинка--сцена::after, .сторона--слева .картинка--видео::after, .сторона--слева .картинка--видео-с-голосом::after { background: linear-gradient(to left, var(--цвет-тёмный-фон) 44%,
-    color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent) 56%, transparent 68%); }
-  .сторона--слева.первый-экран--сцена .первый-экран__текст, .сторона--слева.первый-экран--живая-сцена .первый-экран__текст,
-  .сторона--слева.первый-экран--живая-обложка .первый-экран__текст { grid-column: 2; }
-  /* Кнопка звука на компьютере: правый низ — лицо всегда в верхней части кадра (data-лицо), а после сдвига кадра на 12 % правый верх лёг
-     на волосы (ревью T6); подпись в две строки до 17em. */
-  .звук-блок { right: 3.5em; top: auto; bottom: 3.5em; gap: .6em; }
-  .звук { height: 3.5rem; padding: 0 1.6em 0 1.25em; letter-spacing: .01em; }
-  .звук__почему { font-size: calc(var(--кегль-текст) * .875); white-space: normal; max-width: 17em; text-align: right; border-radius: var(--радиус); align-items: flex-start; }
-  .звук__почему::before { margin-top: .35em; flex: none; }
-  .звук__почему-длинно { display: inline; }  .звук__почему-коротко { display: none; }
-  .сторона--слева .звук-блок { right: auto; left: 3.5em; justify-items: start; }  .сторона--слева .звук__почему { text-align: left; }
-  /* Орбита: фигура посередине квадрата (макушка чуть выше него), спутники по углам поверх колец; плашка «живой портрет» — под квадратом,
-     не на карточке. */
-  .орбита { display: block; position: relative; aspect-ratio: 1; }
-  .орбита .первый-экран__картинка { position: absolute; inset: -6% 10% 0; width: auto; aspect-ratio: auto; margin: 0; order: 0; }
-  .орбита__спутник { position: absolute; width: 38%; margin: 0; }
-  .орбита .живое { top: auto; bottom: -2.4em; left: 50%; translate: -50% 0; }
-  .орбита__спутник:nth-child(1 of .орбита__спутник) { top: 4%; left: 0; }  .орбита__спутник:nth-child(2 of .орбита__спутник) { top: 4%; right: 0; }
-  .орбита__спутник:nth-child(3 of .орбита__спутник) { bottom: 4%; left: 0; }  .орбита__спутник:nth-child(4 of .орбита__спутник) { bottom: 4%; right: 0; }
-  /* Товар: рамка крупнее, бейджи парят по краям рамки. */
-  .картинка--товар { width: min(100%, 22em); }
-  .картинка__бейдж { position: absolute; z-index: 2; margin: 0; }
-  .картинка__бейдж:nth-of-type(1) { top: 14%; left: -14%; }  .картинка__бейдж:nth-of-type(2) { top: 46%; right: -16%; }
-  .картинка__бейдж:nth-of-type(3) { bottom: 12%; left: -10%; }
-  /* Бенто 12 колонок: текст 1–8 в две строки, картинка 8–11, цифры 11–13 по строке, пункты — третья строка. */
-  .бенто { grid-template-columns: repeat(12, minmax(0, 1fr)); grid-auto-rows: minmax(8em, auto); }
-  .бенто__ячейка--главная { grid-column: 1 / 8; grid-row: 1 / 3; padding: calc(var(--отступ-блока) * 1.5); }  .бенто__ячейка--главная h1 { font-size: var(--кегль-h1); }
-  .бенто .картинка { grid-column: 8 / 11; grid-row: 1 / 3; aspect-ratio: auto; order: 0; }
-  .бенто .цифра { grid-column: 11 / 13; }
-  .бенто .цифра:nth-child(1) { grid-row: 1; }  .бенто .цифра:nth-child(2) { grid-row: 2; }  .бенто .цифра:nth-child(3) { grid-row: 3; }
-  .бенто__ячейка--пункты { grid-column: 1 / 11; grid-row: 3; }
-  .бенто__ячейка--пункты .список-иконок { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; }
-  /* Центр: секция во всё окно; заголовок во всю ширину, под ним сетка «колонка 32 % · фигура · колонка 32 %»: колонки идут в потоке сразу под
-     заголовком (h1 в три строки их не задевает), фигура — от макушки до низа секции; колонки не тянутся по высоте, иначе карточки распухают. */
-  .первый-экран--центр { display: grid; min-height: 100svh; }
-  .первый-экран--центр .блок__внутри { grid-template-columns: 32% minmax(0, 1fr) 32%; grid-template-rows: auto 1fr; min-height: 40em; }
-  .центр__верх { grid-column: 1 / -1; width: min(100%, calc(var(--ширина-колонки) * 2)); margin-inline: auto; }
-  .первый-экран--центр .первый-экран__картинка { grid-column: 2; grid-row: 2; width: auto; aspect-ratio: auto; margin: 0 0 calc(-.7 * var(--отступ-секции)); }
-  .центр__бок { grid-row: 2; align-self: start; }  .центр__бок--лево { display: grid; grid-column: 1; }  .центр__бок--право { grid-column: 3; }
-  /* Мозаика: лента плывёт влево, дубли включены, чётные рамки ниже; под курсором — пауза. */
-  .ряд-роликов { mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent); }
-  .ряд-роликов__лента { display: flex; width: max-content; gap: 0; animation: дрейф-ленты 30s linear infinite; }
-  .ряд-роликов:hover .ряд-роликов__лента { animation-play-state: paused; }
-  .ряд-роликов .рамка-телефона, .ряд-роликов .рамка-телефона--дубль, .ряд-роликов .рамка-телефона:nth-child(n + 5) { display: block; width: 13em; margin-right: var(--отступ-блока); }
-  .ряд-роликов .рамка-телефона:nth-child(even) { transform: translateY(1.2em); }
-  /* Главная карточка тарифа приподнята над соседями: top, а не transform — не сбрасывается на :hover и при reduced-motion. */
   .карточка--главная { top: -.75em; box-shadow: var(--тень-глубокая); }
   .таймер__ячейка { min-width: 4.4em; }
+  /* Задача 6, хвост от задачи 5 фикс-раунд 1 п.4: мозаика на компьютере крупнее — 62×18 → 76×22
+     (радиус и отступ не меняются, макет вариант-10 держит только рост острова). */
+  .рамка-телефона__экран::before, .остров { width: 4.75em; height: 1.375em; }
 }
 
+@keyframes пульс-кнопки {
+  0%   { box-shadow: var(--тень-глубокая), 0 0 0 0 color-mix(in srgb, var(--цвет-акцент) 45%, transparent); }
+  70%  { box-shadow: var(--тень-глубокая), 0 0 0 .8em color-mix(in srgb, var(--цвет-акцент) 0%, transparent); }
+  100% { box-shadow: var(--тень-глубокая), 0 0 0 0 color-mix(in srgb, var(--цвет-акцент) 0%, transparent); }
+}
+@keyframes вращение { to { rotate: 360deg; } }
+@keyframes парение { 50% { transform: translateY(-.5em); } }
+@keyframes дрейф { 0% { translate: 0 0; scale: 1; } 50% { translate: 4% -5%; scale: 1.08; } 100% { translate: -3% 4%; scale: .96; } }
+@keyframes мерцание { 50% { opacity: .3; } }
+@keyframes дыхание { 50% { transform: translateY(-.5em); } }
+@keyframes бег { to { transform: translateX(-50%); } }
 @keyframes зум { to { scale: 1.06; } }
 @keyframes дрейф-ленты { to { transform: translateX(-50%); } }
 
 /* Всё, что движется в этом файле, здесь выключается: пульс (три селектора), переходы кнопки, карточки и
-   плюсика вопроса, подъём под курсором. Новую анимацию или transition — сразу добавлять и сюда. */
+   плюсика вопроса, подъём под курсором. Схемные детали (опора, кольцо, окно, звук, лента роликов, лента
+   бегущей строки, зум сцены, живое) выключаются в стили-первый-экран.css своим же блоком. Новую анимацию
+   или transition — сразу добавлять сюда же (или туда, если она схемная). */
 @media (prefers-reduced-motion: reduce) {
   .кнопка--пульс { animation: none; }  .кнопка, .карточка { transition: none; }
   .кнопка--главная:hover, .карточка:hover { transform: none; }
   .первый-экран__действие .кнопка--главная, .липкая-кнопка .кнопка--главная { animation: none; }
   .вопрос > summary::after { transition: none; }
-  .парит, .опора, .кольцо, .окно, .бегущая-строка__лента, .ряд-роликов__лента, .картинка--сцена img, .живое::before,
-  .фон--пятна::before, .фон--пятна::after, .звук, .звук__почему::before,
-  .пятно, .нода, .плей { animation: none; }
-  .бенто__ячейка, .звук { transition: none; }  .бенто__ячейка:hover, .звук:hover { transform: none; }
-  /* Живая сцена без движения: видео не запускаем и не показываем, стоит постер, кнопка звука не нужна. */
-  .картинка--видео-с-голосом video, .звук-блок { display: none; }  .картинка--видео-с-голосом img { display: block; }
+  .парит, .фон--пятна::before, .фон--пятна::after, .пятно, .нода, .плей { animation: none; }
+  .бенто__ячейка { transition: none; }  .бенто__ячейка:hover { transform: none; }
 }
