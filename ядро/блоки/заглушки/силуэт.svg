@@ -1,7 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" role="img" aria-label="Здесь будет ваша картинка">
-  <rect width="600" height="800" fill="silver"/>
-  <circle cx="300" cy="290" r="120" fill="gray"/>
-  <path d="M60 800 C60 560 170 470 300 470 C430 470 540 560 540 800 Z" fill="gray"/>
-  <text x="300" y="60" text-anchor="middle" font-family="sans-serif" font-size="28" fill="white">Здесь будет ваша картинка</text>
-  <text x="300" y="96" text-anchor="middle" font-family="sans-serif" font-size="22" fill="white">нужно: портрет по грудь, лицо в верхней трети</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" role="img" aria-label="Здесь будет ваша картинка: портрет по грудь, лицо в верхней трети">
+  <circle cx="300" cy="290" r="150" fill="#C7BEB0"/>
+  <path d="M0 800 C0 470 130 340 300 340 C470 340 600 470 600 800 Z" fill="#C7BEB0"/>
 </svg>

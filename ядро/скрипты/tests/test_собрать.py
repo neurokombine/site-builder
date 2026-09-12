@@ -7,6 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(СКРИПТЫ))
 import находки  # noqa: E402
 import собрать  # noqa: E402
+import флаги_дизайна  # noqa: E402
 
 
 class ЧистыеТесты(unittest.TestCase):
@@ -72,6 +73,16 @@ class ЧистыеТесты(unittest.TestCase):
             self.assertTrue((Path(д) / "style.css").exists())
             self.assertTrue((Path(д) / ".nojekyll").exists())
             self.assertIn("Disallow: /", (Path(д) / "robots.txt").read_text(encoding="utf-8"))
+
+    def test_предлоги_защищены_неразрывным_пробелом(self):
+        """Задача 13: экраны образца полны обычной прозы с однобуквенными предлогами — на выходе
+        собрать() их защищает; сырой (непрогнанный) текст того же экрана — ещё нет."""
+        сырой = (ФИКСТУРЫ / "работа-образец" / "экраны" / "01-первый-экран.html").read_text(encoding="utf-8-sig")
+        self.assertGreater(len(флаги_дизайна.висячие_предлоги(сырой)), 0, "фикстура обеднела предлогами — возьми другой экран")
+        with tempfile.TemporaryDirectory() as д:
+            путь, _ = собрать.собрать(ФИКСТУРЫ / "работа-образец", куда=Path(д))
+            html = путь.read_text(encoding="utf-8")
+            self.assertEqual(флаги_дизайна.висячие_предлоги(html), [])
 
     def test_оставшаяся_заглушка_красная(self):
         with tempfile.TemporaryDirectory() as д:
