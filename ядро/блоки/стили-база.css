@@ -135,7 +135,7 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
   padding: .5625em .875em; border-radius: 9em; white-space: nowrap;
   font: 600 var(--кегль-кикер)/1 var(--шрифт-текста); letter-spacing: var(--разрядка-кикера);
   background: var(--цвет-тёмный-фон); color: var(--цвет-тёмный-текст); }
-.кикер .иконка, .кикер svg { width: 1em; height: 1em; flex: none; color: currentColor; }
+.кикер .иконка, .кикер svg { width: 1em; height: 1em; flex: none; color: var(--цвет-тёплый, currentColor); }
 .тёмный .кикер { background: transparent; padding: 0; border: 0; letter-spacing: .06em;
   color: var(--цвет-тёплый, var(--цвет-акцент-тёмный)); }
 /* Фикс-раунд 2 задачи 6, макет: `.кикер::before{width:28px;height:2px;background:тёплый}` (переменная «тёплый») —
@@ -360,8 +360,9 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 
 /* ── Деталь «хвост»: вторая, мельче набранная часть заголовка h1 (задача 5, макет строка 110).
    На телефоне (умолчание) отдельной строкой, на компьютере — продолжает предложение инлайн (média
-   900px ниже). Схема, которой хвост нужен блоком и на компьютере, переопределяет display сама. */
-.блок--первый-экран h1 .хвост { display: block; margin-top: .5em; font-size: .66em; font-weight: 600; line-height: 1.28; letter-spacing: 0; }
+   900px ниже). Схема, которой хвост нужен блоком и на компьютере, переопределяет display сама.
+   Фикс-раунд В: отступ .4em — макетные 8px; `.делитель` (двоеточие/тире) схема-логотип прячет сама. */
+.блок--первый-экран h1 .хвост { display: block; margin-top: .4em; font-size: .66em; font-weight: 600; line-height: 1.28; letter-spacing: 0; }
 
 /* ── Утилита «парит»: лёгкое покачивание, которое схемы навешивают на свои чипы и спутники сами. */
 .парит { animation: парение 8s ease-in-out infinite; }
@@ -509,11 +510,10 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
   .карточки { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .карточки--две { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .цифры { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .блок--первый-экран h1 .хвост { display: inline; margin-top: 0; }   /* задача 5: на компьютере хвост продолжает предложение, как в разворот/бенто */
+  .блок--первый-экран h1 .хвост { display: inline; margin-top: 0; font-size: 1em; }   /* макеты: на компьютере хвост продолжает ту же фразу тем же кеглем, мельче он только на телефоне */
   .шапка { padding: 0 3.5em; gap: .75em; }
   .шапка__лого { font-size: 1em; gap: .625em; }  .шапка__лого img { width: 2em; height: 2em; }
   .шапка__лиц { font-size: .8125em; max-width: none; }   /* «.полн» здесь уже видна по умолчанию (правило выше вне media) — переопределять нечего */
-  .чип { font-size: .875em; }
   .пара { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: calc(var(--отступ-блока) * 2.5); align-items: center; }
   .карточка--главная { top: -.75em; box-shadow: var(--тень-глубокая); }
   .таймер__ячейка { min-width: 4.4em; }
