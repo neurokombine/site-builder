@@ -1,5 +1,5 @@
 """Сборка страницы: дизайн, служебная голова, экраны, связь, заглушки — и показ в двух размерах."""
-import json, subprocess, sys, tempfile, unittest
+import json, re, subprocess, sys, tempfile, unittest
 from pathlib import Path
 СКРИПТЫ = Path(__file__).resolve().parent.parent
 ФИКСТУРЫ = Path(__file__).resolve().parent / "фикстуры"
@@ -69,7 +69,13 @@ class ЧистыеТесты(unittest.TestCase):
             self.assertIn('<body class="с-липкой-кнопкой">', html)   # контракт Д: на телефоне кнопка под пальцем
             self.assertIn('<div class="липкая-кнопка"><a class="кнопка кнопка--главная" href="https://t.me/пример">', html)
             self.assertIn('<svg class="иконка"', html)
-            self.assertNotIn("<script>", html)   # таймера в образце нет — и JS в сайт не уезжает
+            # Фикс-раунд К изменил здесь правило: скрипт на странице ровно один и всегда — поправка
+            # кеглей по очку гарнитуры (её человек несёт любую, и «текст читается» — обещание всей
+            # страницы). Всё остальное по-прежнему по признаку в разметке: таймера в образце нет,
+            # видео и кнопки звука тоже — значит, второго <script> в сайт не уезжает.
+            self.assertEqual(html.count("<script>"), 1)
+            self.assertIn("data-поправка", html)
+            self.assertNotIn("data-дедлайн", html)
             self.assertTrue((Path(д) / "style.css").exists())
             self.assertTrue((Path(д) / ".nojekyll").exists())
             self.assertIn("Disallow: /", (Path(д) / "robots.txt").read_text(encoding="utf-8"))
@@ -496,6 +502,51 @@ class ДизайнV2Тесты(unittest.TestCase):
             _, н = собрать.собрать(работа)
             self.assertIn(находки.ЧИНИТЬ, [x["уровень"] for x in н], н)
             self.assertNotIn("В дизайн.md поле не заполнено", [x["что"] for x in н], н)
+
+
+class ОчкоГарнитуры(unittest.TestCase):
+    """Фикс-раунд К: поправка кеглей по очку гарнитуры едет в голове каждой страницы, а подменённую
+    гарнитуру сборка называет вслух."""
+
+    ОЧКО_JS = собрать.ОЧКО_JS.read_text(encoding="utf-8")
+
+    def test_скрипт_в_голове_каждой_страницы(self):
+        поиск = {"заголовок": "Проба", "описание": "", "статус": "закрыт"}
+        страница = собрать.собрать_страницу(собрать.КАРКАС.read_text(encoding="utf-8"), ":root{}", ["<main></main>"], поиск, "")
+        self.assertNotIn("{{ОЧКО}}", страница)
+        self.assertIn("data-поправка", страница)
+        # до первой буквы на экране: скрипт стоит в <head>, за <style> с токенами
+        голова = страница.split("</head>")[0]
+        self.assertIn("data-поправка", голова)
+        self.assertLess(голова.index("</style>"), голова.index("data-поправка"))
+
+    def test_поправку_получают_только_текстовые_кегли(self):
+        """Заголовок, подзаголовок и цифра держат раскладку — их кегль не трогаем ни при какой гарнитуре."""
+        имена = re.findall(r'"(--кегль-[\w-]+)"', self.ОЧКО_JS)
+        self.assertEqual(sorted(имена), ["--кегль-кикер", "--кегль-лид", "--кегль-мелкий", "--кегль-текст"])
+        for чужое in ("--кегль-h1", "--кегль-h2", "--кегль-цифра"):
+            self.assertNotIn(чужое, self.ОЧКО_JS, чужое)
+
+    def test_вниз_кегли_не_двигаем_и_телефон_не_трогаем(self):
+        self.assertIn("Math.max(1,", self.ОЧКО_JS)          # поправка никогда не меньше единицы
+        self.assertIn("(min-width: 900px)", self.ОЧКО_JS)   # и только на компьютере
+        self.assertIn("0.535", self.ОЧКО_JS)                # эталон — очко Open Sans
+
+    def test_подменённую_гарнитуру_называем_вслух(self):
+        профиль = {"шрифты": {"заголовки": "Montserrat", "текст": "Open Sans"}}
+        своё = ":root{--шрифт-заголовков: Montserrat, system-ui; --шрифт-текста: 'Open Sans', system-ui;}"
+        self.assertIsNone(собрать._подменённый_шрифт(своё, профиль))
+        чужое = ":root{--шрифт-заголовков: Jost, system-ui; --шрифт-текста: Jost, system-ui;}"
+        н = собрать._подменённый_шрифт(чужое, профиль)
+        self.assertEqual(н["уровень"], находки.К_СВЕДЕНИЮ)
+        self.assertEqual(len(н["строки"]), 2)
+        self.assertIn("профиль просит «Open Sans»", н["строки"][1])
+        self.assertIn("«Jost»", н["строки"][1])
+        # нет профиля или нет в нём шрифтов — молчим, а не гадаем
+        self.assertIsNone(собрать._подменённый_шрифт(чужое, None))
+        self.assertIsNone(собрать._подменённый_шрифт(чужое, {"палитра": {}}))
+        # пустое имя в профиле сверять не с чем
+        self.assertIsNone(собрать._подменённый_шрифт(чужое, {"шрифты": {"заголовки": "", "текст": ""}}))
 
 
 class КадрПодСхемуТесты(unittest.TestCase):

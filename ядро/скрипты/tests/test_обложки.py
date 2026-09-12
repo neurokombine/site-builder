@@ -194,7 +194,7 @@ class ВБраузере(unittest.TestCase):
                 self.assertIn(f"{номер} · {схема}", текст)
                 self.assertIn(f"обложка-{схема}/index.html", текст)
             живая = (Path(д) / "витрина" / "обложка-живая-сцена" / "index.html").read_text(encoding="utf-8")
-            self.assertEqual(живая.count("<script>"), 2)                       # обложка.js + звук.js
+            self.assertEqual(живая.count("<script>"), 3)                       # очко.js (в каждой странице) + обложка.js + звук.js
             self.assertIn("рекомендую", текст)
             self.assertIn("номер · сторона", текст)
             self.assertIn("слева", текст.split("Что ответить")[1])
