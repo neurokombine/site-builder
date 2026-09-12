@@ -457,7 +457,7 @@ a { color: var(--цвет-акцент); text-underline-offset: .15em; }
    именем `.бенто__ячейка` — раскладка самой плитки бенто (сколько колонок, где картинка и цифры) —
    в стили-первый-экран.css, это только облик одной ячейки. */
 .бенто__ячейка { position: relative; padding: var(--отступ-блока); border-radius: var(--радиус-плитки, var(--радиус)); background: var(--цвет-фон-карточки); color: var(--цвет-текст);
-  border: 1px solid var(--цвет-линия); box-shadow: var(--тень); transition: transform var(--длительность) var(--плавность), box-shadow var(--длительность) var(--плавность); }
+  border: 1px solid var(--цвет-линия); box-shadow: var(--тень); overflow: hidden; transition: transform var(--длительность) var(--плавность), box-shadow var(--длительность) var(--плавность); }
 .бенто__ячейка:hover { transform: translateY(-3px); box-shadow: var(--тень-чип, var(--тень)); }
 .бенто__ячейка.тёмный { background: var(--цвет-тёмный-фон); color: var(--цвет-тёмный-текст); border-color: transparent; }
 /* Задача 1, правка 6: золотая точка в углу ячейки — макет держит её на каждой цифре бенто. */
