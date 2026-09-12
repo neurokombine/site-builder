@@ -168,14 +168,14 @@
      ширины и тянули дымку до 68 % — кадр «задушен» почти до середины экрана. Макеты у обеих свои:
      живая сцена (вариант-3б:112) держит ровно остановки сцены, живая обложка (вариант-8:101) —
      свои, с лёгкой дымкой у правой кромки и дополнительной подложкой снизу под текст. */
-  .картинка--сцена::after, .картинка--видео-с-голосом::after { background: linear-gradient(to right, color-mix(in srgb, var(--цвет-тёмный-фон) 96%, transparent) 0%,
-    color-mix(in srgb, var(--цвет-тёмный-фон) 90%, transparent) 30%, color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent) 43%, transparent 52%); }
-  .картинка--видео::after { background: linear-gradient(to right, color-mix(in srgb, var(--цвет-тёмный-фон) 97%, transparent) 0%,
-      color-mix(in srgb, var(--цвет-тёмный-фон) 90%, transparent) 26%, color-mix(in srgb, var(--цвет-тёмный-фон) 50%, transparent) 48%,
-      color-mix(in srgb, var(--цвет-тёмный-фон) 8%, transparent) 70%, color-mix(in srgb, var(--цвет-тёмный-фон) 28%, transparent) 100%),
-    linear-gradient(to top, color-mix(in srgb, var(--цвет-тёмный-фон) 75%, transparent), transparent 40%); }
+  .картинка--сцена::after, .картинка--видео-с-голосом::after { background: linear-gradient(to right, color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 96%, transparent) 0%,
+    color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 90%, transparent) 30%, color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 55%, transparent) 43%, transparent 52%); }
+  .картинка--видео::after { background: linear-gradient(to right, color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 97%, transparent) 0%,
+      color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 90%, transparent) 26%, color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 50%, transparent) 48%,
+      color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 8%, transparent) 70%, color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 28%, transparent) 100%),
+    linear-gradient(to top, color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 75%, transparent), transparent 40%); }
   .картинка--сцена::before, .картинка--видео::before, .картинка--видео-с-голосом::before {
-    background: linear-gradient(to right, var(--цвет-тёмный-фон) 52%, transparent 66%); }
+    background: linear-gradient(to right, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 52%, transparent 66%); }
   .первый-экран--сцена h1 { font-size: clamp(2.75rem, 4vw, 3.625rem); }   /* задача 6, макет строка 97: clamp(44px,4vw,58px) — токен clamp(30,5vw,48) не годится, три числа независимы */
   /* Фикс-раунд 1, макет строка 96: отступ сверху текста сцены на компьютере — плоские 96px, у нас
      было `--отступ-секции * 2.2` (до ~158px на верхнем конце вилки) — лишние ~60px топили строку
@@ -190,14 +190,14 @@
      пара. Живой сцене/обложке слева тем же приёмом зеркалим 65% в 35% (100−65): margin-left=−29%. */
   .сторона--слева.первый-экран--живая-сцена .картинка--видео-с-голосом video, .сторона--слева.первый-экран--живая-сцена .картинка--видео-с-голосом img,
   .сторона--слева.первый-экран--живая-обложка .картинка--видео video, .сторона--слева.первый-экран--живая-обложка .картинка--видео img { margin-left: -29%; }
-  .сторона--слева .картинка--сцена::after, .сторона--слева .картинка--видео-с-голосом::after { background: linear-gradient(to left, color-mix(in srgb, var(--цвет-тёмный-фон) 96%, transparent) 0%,
-    color-mix(in srgb, var(--цвет-тёмный-фон) 90%, transparent) 30%, color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent) 43%, transparent 52%); }
-  .сторона--слева .картинка--видео::after { background: linear-gradient(to left, color-mix(in srgb, var(--цвет-тёмный-фон) 97%, transparent) 0%,
-      color-mix(in srgb, var(--цвет-тёмный-фон) 90%, transparent) 26%, color-mix(in srgb, var(--цвет-тёмный-фон) 50%, transparent) 48%,
-      color-mix(in srgb, var(--цвет-тёмный-фон) 8%, transparent) 70%, color-mix(in srgb, var(--цвет-тёмный-фон) 28%, transparent) 100%),
-    linear-gradient(to top, color-mix(in srgb, var(--цвет-тёмный-фон) 75%, transparent), transparent 40%); }
+  .сторона--слева .картинка--сцена::after, .сторона--слева .картинка--видео-с-голосом::after { background: linear-gradient(to left, color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 96%, transparent) 0%,
+    color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 90%, transparent) 30%, color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 55%, transparent) 43%, transparent 52%); }
+  .сторона--слева .картинка--видео::after { background: linear-gradient(to left, color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 97%, transparent) 0%,
+      color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 90%, transparent) 26%, color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 50%, transparent) 48%,
+      color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 8%, transparent) 70%, color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 28%, transparent) 100%),
+    linear-gradient(to top, color-mix(in srgb, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 75%, transparent), transparent 40%); }
   .сторона--слева .картинка--сцена::before, .сторона--слева .картинка--видео::before, .сторона--слева .картинка--видео-с-голосом::before {
-    background: linear-gradient(to left, var(--цвет-тёмный-фон) 52%, transparent 66%); }
+    background: linear-gradient(to left, var(--вуаль-ключа, var(--цвет-тёмный-фон)) 52%, transparent 66%); }
   .сторона--слева.первый-экран--сцена .первый-экран__текст, .сторона--слева.первый-экран--живая-сцена .первый-экран__текст,
   .сторона--слева.первый-экран--живая-обложка .первый-экран__текст { grid-column: 2; }
   .сторона--слева.первый-экран--сцена .первый-экран__регалии, .сторона--слева.первый-экран--живая-сцена .первый-экран__регалии,
