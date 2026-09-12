@@ -1,4 +1,4 @@
-.PHONY: setup check profile research look proto-check showcase build image verify publish clean
+.PHONY: setup check profile research look proto-check showcase build refresh image verify publish clean
 
 setup:          ## разовая установка окружения: питон, зависимости, браузер
 	bash ядро/скрипты/setup.sh
@@ -31,6 +31,12 @@ showcase:       ## витрина вариантов: make showcase WORK=сай�
 build:          ## собрать и показать: make build WORK=сайты/моё-дело [SCREEN=1]
 	@test -n "$(WORK)" || { echo "Укажите папку работы: make build WORK=сайты/моё-дело [SCREEN=1]"; exit 2; }
 	.venv/bin/python ядро/скрипты/собрать.py $(WORK) $(if $(SCREEN),--экран $(SCREEN))
+
+## После обновления системы: экраны сайта — ваши копии, ядро их не переписывает молча.
+## Без GO=1 — сухой прогон: покажет, что появится и что исчезнет, файла не тронет.
+refresh:        ## переложить первый экран по свежей заготовке: make refresh WORK=сайты/моё-дело [GO=1]
+	@test -n "$(WORK)" || { echo "Укажите папку работы: make refresh WORK=сайты/моё-дело [GO=1]"; exit 2; }
+	.venv/bin/python ядро/скрипты/обновить_экран.py $(WORK) $(if $(GO),--перезаложим)
 
 image:          ## вставить и сжать картинку: make image FILE=фото.jpg WORK=сайты/моё-дело
 	@test -n "$(WORK)" || { echo "Укажите папку работы: make image FILE=фото.jpg WORK=сайты/моё-дело"; exit 2; }
