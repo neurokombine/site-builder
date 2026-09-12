@@ -199,6 +199,38 @@ class ВБраузере(unittest.TestCase):
             self.assertIn("номер · сторона", текст)
             self.assertIn("слева", текст.split("Что ответить")[1])
 
+    def test_ничего_не_уезжает_под_липкую_кнопку(self):
+        """Приёмка фикса И: липкая панель прибита к низу ОКНА и закрывает нижние ~80 px на любой
+        прокрутке, а первый экран у восьми схем выше окна телефона. Резерв под панель держит вся
+        семья первого экрана, а не три схемы с текстом у нижней кромки: у разворота под панель
+        уезжали «Ближайший старт» и строка лицензии, у мозаики и афиши — бегущая строка."""
+        СЧИТАЕМ = """() => {
+            const s = document.querySelector('section.блок--первый-экран');
+            const кн = document.querySelector('.липкая-кнопка');
+            if (!кн) return ['липкой кнопки нет'];
+            window.scrollTo(0, Math.max(0, s.getBoundingClientRect().height - window.innerHeight));
+            const кромка = кн.getBoundingClientRect().top, под = [];
+            s.querySelectorAll('*').forEach(e => {
+                if (e.children.length) return;
+                const b = e.getBoundingClientRect(), т = (e.textContent || '').trim();
+                if (!т || !b.height) return;
+                if (b.bottom > кромка + 1) под.push(т.slice(0, 30));
+            });
+            return под; }"""
+        with tempfile.TemporaryDirectory() as д:
+            работа = _скопировать_образец(Path(д))
+            обложки.обложки(работа, куда=Path(д) / "каталог", браузер=self.браузер, каталог=True)
+            контекст = self.браузер.new_context(**глаза.РАЗМЕРЫ["телефон"])
+            try:
+                for папка in sorted((Path(д) / "каталог").glob("обложка-*")):
+                    страница = контекст.new_page()
+                    страница.goto((папка / "index.html").as_uri())
+                    страница.wait_for_timeout(150)
+                    self.assertEqual(страница.evaluate(СЧИТАЕМ), [], f"{папка.name}: уехало под липкую кнопку")
+                    страница.close()
+            finally:
+                контекст.close()
+
     def test_каталог_без_копий_медиа(self):
         with tempfile.TemporaryDirectory() as д:
             работа = _скопировать_образец(Path(д))
