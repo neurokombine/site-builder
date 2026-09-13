@@ -194,10 +194,15 @@ class ВБраузере(unittest.TestCase):
                 self.assertIn(f"{номер} · {схема}", текст)
                 self.assertIn(f"обложка-{схема}/index.html", текст)
             живая = (Path(д) / "витрина" / "обложка-живая-сцена" / "index.html").read_text(encoding="utf-8")
-            self.assertEqual(живая.count("<script>"), 3)                       # очко.js (в каждой странице) + обложка.js + звук.js
+            self.assertEqual(живая.count("<script>"), 4)                       # очко.js (в каждой странице) + липкая.js (с панелью) + обложка.js + звук.js
             self.assertIn("рекомендую", текст)
             self.assertIn("номер · сторона", текст)
             self.assertIn("слева", текст.split("Что ответить")[1])
+
+    # Кромку панели считаем от её ВЫСОТЫ, а не от нынешнего `top`: с фикса Н панель спит, пока
+    # главная кнопка на виду, и уехала бы вниз за окно — сторож стал бы мерить пустоту и молчать
+    # о чём угодно. Меряем там, где панель стоит, КОГДА она проснулась.
+    КРОМКА_ПАНЕЛИ = """(кн) => window.innerHeight - кн.getBoundingClientRect().height"""
 
     def test_ничего_не_уезжает_под_липкую_кнопку(self):
         """Приёмка фикса И: липкая панель прибита к низу ОКНА и закрывает нижние ~80 px на любой
@@ -209,7 +214,7 @@ class ВБраузере(unittest.TestCase):
             const кн = document.querySelector('.липкая-кнопка');
             if (!кн) return ['липкой кнопки нет'];
             window.scrollTo(0, Math.max(0, s.getBoundingClientRect().height - window.innerHeight));
-            const кромка = кн.getBoundingClientRect().top, под = [];
+            const кромка = window.innerHeight - кн.getBoundingClientRect().height, под = [];
             s.querySelectorAll('*').forEach(e => {
                 if (e.children.length) return;
                 const b = e.getBoundingClientRect(), т = (e.textContent || '').trim();
@@ -228,6 +233,65 @@ class ВБраузере(unittest.TestCase):
                     страница.wait_for_timeout(150)
                     self.assertEqual(страница.evaluate(СЧИТАЕМ), [], f"{папка.name}: уехало под липкую кнопку")
                     страница.close()
+            finally:
+                контекст.close()
+
+    def test_в_первом_кадре_панель_спит_и_ничего_не_режет(self):
+        """Фикс-раунд Н, решение владелицы: «пока главная кнопка видна, липкая панель не нужна».
+
+        Сторож фикса И проверял ПРОКРУТКУ и был зелёным, пока в первом же кадре — до всякой
+        прокрутки — панель резала строку пополам у девяти видов каталога из двадцати четырёх.
+        Здесь проверяется именно первый кадр, все схемы в обоих ключах:
+        · панель спит, пока главная кнопка первого экрана в окне, и ничего не перерезано;
+        · кнопка ушла из виду — панель проснулась и стоит на своём месте у низа окна.
+        Обратная сторона (без JS панель видна всегда) — в `test_стили`, по тексту скрипта и стилей.
+        """
+        ПЕРВЫЙ_КАДР = """() => {
+            const s = document.querySelector('section.блок--первый-экран');
+            const п = document.querySelector('.липкая-кнопка');
+            const г = document.querySelector('.первый-экран__действие .кнопка--главная');
+            if (!п || !г) return {беда: 'нет панели или главной кнопки'};
+            window.scrollTo(0, 0);
+            const пб = п.getBoundingClientRect(), гб = г.getBoundingClientRect();
+            const видна = пб.top < window.innerHeight - 1 && parseFloat(getComputedStyle(п).opacity) > .01;
+            const режет = [];
+            if (видна) s.querySelectorAll('*').forEach(e => {
+                if (e.children.length) return;
+                const b = e.getBoundingClientRect(), т = (e.textContent || '').trim();
+                if (т && b.height && b.bottom > пб.top + 1 && b.top < пб.top - 1) режет.push(т.slice(0, 30));
+            });
+            return {видна, режет, кнопка_в_окне: гб.bottom > 0 && гб.top < window.innerHeight}; }"""
+        ПОСЛЕ_УХОДА = """() => {
+            const п = document.querySelector('.липкая-кнопка');
+            const г = document.querySelector('.первый-экран__действие .кнопка--главная');
+            window.scrollTo(0, г.getBoundingClientRect().bottom + window.scrollY + 40);
+            return new Promise(готово => setTimeout(() => {
+                const пб = п.getBoundingClientRect(), гб = г.getBoundingClientRect();
+                готово({кнопка_в_окне: гб.bottom > 0 && гб.top < window.innerHeight,
+                        панель_на_месте: Math.abs(пб.bottom - window.innerHeight) < 2
+                                         && parseFloat(getComputedStyle(п).opacity) > .9});
+            }, 400)); }"""
+        with tempfile.TemporaryDirectory() as д:
+            работа = _скопировать_образец(Path(д))
+            обложки.обложки(работа, куда=Path(д) / "каталог", браузер=self.браузер, каталог=True, снимки=False)
+            контекст = self.браузер.new_context(**глаза.РАЗМЕРЫ["телефон"])
+            проснулась = 0
+            try:
+                for папка in sorted((Path(д) / "каталог").glob("обложка-*")):
+                    страница = контекст.new_page()
+                    страница.goto((папка / "index.html").as_uri())
+                    страница.wait_for_timeout(200)
+                    кадр = страница.evaluate(ПЕРВЫЙ_КАДР)
+                    self.assertNotIn("беда", кадр, папка.name)
+                    self.assertTrue(кадр["кнопка_в_окне"], f"{папка.name}: главной кнопки нет в первом кадре")
+                    self.assertFalse(кадр["видна"], f"{папка.name}: панель не спит в первом кадре")
+                    self.assertEqual(кадр["режет"], [], f"{папка.name}: перерезано панелью в первом кадре")
+                    ушла = страница.evaluate(ПОСЛЕ_УХОДА)
+                    if not ушла["кнопка_в_окне"]:   # у коротких страниц каталога прокрутки не хватает
+                        проснулась += 1
+                        self.assertTrue(ушла["панель_на_месте"], f"{папка.name}: кнопка ушла, а панель не вернулась")
+                    страница.close()
+                self.assertGreater(проснулась, 0, "ни на одной странице кнопка не ушла из виду — проверка пустая")
             finally:
                 контекст.close()
 
