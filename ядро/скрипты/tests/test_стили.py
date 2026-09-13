@@ -682,3 +682,90 @@ class КрупностьНаТелефоне(unittest.TestCase):
         низ, верх = self.обложка.НОРМА_ГОЛОВЫ_НА_ТЕЛЕФОНЕ
         self.assertLess(низ, верх)
         self.assertGreater(верх - низ, .05, "вилка схлопнулась в число — маятник качнётся снова")
+
+
+class ВтораяСсылкаИЛицензия(unittest.TestCase):
+    """Фикс-раунд М — два решения владелицы, которые легко «починить» обратно.
+
+    1. «Тарифы и цены давай строкой, а не кнопкой» — но только на ТЕЛЕФОНЕ. На компьютере вторая
+       кнопка остаётся контурной, как в макете, и правило «кнопка действия всегда контрастная»
+       к ней не относится: оно про главную, а вторая — второстепенный путь и нарочно тише.
+    2. «Поднять до 13 — читаемость важнее»: строка лицензии в шапке набирается 13 px на ОБОИХ
+       размерах, хотя все двенадцать макетов дают ей на телефоне 11. Сознательное отступление —
+       реестр в ядро/дизайн/схемы-обложек.md § 13.
+
+    Мерим в браузере, а не в тексте стилей: кегль собирается из токена профиля, а высоту ряда
+    решает раскладка — по строке CSS этого не видно.
+    """
+    ПОЛ_МЕЛКОГО = 13   # тот же порог, что у сторожа мелкого текста (флаги_дизайна.МЕЛКОЕ_МИН)
+
+    @classmethod
+    def setUpClass(cls):
+        import tempfile
+        from playwright.sync_api import sync_playwright
+        import глаза
+        cls.глаза = глаза
+        cls._временная = tempfile.TemporaryDirectory()
+        cls._playwright = sync_playwright().start()
+        cls.браузер = глаза.запустить_браузер(cls._playwright)
+        токены = собрать.прочитать_дизайн(ROOT / "ядро/скрипты/tests/фикстуры/работа-образец/дизайн.md")["решения"]
+        cls.путь = Path(cls._временная.name) / "index.html"
+        cls.путь.write_text(
+            '<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8">'
+            # Без этой строки телефонный контекст раскладывает страницу в 980 px и ни один
+            # `max-width: 899px` не срабатывает — тест «проходил» бы, меряя компьютерные правила.
+            '<meta name="viewport" content="width=device-width, initial-scale=1"><title>Проба</title>'
+            f"<style>{собрать._склейка_стилей()}\n{токены}</style></head><body>"
+            '<section class="блок блок--первый-экран первый-экран--сцена тёмный" id="экран-1">'
+            '<header class="шапка"><a class="шапка__лого" href="#">Знак</a>'
+            '<span class="шапка__лиц" id="лиц"><span>Образовательная лицензия № Л000-00000-00/00000000</span></span></header>'
+            '<div class="блок__внутри"><div class="первый-экран__текст">'
+            '<div class="первый-экран__действие"><a class="кнопка кнопка--главная" id="главная" href="#">Оставить заявку</a>'
+            '<a class="кнопка кнопка--контур" id="контур" href="#">Тарифы и цены</a></div>'
+            '</div></div></section></body></html>', encoding="utf-8")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.браузер.close()
+        cls._playwright.stop()
+        cls._временная.cleanup()
+
+    def _замер(self, размер: str) -> dict:
+        контекст = self.браузер.new_context(locale="ru-RU", **self.глаза.РАЗМЕРЫ[размер])
+        try:
+            страница = контекст.new_page()
+            страница.goto(self.путь.as_uri())
+            страница.wait_for_timeout(150)
+            return страница.evaluate("""() => {
+                const к = document.getElementById('контур'), г = document.getElementById('главная');
+                const ст = getComputedStyle(к), после = getComputedStyle(к, '::after');
+                return {рамка: parseFloat(ст.borderTopWidth) + parseFloat(ст.borderBottomWidth),
+                        высота: Math.round(к.getBoundingClientRect().height),
+                        главная: Math.round(г.getBoundingClientRect().height),
+                        ниже: к.getBoundingClientRect().top >= г.getBoundingClientRect().bottom,
+                        стрелка: (после.content || '').includes('→'),
+                        тише: parseFloat(ст.opacity) < 1,
+                        лицензия: parseFloat(getComputedStyle(document.getElementById('лиц')).fontSize)};
+            }""")
+        finally:
+            контекст.close()
+
+    def test_на_телефоне_вторая_это_строка_со_стрелкой(self):
+        з = self._замер("телефон")
+        self.assertEqual(з["рамка"], 0, "вторая кнопка на телефоне снова в рамке — решение владелицы отменено")
+        self.assertTrue(з["стрелка"], "у строки «Тарифы и цены» пропала стрелка →")
+        self.assertTrue(з["тише"], "строка звучит вровень с главной кнопкой, а в макете она тише")
+        self.assertTrue(з["ниже"], "главная кнопка на телефоне идёт во всю ширину, строка — под ней")
+        self.assertLess(з["высота"], з["главная"], "строка заняла высоту кнопки — значит осталась кнопкой")
+
+    def test_на_компьютере_вторая_кнопка_осталась_кнопкой(self):
+        з = self._замер("компьютер")
+        self.assertGreater(з["рамка"], 0, "на компьютере вторая кнопка обязана остаться контурной — макет её не менял")
+        self.assertFalse(з["стрелка"], "стрелка строки уехала на компьютер")
+        self.assertEqual(з["высота"], з["главная"], "на компьютере вторая кнопка стоит вровень с главной")
+
+    def test_лицензия_не_мельче_тринадцати_на_обоих_размерах(self):
+        for размер in ("телефон", "компьютер"):
+            with self.subTest(размер):
+                self.assertGreaterEqual(round(self._замер(размер)["лицензия"], 1), self.ПОЛ_МЕЛКОГО,
+                                        "строка лицензии снова мельче 13 — владелица выбрала канон, а не макетные 11")
