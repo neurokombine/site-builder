@@ -139,7 +139,7 @@
     </div>
     <div class="орбита__сцена">
       <span class="опора"></span><span class="кольцо"></span><span class="кольцо кольцо--2"></span>
-      <figure class="картинка картинка--вырез первый-экран__картинка" style="--голова-в-кадре: .152; --макушка-в-кадре: .063"><img src="../../пример-студия/img/portret-vyrez.webp" alt="НейроВидеоСтудия вы научитесь делать видео из ничего" data-лицо="53,13" fetchpriority="high"></figure>
+      <figure class="картинка картинка--вырез первый-экран__картинка" style="--голова-в-кадре: .139; --макушка-в-кадре: .090"><img src="../../пример-студия/img/portret-vyrez-svetlyy.webp" alt="НейроВидеоСтудия вы научитесь делать видео из ничего" data-лицо="51,15" fetchpriority="high"></figure>
       <div class="карточка карточка--стекло спутник с1 парит"><div class="спутник__икон"><svg class="иконка" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
   <rect x="3" y="4" width="18" height="16" rx="2"/>
   <path d="M8 4v16M16 4v16"/>
@@ -183,6 +183,15 @@
   // первого экрана. Поэтому начальное состояние ставим сразу, ещё до первой отрисовки.
   var б = кнопка.getBoundingClientRect();
   пометить(б.bottom > 0 && б.top < (window.innerHeight || 0));
+
+  // ⚡ И только СЛЕДУЮЩИМ кадром разрешаем стилям анимировать панель. Без этого переход честно
+  // проигрывал уезд при каждой загрузке: по умолчанию панель видна (иначе без JS её было бы не
+  // вернуть), а класс сна ложится уже после разбора страницы — зритель успевал увидеть её целиком.
+  // Два кадра, а не один: первый отдаёт браузеру начальное положение на отрисовку, второй включает
+  // переход, когда «до» и «после» уже совпали. Дальше панель ездит плавно, как и задумано.
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () { document.body.classList.add("панель-с-переходом"); });
+  });
 
   new IntersectionObserver(function (записи) {
     пометить(записи[записи.length - 1].isIntersecting);
