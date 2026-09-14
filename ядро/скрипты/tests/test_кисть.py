@@ -4,6 +4,8 @@
 на которой система принимает решения — что считать нарисованной картинкой, когда она готова,
 вошли мы или нет, свой это браузер или чужой, и не завёлся ли где-нибудь путь через API.
 """
+import contextlib
+import io
 import os
 import sys
 import tempfile
@@ -202,9 +204,32 @@ class ЧужиеИСвоиБраузеры(unittest.TestCase):
 
 class ГдеChrome(unittest.TestCase):
     def test_переменная_перебивает_поиск(self):
+        # Ручка старше списка кандидатов — но только если по её пути действительно есть файл.
         путь = кисть.найти_chrome(платформа="linux", окружение={"CHROME_BIN": "/свой/chrome"},
-                                  есть=lambda п: False)
+                                  есть=lambda п: п == "/свой/chrome")
         self.assertEqual(путь, "/свой/chrome")
+
+    def test_путь_из_переменной_проверяется_как_свои_кандидаты(self):
+        # Путь в переменной человек вводит руками и по памяти: взять его на слово — значит
+        # проглотить опечатку и показать зелёную галочку тому, у кого канала нет.
+        with self.assertRaises(кисть.ПутьМимоБраузера) as беда:
+            кисть.найти_chrome(платформа="darwin", окружение={"CHROME_BIN": "/нет/такого"},
+                               есть=lambda п: True if п != "/нет/такого" else False)
+        self.assertEqual(беда.exception.путь, "/нет/такого")
+        self.assertIn("/нет/такого", str(беда.exception))
+
+    def test_опечатка_в_пути_не_ищет_chrome_дальше_по_списку(self):
+        # Иначе человек получил бы «✅ Chrome найден» — но не тот, который он назвал.
+        with self.assertRaises(кисть.ПутьМимоБраузера):
+            кисть.найти_chrome(платформа="darwin", окружение={"CHROME_BIN": "/нет/такого"},
+                               есть=lambda п: п.endswith("Google Chrome"))
+
+    def test_пустая_переменная_за_ручку_не_считается(self):
+        # CHROME_BIN= (или пробелы) — это не «браузер вот здесь», это ничего.
+        for пусто in ("", "   "):
+            путь = кисть.найти_chrome(платформа="linux", окружение={"CHROME_BIN": пусто},
+                                      есть=lambda п: п == "/usr/bin/google-chrome")
+            self.assertEqual(путь, "/usr/bin/google-chrome")
 
     def test_находит_на_маке(self):
         путь = кисть.найти_chrome(
@@ -459,6 +484,159 @@ class ПравилоСвежейМодели(unittest.TestCase):
     def test_оба_написания_пункта_меню(self):
         self.assertIn("Создать изображение", кисть.ПУНКТЫ_РЕЖИМА_КАРТИНКИ)
         self.assertIn("Create image", кисть.ПУНКТЫ_РЕЖИМА_КАРТИНКИ)
+
+
+class ЧетыреСостоянияКанала(unittest.TestCase):
+    """Канала нет · не входили ни разу · вход умер · занято — и пятое, отдельное: сеть.
+
+    Ложный вызов к экрану стоит доверия ко всем следующим, поэтому состояния обязаны
+    различаться не только внутри кода, но и словами, которые видит человек.
+    """
+
+    def setUp(self):
+        self.д = Path(tempfile.mkdtemp())
+        self.профиль = self.д / "профиль-chatgpt"
+        self.журнал = self.д / "чем-рисовали.txt"
+        self.замок = self.д / ".замок"
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.д, ignore_errors=True)
+
+    def состояние(self, найти=lambda: "/путь/к/chrome"):
+        return кисть.состояние_канала(найти=найти, профиль=self.профиль,
+                                      журнал=self.журнал, замок=self.замок)
+
+    def нет_chrome(self):
+        raise кисть.БедаКисти("Не нашёл Google Chrome на этом компьютере.")
+
+    def test_канала_нет_когда_chrome_не_найден(self):
+        self.assertEqual(self.состояние(найти=self.нет_chrome), кисть.НЕТ_БРАУЗЕРА)
+
+    def test_опечатка_в_переменной_это_своё_состояние_а_не_общее_канала_нет(self):
+        def мимо():
+            raise кисть.ПутьМимоБраузера("/нет/такого")
+        self.assertEqual(self.состояние(найти=мимо), кисть.ПУТЬ_МИМО)
+
+    def test_не_входили_ни_разу_когда_профиль_пуст(self):
+        self.assertEqual(self.состояние(), кисть.НЕ_ВХОДИЛИ)
+
+    def test_вход_был_виден_по_журналу(self):
+        self.журнал.write_text("2026-09-13 19:07 МСК — вход: выполнен руками\n", encoding="utf-8")
+        self.assertEqual(self.состояние(), кисть.ГОТОВ)
+
+    def test_вход_был_виден_по_базе_кук(self):
+        куки = self.профиль / "Default" / "Cookies"
+        куки.parent.mkdir(parents=True)
+        куки.write_bytes(b"x" * (кисть.ПУСТАЯ_БАЗА_КУК + 1))
+        self.assertEqual(self.состояние(), кисть.ГОТОВ)
+
+    def test_окно_открывали_но_не_вошли_это_не_умерший_вход(self):
+        # Пустая база кук заводится и без входа: сказать такому человеку «вход умер» —
+        # соврать ему про его же первый запуск.
+        куки = self.профиль / "Default" / "Cookies"
+        куки.parent.mkdir(parents=True)
+        куки.write_bytes(b"x" * 4096)
+        self.assertEqual(self.состояние(), кисть.НЕ_ВХОДИЛИ)
+
+    def test_занято_когда_замок_держит_живой_прогон(self):
+        self.замок.write_text(str(os.getpid()), encoding="utf-8")
+        self.assertEqual(self.состояние(), кисть.ЗАНЯТО)
+
+    def test_брошенный_замок_занятостью_не_считается(self):
+        self.журнал.write_text("вход: выполнен руками\n", encoding="utf-8")
+        self.замок.write_text("999999", encoding="utf-8")   # такого процесса нет
+        self.assertEqual(self.состояние(), кисть.ГОТОВ)
+
+    def test_нет_браузера_старше_всего_остального(self):
+        self.замок.write_text(str(os.getpid()), encoding="utf-8")
+        self.assertEqual(self.состояние(найти=self.нет_chrome), кисть.НЕТ_БРАУЗЕРА)
+
+
+class СловаЧетырёхСостояний(unittest.TestCase):
+    ВСЕ = (кисть.НЕТ_БРАУЗЕРА, кисть.ПУТЬ_МИМО, кисть.НЕ_ВХОДИЛИ, кисть.ВХОД_УМЕР,
+           кисть.ЗАНЯТО, кисть.СЕТЬ, кисть.ГОТОВ)
+
+    def test_у_каждого_состояния_свои_слова(self):
+        сказанное = {с: "\n".join(кисть.слова_канала(с)) for с in self.ВСЕ}
+        self.assertEqual(len(set(сказанное.values())), len(self.ВСЕ),
+                         "два состояния говорят одно и то же — человек их не различит")
+        for состояние, текст in сказанное.items():
+            self.assertTrue(текст.strip(), состояние)
+
+    def test_канала_нет_говорит_что_поставить_и_что_сайт_всё_равно_соберётся(self):
+        текст = "\n".join(кисть.слова_канала(кисть.НЕТ_БРАУЗЕРА))
+        self.assertIn("google.com/chrome", текст)
+        self.assertIn("CHROME_BIN", текст)
+        self.assertIn("сайт", текст.lower())
+
+    def test_не_входили_зовёт_к_окну_и_обещает_не_видеть_пароля(self):
+        текст = "\n".join(кисть.слова_канала(кисть.НЕ_ВХОДИЛИ))
+        self.assertIn("--вход", текст)
+        self.assertIn("пароль", текст.lower())
+
+    def test_вход_умер_говорит_что_это_не_поломка(self):
+        текст = "\n".join(кисть.слова_канала(кисть.ВХОД_УМЕР))
+        self.assertIn("--вход", текст)
+        self.assertIn("не поломка", текст.lower())
+
+    def test_занято_запрещает_трогать_чужие_окна(self):
+        текст = "\n".join(кисть.слова_канала(кисть.ЗАНЯТО))
+        self.assertIn(кисть.ИМЯ_ПРОФИЛЯ, текст)
+        self.assertIn("не трогайте", текст.lower())
+
+    def test_сеть_тормозит_не_превращается_в_идите_входите(self):
+        # Пятое состояние: человека не будим вовсе.
+        текст = "\n".join(кисть.слова_канала(кисть.СЕТЬ)).lower()
+        for звонок in ("--вход", "войдите"):
+            self.assertNotIn(звонок, текст, "сеть зовёт к экрану, а не должна")
+        self.assertIn("не надо", текст)
+        self.assertIn("позже", текст)
+
+    def test_путь_мимо_называет_путь_и_не_велит_ставить_chrome(self):
+        # Chrome у человека есть; «поставьте Chrome» здесь — совет чинить то, что не сломано.
+        текст = "\n".join(кисть.слова_канала(кисть.ПУТЬ_МИМО, путь="/нет/такого/chrome"))
+        self.assertIn("/нет/такого/chrome", текст)
+        self.assertIn("CHROME_BIN", текст)
+        self.assertNotIn("google.com/chrome", текст)
+        self.assertIn("опечатка", текст)
+
+    def test_путь_берётся_из_окружения_когда_его_не_передали(self):
+        было = os.environ.get("CHROME_BIN")
+        os.environ["CHROME_BIN"] = "/из/окружения/chrome"
+        try:
+            текст = "\n".join(кисть.слова_канала(кисть.ПУТЬ_МИМО))
+        finally:
+            os.environ.pop("CHROME_BIN") if было is None else os.environ.update(CHROME_BIN=было)
+        self.assertIn("/из/окружения/chrome", текст)
+
+    def test_незнакомое_состояние_не_роняет_печать(self):
+        self.assertTrue(кисть.слова_канала("что-то новое"))
+
+
+class ОтчётОКанале(unittest.TestCase):
+    """`--канал` — отчёт, а не ворота: на нём стоит установка, и падать ей нельзя."""
+
+    def прогон(self, состояние):
+        было = кисть.состояние_канала
+        кисть.состояние_канала = lambda *а, **к: состояние
+        поток = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(поток):
+                код = кисть.команда_канал()
+        finally:
+            кисть.состояние_канала = было
+        return код, поток.getvalue()
+
+    def test_любое_состояние_даёт_ноль(self):
+        for состояние in СловаЧетырёхСостояний.ВСЕ:
+            код, вывод = self.прогон(состояние)
+            self.assertEqual(код, 0, состояние)
+            self.assertTrue(вывод.strip(), состояние)
+
+    def test_канала_нет_печатается_словами_а_не_молчанием(self):
+        _, вывод = self.прогон(кисть.НЕТ_БРАУЗЕРА)
+        self.assertIn("google.com/chrome", вывод)
 
 
 if __name__ == "__main__":
