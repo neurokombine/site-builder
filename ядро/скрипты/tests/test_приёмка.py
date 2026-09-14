@@ -423,6 +423,147 @@ class ЛицоТолькоПоСлову(unittest.TestCase):
         self.assertEqual(list((self.работа / "img").iterdir()), [])
 
 
+class ВоротаВImgНеОбходятся(unittest.TestCase):
+    """Б-1: ворота держались на имени последней папки и обходились тремя способами сразу.
+
+    Сравнивался только `куда.name == "img"` — без `resolve()` и без нормализации регистра.
+    Значит, портрет без слова человека попадал в `img/` подпапкой (`собрать.py` копирует `img/`
+    целиком, вместе с подпапками), симлинком `витрина/кадр-ждёт → ../img` и заглавным `IMG` (на
+    macOS и Windows это та же папка). Теперь смотрится весь разрешённый путь и все его предки.
+    """
+
+    def setUp(self):
+        self._в = tempfile.TemporaryDirectory()
+        self.д = Path(self._в.name)
+        self.addCleanup(self._в.cleanup)
+        self.работа = self.д / "сайты" / "моё-дело"
+        self.img = self.работа / "img"
+        self.img.mkdir(parents=True)
+        (self.работа / "витрина").mkdir()
+        self.кадр = фото(self.д / "kadr.png")
+        self.заказ = заказ_на("разворот")
+
+    def нарисовать_в(self, куда):
+        return приёмка.добиться_кадра(self.заказ, куда, рисует=Рисовалка([self.кадр]),
+                                      мерит=мерилка([замеры(доля=.33)]))
+
+    def test_подпапка_внутри_img_это_тот_же_img(self):
+        with self.assertRaises(приёмка.ЛицоБезСлова):
+            self.нарисовать_в(self.img / "кадры")
+        self.assertEqual(list(self.img.rglob("*")), [])
+
+    def test_симлинк_ведущий_в_img_не_обманывает_ворота(self):
+        ссылка = self.работа / "витрина" / "кадр-ждёт"
+        try:
+            ссылка.symlink_to(self.img, target_is_directory=True)
+        except (OSError, NotImplementedError) as беда:      # Windows без прав на симлинки
+            self.skipTest(f"симлинки на этой машине не заводятся: {беда}")
+        with self.assertRaises(приёмка.ЛицоБезСлова):
+            self.нарисовать_в(ссылка)
+        self.assertEqual(list(self.img.rglob("*")), [])
+
+    def test_заглавный_IMG_это_та_же_папка(self):
+        with self.assertRaises(приёмка.ЛицоБезСлова):
+            self.нарисовать_в(self.работа / "IMG")
+
+    def test_папка_ожидания_по_прежнему_законна(self):
+        итог = self.нарисовать_в(self.работа / "витрина" / приёмка.ЖДЁТ)
+        self.assertTrue(Path(итог["файл"]).is_file())
+        self.assertEqual(list(self.img.rglob("*")), [])
+
+    def test_отказ_в_командной_строке_не_подписан_каналом(self):
+        # Ворота те же, но отказ из кисти печатался бы с подписью «канал» — а канал тут ни при чём.
+        поток = io.StringIO()
+        with contextlib.redirect_stdout(поток):
+            код = приёмка.main_с_аргументами(["--схема", "разворот", "--ключ", "светлый",
+                                              "--нарисуй", "--без-показа",
+                                              "--куда", str(self.img / "кадры")])
+        self.assertEqual(код, 2)
+        self.assertNotIn("канал", поток.getvalue())
+        self.assertIn("не рисую", поток.getvalue())
+        self.assertEqual(list(self.img.rglob("*")), [])
+
+    def test_кисть_и_приёмка_спрашивают_одну_функцию(self):
+        # А-4: документ обещал «портрет в `img/` не рисуется ни одним путём», а охранялся один
+        # путь из двух — прямая команда `кисть.py --нарисуй --куда сайты/<имя>/img` шла мимо.
+        import ворота
+        for путь in (self.img, self.img / "кадры", self.работа / "IMG"):
+            self.assertTrue(ворота.внутри_img(путь), путь)
+            with self.assertRaises(кисть.БедаКисти, msg=str(путь)):
+                кисть.проверить_куда(путь)
+        self.assertFalse(ворота.внутри_img(self.работа / "витрина" / приёмка.ЖДЁТ))
+
+
+class НаКрасномНеРисуем(unittest.TestCase):
+    """Б-2: у `приёмка.py --нарисуй` то же правило, что у `заказ.py --нарисуй`. 🔴 — это «чинить
+    до съёмки»; рисовать поверх него значит потратить генерацию по подписке человека и до трёх
+    попыток приёмки на заведомо чужое лицо, а потом показать ему витрину с посторонним."""
+
+    def test_без_схемы_и_работы_не_рисуем(self):
+        поток = io.StringIO()
+        with contextlib.redirect_stdout(поток):
+            код = приёмка.main_с_аргументами(["--нарисуй"])
+        self.assertIn(код, (1, 2))
+        self.assertNotIn("Traceback", поток.getvalue())
+
+    def test_красное_в_заказе_останавливает_генерацию(self):
+        звали = []
+        красная = [{"уровень": ЧИНИТЬ, "что": "Нет ваших снимков — рисовать лицо не с чего",
+                    "строки": ["в профиле пусто"], "почему": "лицо должно быть вашим",
+                    "бук": "внешность", "важность": 0}]
+        с_заказом = (заказ_на("разворот"), красная)
+        поток = io.StringIO()
+        with patch.object(приёмка, "_заказ_для_кадра", lambda *а, **к: с_заказом), \
+             patch.object(приёмка, "нарисовать_и_принять",
+                          lambda *а, **к: звали.append(а) or {}), \
+             contextlib.redirect_stdout(поток):
+            код = приёмка.main_с_аргументами(["--схема", "разворот", "--ключ", "светлый",
+                                              "--нарисуй", "--без-показа"])
+        self.assertEqual(код, 1)
+        self.assertEqual(звали, [], "кисть позвали поверх 🔴")
+        self.assertIn("Не рисую", поток.getvalue())
+
+
+class РаботаВыводитсяИзПутиКадра(unittest.TestCase):
+    """Б-7: `--слово беру` без `--работа` писал кадр и журнал в текущую папку — то есть заводил
+    `img/` и `журнал.md` в корне системы, ни к какой работе не привязанные."""
+
+    def setUp(self):
+        self._в = tempfile.TemporaryDirectory()
+        self.д = Path(self._в.name)
+        self.addCleanup(self._в.cleanup)
+        self.работа = self.д / "сайты" / "моё-дело"
+        self.ждёт = self.работа / "витрина" / приёмка.ЖДЁТ
+        self.ждёт.mkdir(parents=True)
+
+    def test_штатный_путь_кадра_называет_работу(self):
+        кадр = фото(self.ждёт / "kadr.png")
+        self.assertEqual(приёмка.работа_по_кадру(кадр).resolve(), self.работа.resolve())
+
+    def test_чужой_путь_работу_не_выдумывает(self):
+        self.assertIsNone(приёмка.работа_по_кадру(self.д / "kadr.png"))
+        self.assertIsNone(приёмка.работа_по_кадру(""))
+        self.assertIsNone(приёмка.работа_по_кадру(None))
+
+    def test_слово_без_работы_не_заводит_img_в_текущей_папке(self):
+        кадр = фото(self.д / "kadr.png")          # кадр не в папке ожидания — работу не вывести
+        итог = {"файл": str(кадр), "промт": "промт", "попыток": 1, "беда": "",
+                "замеры": {}, "промахи": [], "чем_нарисовано": {}, "заказ": заказ_на("разворот")}
+        (self.д / "итог.json").write_text(json.dumps(итог, ensure_ascii=False), encoding="utf-8")
+        поток = io.StringIO()
+        с_папки = Path.cwd()
+        os.chdir(self.д)
+        try:
+            with contextlib.redirect_stdout(поток):
+                код = приёмка.main_с_аргументами(["--куда", str(self.д), "--слово", "беру"])
+        finally:
+            os.chdir(с_папки)
+        self.assertEqual(код, 2)
+        self.assertIn("--работа", поток.getvalue())
+        self.assertFalse((self.д / "img").exists())
+        self.assertFalse((self.д / "журнал.md").exists())
+
+
 # ── витрина показа ───────────────────────────────────────────────────────────
 class ВитринаПоказа(unittest.TestCase):
     """Пять пунктов `портрет.ЧТО_ПОКАЗАТЬ` в их порядке плюс слово человека."""
