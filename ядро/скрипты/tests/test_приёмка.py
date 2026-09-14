@@ -34,6 +34,7 @@ import портрет  # noqa: E402
 import приёмка  # noqa: E402
 from находки import ЧИНИТЬ, ПОПРАВИТЬ, К_СВЕДЕНИЮ  # noqa: E402
 from test_обложка import фигура_png  # noqa: E402
+from test_личное import ЛИЧНЫЕ_СЛОВА  # noqa: E402   # общий список личных слов
 
 ПАЛИТРА = {"светлый_фон_1": "#FAF8F5", "тёмный_фон_1": "#0D1B2A",
            "акцент": "#2C4A63", "тёплый": "#C8A97E", "текст": "#2B2B33"}
@@ -806,7 +807,7 @@ class Отчуждаемость(unittest.TestCase):
 
     def test_нет_личного(self):
         текст = (СКРИПТЫ / "приёмка.py").read_text(encoding="utf-8").lower()
-        for слово in ("натэл", "зубченко", "ritoriks", "тэфи", "34 900"):
+        for слово in [с.lower() for с in ЛИЧНЫЕ_СЛОВА]:
             self.assertNotIn(слово, текст, f"в ядре нашлось личное: {слово}")
 
     def test_нет_зашитых_цветов(self):

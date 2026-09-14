@@ -7,6 +7,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "ядро" / "скрипты"))
 import собрать  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))   # общий список личных слов
+from test_личное import ЛИЧНЫЕ_СЛОВА  # noqa: E402
 
 # Задача 6: файл один был («стили.css», 660 строк — потолок), одиннадцать схем в него было уже не
 # дописать. Раздел на два по назначению — база (общая база + двенадцать деталей) и схемы первого
@@ -156,8 +158,10 @@ class Стили(unittest.TestCase):
         self.assertNotRegex(self.тело, r"(?<![\w.-])(?:[5-9]|\d{2,})(?:\.\d+)?px\b", "px ≥ 5 — только токены")
         for м in re.finditer(r"font(?:-family)?\s*:\s*([^;]+);", self.тело):
             self.assertTrue(м.group(1).strip().startswith("var(") or "var(--шрифт" in м.group(1), м.group(0))
-        for слово in ("Montserrat", "Open Sans", "Georgia", "nz-", "Натэл"):
+        for слово in ("Montserrat", "Open Sans", "Georgia", "nz-"):
             self.assertNotIn(слово, self.css, слово)
+        for слово in ЛИЧНЫЕ_СЛОВА:   # общий сторож личного — test_личное.py
+            self.assertNotIn(слово.lower(), self.css.lower(), слово)
         # Задача 1: новые группы токенов реально подключены к правилам, а не просто объявлены —
         # иначе тест «нет литералов» ловит только цвет/px и обходится добавлением неиспользуемой переменной.
         self.assertRegex(self.тело, r"\.лид \{ font-size: var\(--кегль-лид", "лид не на своём токене кегля")

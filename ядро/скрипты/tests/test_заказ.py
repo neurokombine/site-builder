@@ -18,6 +18,8 @@ sys.path.insert(0, str(СКРИПТЫ))
 import заказ  # noqa: E402
 import кисть  # noqa: E402
 import обложка  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))   # общий список личных слов
+from test_личное import ЛИЧНЫЕ_СЛОВА  # noqa: E402
 
 ПАЛИТРА = {"светлый_фон_1": "#FAF8F5", "тёмный_фон_1": "#0D1B2A",
            "акцент": "#2C4A63", "тёплый": "#C8A97E", "текст": "#2B2B33"}
@@ -503,7 +505,7 @@ class Отчуждаемость(unittest.TestCase):
 
     def test_в_модуле_нет_личного(self):
         текст = (СКРИПТЫ / "заказ.py").read_text(encoding="utf-8").lower()
-        for слово in ("натэл", "зубченко", "ritoriks", "студи", "нейровидео"):
+        for слово in [с.lower() for с in ЛИЧНЫЕ_СЛОВА] + ["студи"]:
             self.assertNotIn(слово, текст, f"в ядре нашлось личное: {слово}")
 
     def test_в_модуле_нет_зашитых_цветов(self):
