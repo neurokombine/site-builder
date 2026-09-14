@@ -719,3 +719,140 @@ class КонтрастВОбоихКлючах(unittest.TestCase):
                     _, найдено = собрать._цвет_кнопки(токены, {"палитра": полная})
                     self.assertTrue(any(н["уровень"] == находки.ПОПРАВИТЬ for н in найдено),
                                     f"{имя}/{ключ}: кнопку не из чего перекрасить, а система молчит")
+
+
+ЛИЧНОЕ_В_КОММЕНТАРИЯХ = ("владелиц", "фикс-раунд", "фикс М ", "НейроВидео", "Натэла", "Зубченко")
+
+
+def _правила_css(текст: str) -> int:
+    """Сколько `{` в стилях НЕ считая комментариев и строк — свой разбор посимвольно, нарочно не
+    тот, которым чистит сборка: если оба ошибутся одинаково, тест ничего не поймает."""
+    счёт, i, n, кавычка = 0, 0, len(текст), None
+    while i < n:
+        с = текст[i]
+        if кавычка:
+            if с == "\\":
+                i += 2
+                continue
+            if с == кавычка:
+                кавычка = None
+        elif с in "\"'":
+            кавычка = с
+        elif текст[i:i + 2] == "/*":
+            конец = текст.find("*/", i + 2)
+            i = n if конец < 0 else конец + 2
+            continue
+        elif с == "{":
+            счёт += 1
+        i += 1
+    return счёт
+
+
+class СайтБезЛетописи(unittest.TestCase):
+    """Задача 1 отчуждаемости: комментарии ядра — ход разработки, чужие имена и решения. В самих
+    файлах ядра они на месте, а в папку сайта (её открывает любой посетитель) не уезжают."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.врем = tempfile.TemporaryDirectory()
+        д = Path(cls.врем.name)
+        работа = д / "все"   # все блоки разом: и таймер, и живая обложка, и звук — все скрипты ядра
+        (работа / "экраны").mkdir(parents=True)
+        for ф in sorted((ФИКСТУРЫ / "экраны-все").glob("*.html")):
+            (работа / "экраны" / ф.name).write_text(ф.read_text(encoding="utf-8"), encoding="utf-8")
+        for имя in ("дизайн.md", "поиск.md", "прототип.md"):
+            (работа / имя).write_text((ФИКСТУРЫ / "работа-образец" / имя).read_text(encoding="utf-8"), encoding="utf-8")
+        import shutil
+        shutil.copytree(ФИКСТУРЫ / "работа-образец" / "img", работа / "img")
+        shutil.copytree(ФИКСТУРЫ / "работа-образец" / "video", работа / "video")
+        путь, _ = собрать.собрать(работа)
+        cls.сайт = путь.parent
+        cls.html = путь.read_text(encoding="utf-8")
+        cls.css = (cls.сайт / "style.css").read_text(encoding="utf-8")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.врем.cleanup()
+
+    def test_1_стили_сайта_без_комментариев(self):
+        self.assertNotIn("/*", self.css)
+        self.assertNotIn("*/", self.css)
+
+    def test_2_страница_без_комментариев(self):
+        self.assertNotIn("<!--", self.html)
+        self.assertNotIn("-->", self.html)
+
+    def test_3_ни_в_одном_файле_сайта_нет_личного(self):
+        for файл in sorted(self.сайт.rglob("*")):
+            if not файл.is_file():
+                continue
+            try:
+                текст = файл.read_text(encoding="utf-8")
+            except (UnicodeDecodeError, ValueError):
+                continue   # картинка или ролик — там текста нет
+            for слово in ЛИЧНОЕ_В_КОММЕНТАРИЯХ:
+                self.assertNotIn(слово.lower(), текст.lower(), f"{файл.name}: «{слово}»")
+
+    def test_4_стили_не_пострадали(self):
+        """Правил в собранном style.css ровно столько же, сколько их в файлах ядра вне комментариев."""
+        было = _правила_css(собрать._склейка_стилей())
+        self.assertGreater(было, 100, "склейка стилей опустела — тест мерит не то")
+        self.assertEqual(было, self.css.count("{"))
+        self.assertEqual(self.css.count("{"), self.css.count("}"))
+
+    def test_5_скрипты_доехали_живыми(self):
+        """Вырезаны комментарии, а не код: все скрипты ядра на месте и их работа не тронута."""
+        self.assertEqual(self.html.count("<script>"), self.html.count("</script>"))
+        # Приметы берём по одной на скрипт и нарочно НЕ по имени наблюдателя за прокруткой: оно
+        # одно на всё ядро и сторожится отдельно (test_стили, запрет появления при скролле).
+        for кусок in ("data-поправка",            # очко.js — в голове каждой страницы
+                      "главная-на-виду",          # липкая.js — сон панели телефона
+                      "видео.play()",             # обложка.js — живая обложка
+                      "clearInterval(таймер)"):   # таймер.js — отсчёт до дедлайна
+            self.assertIn(кусок, self.html, кусок)
+        for скрипт in re.findall(r"<script>(.*?)</script>", self.html, re.S):
+            for строка in скрипт.splitlines():
+                self.assertFalse(строка.strip().startswith("//"), строка)
+
+    def test_6_файлы_ядра_остались_с_комментариями(self):
+        """Чистим ВЫХОД, а не ядро: в самих файлах комментарии нужны тому, кто ядро правит."""
+        self.assertIn("/*", собрать.СТИЛИ[0].read_text(encoding="utf-8"))
+        self.assertIn("//", собрать.ЛИПКАЯ_JS.read_text(encoding="utf-8"))
+
+
+class ЧисткаНеТрогаетКод(unittest.TestCase):
+    """Регрессия: слэши и звёздочки бывают частью кода, а не комментарием."""
+
+    def test_css_строка_со_слэшами_цела(self):
+        css = ('.a::after { content: "/* не комментарий */"; }\n'
+               '.b { background: url("data:image/svg+xml,%3Csvg%3E//x%3C/svg%3E"); }\n'
+               ".c { color: red; }/* прочь */\n")
+        чисто = собрать.без_комментариев_css(css)
+        self.assertIn('content: "/* не комментарий */"', чисто)
+        self.assertIn("%3Csvg%3E//x%3C/svg%3E", чисто)
+        self.assertNotIn("прочь", чисто)
+        self.assertEqual(чисто.count("{"), 3)
+
+    def test_js_адрес_и_хвостовой_слэш_целы(self):
+        js = ("// строка целиком комментарий\n"
+              '  var а = "https://пример.рф/путь";   // хвост остаётся: вырезать вслепую опасно\n'
+              "/* блоком */\n"
+              "  var б = `//в кавычках`;\n")
+        чисто = собрать.без_комментариев_js(js)
+        self.assertIn('"https://пример.рф/путь"', чисто)
+        self.assertIn("`//в кавычках`", чисто)
+        self.assertIn("// хвост остаётся", чисто)
+        self.assertNotIn("строка целиком", чисто)
+        self.assertNotIn("блоком", чисто)
+
+    def test_html_условный_комментарий_остаётся(self):
+        html = "<p>текст</p>\n<!-- подсказка шаблона -->\n<!--[if IE]>запасное<![endif]-->\n"
+        чисто = собрать.без_комментариев_html(html)
+        self.assertIn("<p>текст</p>", чисто)
+        self.assertIn("<!--[if IE]>", чисто)
+        self.assertNotIn("подсказка шаблона", чисто)
+
+    def test_пустые_строки_схлопнуты_а_лесенка_цела(self):
+        чисто = собрать.без_комментариев_js("var а = 1;\n/* раз */\n/* два */\n  var б = 2;\n")
+        self.assertNotIn("\n\n\n", чисто)
+        self.assertIn("\n\n  var б = 2;", чисто)
