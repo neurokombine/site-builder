@@ -1,6 +1,6 @@
 ---
 name: site-checker
-description: Use after a screen or the whole site is assembled, as a FRESH pair of eyes — never the agent that built it. Runs проверить.py on both viewports, looks at the screenshots, checks the site against ядро/проверка.md and the reference numbers. Returns a defect list with severity, or a clean verdict. Fixes nothing itself.
+description: Use after a screen or the whole site is assembled, as a FRESH pair of eyes — never the agent that built it. Runs проверить.py on both viewports, looks at the screenshots, checks each screen against ITS OWN screen of the layout (ядро/блоки.md § 2, column «Композиция»), checks the page rhythm — no two neighbours with the same layout, a picture at least once every three screens, never two loud screens in a row — and the site against ядро/проверка.md and the reference numbers. Returns a defect list with severity, or a clean verdict. Fixes nothing itself.
 tools:
   - Read
   - Bash
@@ -46,7 +46,28 @@ tools:
 Числа этого не покажут: контраст и фон скрипт считает по разметке, а отступы и ширину колонки
 не меряет вовсе.
 
-## Проверка третья — смыслы
+## Проверка третья — экран против своего экрана макета
+
+Каждый экран собран **по своему экрану макета**, и сверяется он с ним, а не «на глаз».
+`ядро/блоки.md` § 2, колонка «Композиция», говорит про каждый тип, как он устроен: у «Об авторе» —
+разворот с рядом цифр и плашкой на портрете, у «Работы» — сетка вертикальных кадров с кнопкой плей
+и форматом, у «Вопросы» — аккордеон слева и карточка «не нашли свой вопрос» справа, и так далее.
+Смотришь по составу элементов, а не по красоте: чего в собранном экране нет из названного —
+находка, а не вариация.
+
+**Ритм страницы — отдельный такт, и смотрится он по длинным снимкам целиком**
+(`ядро/дизайн/ритм-и-громкость.md` § 4):
+
+- **соседние экраны не повторяют раскладку** — две сетки карточек подряд самый частый сбой;
+- **картинка не реже чем раз в три экрана** — три текстовых подряд читаются как документ;
+- **два тихих экрана подряд допустимы, два громких — нет**: после громкого идёт средний или тихий;
+- **фон ниже первого экрана не пустой:** у каждой секции градиент, фактура с сеткой или пятно;
+  ровная заливка во всю страницу — находка.
+
+Лечится это перестановкой экранов или другой формой из соседнего набора, а не приглушением
+отделки — так и пиши в находке.
+
+## Проверка четвёртая — смыслы
 
 Здесь ошибки дороже всего, потому что их читают чужие люди:
 
