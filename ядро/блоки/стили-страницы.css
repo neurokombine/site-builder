@@ -1,0 +1,474 @@
+/* Словарь деталей страницы — то, из чего собраны экраны НИЖЕ первого: громкость секции, её шапка
+   с чертой, фактура, роль, остров-врезка, плашка, разворот, лента шагов, аккордеон программы,
+   плитка работы, тариф, отзыв-заглушка, вопросы, условия, финал, подвал. Шестнадцать семейств;
+   какое когда берётся и на каких токенах держится — `ядро/дизайн/детали-страницы.md`.
+
+   Зачем отдельный файл. Общая база знает типографику, кнопки, карточки и двенадцать деталей
+   ПЕРВОГО экрана; деталей остальных одиннадцати экранов в ней не было ни одной — поэтому блоки и
+   выглядели голыми рядом с первым экраном. Место в склейке (`собрать.СТИЛИ`) — сразу за базой и
+   ДО четырёх частей первого экрана: схемы первого экрана перебивают общее, как и раньше.
+
+   ⛔ Те же запреты, что и в базе: ни hex, ни имени шрифта, ни px-литерала оформления от пяти и
+   выше — только переменные дизайн-системы и `color-mix(…, transparent)`. Геометрия макета — в
+   `rem` (1rem = 16px, ровно в макетных числах), кегли — долями от кегля текста и мелкого кегля.
+   ⭐ Телефон — первая версия. Всё, что вне медиазапроса, написано под узкий экран; медиазапрос
+   на 900px только раскладывает колонки и возвращает макетные кегли компьютера. Текст, который
+   человек читает (`p` и `li`), на телефоне не мельче кегля текста — даже там, где макет набирает
+   его 14–15px: канон читаемости сильнее макета, и он же стоит сторожем в `флаги_дизайна.py`.
+   ⭐ Каждое семейство объявлено в ОБОИХ ключах: геометрия — один раз, цветные поверхности —
+   отдельными правилами под `.светлый` и под `.тёмный`. Предметы, которые лежат НА кадре, а не на
+   секции (плашка, плитка работы), в обоих ключах остаются тёмными — так же, как стеклянная плита
+   и рамка телефона в базе: они часть кадра, а не часть страницы.
+   ⭐ Появления при прокрутке нет. Движется только то, что уже видно: зум фотографии финала,
+   поворот шеврона, подъём кнопки плей под курсором, плавная кромка модуля — все четыре имени
+   выключены в конце файла. */
+
+/* ── Громкость секции: три ступени воздуха из макета (тихо · обычная · громко) ── */
+/* Обычная ступень — это базовый `.блок` со своим отступом секции; здесь только две крайние.
+   Запасное значение у каждой — доля от той же обычной ступени: дизайн без новых токенов
+   получает ту же лестницу, только посчитанную самой, а не выбранную человеком. */
+.блок--тихо { padding-block: var(--отступ-секции-тихо, calc(var(--отступ-секции) * .78)); }
+.блок--громко { padding-block: var(--отступ-секции-громко, calc(var(--отступ-секции) * 1.16)); }
+
+/* ── Шапка секции: кикер, заголовок, лид и черта под ними ── */
+/* `justify-items: start` — не украшение: без него чип и кикер растягиваются на всю колонку грида. */
+.секция__шапка { position: relative; z-index: 2; display: grid; justify-items: start; gap: .875rem;
+  max-width: 45rem; margin-bottom: 2rem; }
+.секция__шапка--центр { max-width: 40rem; margin-inline: auto; text-align: center; justify-items: center; }
+.секция__шапка > * { margin-bottom: 0; }   /* в гриде воздух держит gap, а не нижние поля заголовка и кикера */
+.секция__тело { position: relative; z-index: 2; }
+.секция__лид { max-width: 37.5rem; margin-bottom: 0; }
+.черта { width: 2.75rem; height: 3px; border-radius: 3px; }
+.светлый .секция__лид { color: var(--цвет-текст-мягкий); }
+.тёмный .секция__лид { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 75%, transparent); }
+.светлый .черта { background: var(--цвет-тёплый-тёмный, var(--цвет-акцент-тёмный)); }
+.тёмный .черта { background: var(--тёплый-ключа, var(--цвет-акцент-тёмный)); }
+
+/* ── Фактура: секция без картинки не должна быть плоской заливкой ── */
+/* Диагональный градиент на самой секции плюс сетка-текстура отдельным элементом внутри неё:
+   сетка проявляется только в центре (радиальная маска) и к краям сходит на нет. */
+.светлый.блок--текстура { background: linear-gradient(170deg, var(--цвет-фон-2), var(--цвет-фон) 75%); }
+.тёмный.блок--текстура { background: linear-gradient(170deg, var(--цвет-тёмный-фон-2, var(--цвет-тёмный-фон)), var(--цвет-тёмный-фон) 75%); }
+.сетка-текстура { position: absolute; inset: 0; pointer-events: none; background-size: 3.5rem 3.5rem;
+  -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 20%, black 30%, transparent 100%);
+  mask-image: radial-gradient(ellipse 75% 65% at 50% 20%, black 30%, transparent 100%); }
+.светлый .сетка-текстура { background-image:
+  linear-gradient(color-mix(in srgb, var(--цвет-акцент) 5%, transparent) 1px, transparent 1px),
+  linear-gradient(90deg, color-mix(in srgb, var(--цвет-акцент) 5%, transparent) 1px, transparent 1px); }
+.тёмный .сетка-текстура { background-image:
+  linear-gradient(color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 6%, transparent) 1px, transparent 1px),
+  linear-gradient(90deg, color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 6%, transparent) 1px, transparent 1px); }
+
+/* ── Роль: «кому это» — плитка с именем адресата и абзацем под ним ── */
+/* Первая карточка на компьютере занимает всю ширину: главный адресат читается первым, а не одним
+   из трёх одинаковых прямоугольников. */
+.текстура__список { position: relative; z-index: 2; display: grid; gap: .875rem; max-width: 51.25rem; }
+.роль { border-radius: var(--радиус-карточки, var(--радиус)); padding: 1.25rem; }
+.роль b { display: block; font-family: var(--шрифт-заголовков); font-weight: 700;
+  font-size: var(--кегль-текст); margin-bottom: .5rem; }
+.роль p { font-size: var(--кегль-текст); line-height: 1.6; margin-bottom: 0; }
+.светлый .роль { background: var(--цвет-фон-карточки); border: 1px solid var(--цвет-линия); box-shadow: var(--тень); }
+.светлый .роль b { color: var(--цвет-акцент); }
+.светлый .роль p { color: var(--цвет-текст-мягкий); }
+.тёмный .роль { background: color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 22%, transparent); }
+.тёмный .роль b { color: var(--тёплый-ключа, var(--цвет-акцент-тёмный)); }
+.тёмный .роль p { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 82%, transparent); }
+
+/* ── Остров: приподнятая врезка посреди текста — вывод, итог, «что это значит» ── */
+/* Имя разведено с базой нарочно: там `остров` — островок-динамик сверху рамки телефона, здесь
+   врезка посреди текста. Одно слово на две разные детали кончилось бы тем, что врезка внутри
+   рамки телефона молча превратилась бы в динамик (задача 2, решение координатора 14.09.2026). */
+.врезка { display: grid; gap: .375rem; padding: 1.25rem 1.375rem;
+  border-radius: var(--радиус-карточки, var(--радиус)); }
+.врезка b { font-family: var(--шрифт-заголовков); font-weight: 700; font-size: var(--кегль-текст); }
+.врезка p { font-size: var(--кегль-текст); line-height: 1.55; margin-bottom: 0; }
+.светлый .врезка { background: color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 40%, transparent); }
+.светлый .врезка b { color: var(--цвет-акцент); }
+.светлый .врезка p { color: var(--цвет-текст-мягкий); }
+.тёмный .врезка { background: color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 32%, transparent); }
+.тёмный .врезка b { color: var(--тёплый-ключа, var(--цвет-акцент-тёмный)); }
+.тёмный .врезка p { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 78%, transparent); }
+
+/* ── Плашка: подпись поверх фотографии или кадра ── */
+/* Лежит на снимке, а не на секции, — поэтому плита тёмная в обоих ключах: под ней фотография. */
+.плашка { display: inline-flex; align-items: center; gap: .5rem; padding: .5rem .875rem; border-radius: 9em;
+  font-size: var(--кегль-мелкий); line-height: 1.3;
+  backdrop-filter: blur(.625rem); -webkit-backdrop-filter: blur(.625rem); }
+.плашка b { font-family: var(--шрифт-заголовков); font-weight: 600; }
+.плашка .иконка, .плашка svg, .плашка .значок { width: 1rem; height: 1rem; flex: none; }
+.светлый .плашка { color: var(--цвет-тёмный-текст);
+  background: color-mix(in srgb, var(--цвет-тёмный-фон) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 40%, transparent); }
+.тёмный .плашка { color: var(--цвет-тёмный-текст);
+  background: color-mix(in srgb, var(--цвет-тёмный-фон) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 40%, transparent); }
+
+/* ── Разворот: текст и фотография рядом, с зеркалом ── */
+/* Колонки неровные нарочно (1.05 к .95): ровные пополам читаются как таблица, а не как разворот.
+   Зеркало — `order` у фотографии, а не второй рецепт блока. */
+.разворот__сетка { position: relative; z-index: 2; display: grid; gap: 1.625rem; }
+.разворот__сетка .фото { position: relative; min-height: 20rem;
+  border-radius: var(--радиус-карточки, var(--радиус)); }
+.разворот__сетка .фото img { width: 100%; height: 100%; aspect-ratio: auto; object-fit: cover; }
+.фото__подпись { position: absolute; left: .875rem; right: .875rem; bottom: .875rem; }
+.светлый .разворот__сетка .фото { box-shadow: 0 1.5rem 3.75rem color-mix(in srgb, var(--цвет-тёмный-фон) 18%, transparent); }
+.тёмный .разворот__сетка .фото { box-shadow: 0 1.5rem 3.75rem color-mix(in srgb, var(--цвет-тёмный-фон) 40%, transparent); }
+
+/* ── Лента шагов: путь из карточек, на компьютере — в строку и с нитью между ними ── */
+/* Нить тянется только там, где шаги стоят в ряд: на телефоне карточки идут столбиком, и нить
+   между ними указывала бы вбок в пустоту. Толщину нити держит свой токен. */
+.лента { position: relative; z-index: 2; display: grid; gap: 1rem; }
+.лента .шаг { position: relative; display: block; border-radius: var(--радиус-модуля, var(--радиус));
+  padding: 1.125rem 1.125rem 1.25rem; }
+.лента .шаг:not(:last-child)::before { content: none; }   /* вертикальная нить базовых шагов здесь не нужна */
+.лента .шаг__номер { width: 1.875rem; height: 1.875rem; border-radius: 50%; display: grid; place-items: center;
+  margin-bottom: .75rem; box-shadow: none; font: 700 var(--кегль-мелкий)/1 var(--шрифт-заголовков); }
+.лента .шаг b { display: block; font-family: var(--шрифт-заголовков); font-weight: 700;
+  font-size: var(--кегль-текст); margin-bottom: .375rem; }
+.лента .шаг p { font-size: var(--кегль-текст); line-height: 1.55; margin-bottom: 0; }
+.светлый .лента .шаг { background: var(--цвет-фон-карточки); border: 1px solid var(--цвет-линия); box-shadow: var(--тень); }
+.светлый .лента .шаг p { color: var(--цвет-текст-мягкий); }
+.светлый .лента .шаг__номер { background: var(--цвет-тёплый, var(--цвет-акцент-тёмный)); color: var(--цвет-тёмный-фон); }
+.тёмный .лента .шаг { background: color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 28%, transparent); }
+.тёмный .лента .шаг p { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 75%, transparent); }
+.тёмный .лента .шаг__номер { background: var(--тёплый-ключа, var(--цвет-акцент-тёмный)); color: var(--цвет-тёмный-фон); }
+
+/* ── Аккордеон программы: части, внутри них модули, каждый раскрывается ── */
+/* Раскрывается сам `details`, без единой строки скрипта: у кого выключен JS, тот всё равно
+   откроет любой модуль. Отступ тела — под номером, чтобы текст шёл одной колонкой с заголовком. */
+.части-программы { position: relative; z-index: 2; display: grid; gap: 2.25rem; }
+.часть { display: grid; gap: 1rem; }
+.часть__шапка { display: flex; align-items: baseline; gap: .75rem; flex-wrap: wrap; }
+.часть__имя { font-family: var(--шрифт-заголовков); font-weight: 700; font-size: calc(var(--кегль-текст) * 1.2); }
+.часть__метка { font-size: calc(var(--кегль-мелкий) * .93); letter-spacing: .02em; }
+.модули { display: grid; gap: .625rem; }
+.модуль { border-radius: var(--радиус-модуля, var(--радиус)); overflow: hidden;
+  transition: border-color var(--длительность) var(--плавность), box-shadow var(--длительность) var(--плавность); }
+.модуль__шапка { display: flex; align-items: center; gap: .875rem; padding: 1rem 1.125rem; cursor: pointer; list-style: none; }
+.модуль__шапка::-webkit-details-marker { display: none; }
+.модуль__номер { flex: none; width: 2.375rem; height: 2.375rem; border-radius: .75rem; display: grid; place-items: center;
+  font: 700 calc(var(--кегль-мелкий) * .93)/1 var(--шрифт-заголовков); }
+.модуль__заголовок { flex: 1; min-width: 0; }
+.модуль__заголовок b { display: block; font-family: var(--шрифт-заголовков); font-weight: 700;
+  font-size: var(--кегль-текст); line-height: 1.3; }
+.модуль__мета { display: flex; flex-wrap: wrap; gap: .375rem .75rem; margin-top: .3125rem;
+  font-size: calc(var(--кегль-мелкий) * .93); }
+.модуль__шеврон { flex: none; width: 1.375rem; height: 1.375rem;
+  transition: transform var(--длительность) var(--плавность); }
+.модуль[open] .модуль__шеврон { transform: rotate(180deg); }
+.модуль__тело { padding: 0 1.125rem 1.25rem 4.375rem; display: grid; gap: .75rem; }
+.модуль__тело p { font-size: var(--кегль-текст); line-height: 1.6; margin-bottom: 0; }
+.модуль__результат { font-size: var(--кегль-текст); margin-bottom: 0; }
+.тег { display: inline-flex; align-items: center; gap: .375rem; width: fit-content; justify-self: start;
+  padding: .3125rem .625rem; border-radius: 9em; font-size: calc(var(--кегль-мелкий) * .93); }
+.светлый .модуль { background: var(--цвет-фон-карточки); border: 1px solid var(--цвет-линия);
+  box-shadow: 0 .75rem 1.875rem color-mix(in srgb, var(--цвет-тёмный-фон) 6%, transparent); }
+.светлый .модуль[open] { border-color: var(--цвет-тёплый, var(--цвет-акцент-тёмный));
+  box-shadow: 0 1.25rem 2.75rem color-mix(in srgb, var(--цвет-тёмный-фон) 12%, transparent); }
+.светлый .часть__имя { color: var(--цвет-текст); }
+.светлый .часть__метка { color: var(--цвет-акцент); }
+.светлый .модуль__номер { background: color-mix(in srgb, var(--цвет-акцент) 8%, transparent); color: var(--цвет-акцент); }
+.светлый .модуль__заголовок b { color: var(--цвет-текст); }
+.светлый .модуль__мета, .светлый .модуль__тело p { color: var(--цвет-текст-мягкий); }
+.светлый .модуль__шеврон { color: var(--цвет-акцент); }
+.светлый .модуль__результат { color: var(--цвет-текст); }
+.светлый .модуль__результат b { color: var(--цвет-акцент); }
+.светлый .тег { background: var(--цвет-фон-2); color: var(--цвет-текст-мягкий); border: 1px solid var(--цвет-линия); }
+.тёмный .модуль { background: color-mix(in srgb, var(--цвет-тёмный-фон) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 22%, transparent); }
+.тёмный .модуль[open] { border-color: color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 55%, transparent); }
+.тёмный .часть__имя { color: var(--текст-ключа, var(--цвет-тёмный-текст)); }
+.тёмный .часть__метка { color: var(--тёплый-ключа, var(--цвет-акцент-тёмный)); }
+.тёмный .модуль__номер { background: color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 14%, transparent);
+  color: var(--тёплый-ключа, var(--цвет-акцент-тёмный)); }
+.тёмный .модуль__заголовок b { color: var(--текст-ключа, var(--цвет-тёмный-текст)); }
+.тёмный .модуль__мета { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 60%, transparent); }
+.тёмный .модуль__тело p { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 80%, transparent); }
+.тёмный .модуль__шеврон { color: var(--тёплый-ключа, var(--цвет-акцент-тёмный)); }
+.тёмный .модуль__результат { color: var(--текст-ключа, var(--цвет-тёмный-текст)); }
+.тёмный .модуль__результат b { color: var(--тёплый-ключа, var(--цвет-акцент-тёмный)); }
+.тёмный .тег { background: color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 12%, transparent);
+  color: var(--цвет-тёплый-мягкий, var(--цвет-тёплый, var(--цвет-линия)));
+  border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 28%, transparent); }
+
+/* ── Плитка работы: вертикальный кадр ролика с форматом, кнопкой плей, подписью и полосой ── */
+/* Кадр вертикальный (9:13) — так снимают для телефона, и так его и показывают. Плитка остаётся
+   тёмной в обоих ключах: это кадр видео, а не поверхность страницы. */
+.работы__сетка { position: relative; z-index: 2; display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.работа { position: relative; border-radius: var(--радиус-модуля, var(--радиус)); overflow: hidden; aspect-ratio: 9 / 13; }
+.работа::before { content: ""; position: absolute; inset: 0; }
+.работа::after { content: ""; position: absolute; inset: 0; background-size: 1.375rem 1.375rem;
+  -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, black 30%, transparent 100%);
+  mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, black 30%, transparent 100%); }
+.работа__формат { position: absolute; z-index: 2; left: .625rem; top: .625rem; right: .625rem;
+  display: inline-flex; width: fit-content; align-items: center; letter-spacing: .01em;
+  font: 600 calc(var(--кегль-мелкий) * .93)/1.2 var(--шрифт-заголовков);
+  padding: .375rem .6875rem; border-radius: 9em;
+  backdrop-filter: blur(.5rem); -webkit-backdrop-filter: blur(.5rem); }
+.работа .плей { left: 50%; top: 50%; translate: -50% -50%; width: 2.75rem; height: 2.75rem;
+  transition: scale var(--длительность) var(--плавность); }
+.работа:hover .плей { scale: 1.08; }
+.работа__подпись { position: absolute; z-index: 2; left: .625rem; right: .625rem; bottom: 1rem;
+  font-size: calc(var(--кегль-мелкий) * .93); line-height: 1.3; }
+.работа__подпись b { display: block; font-family: var(--шрифт-заголовков); font-weight: 600;
+  font-size: calc(var(--кегль-мелкий) * .96); }
+.работа__шкала { position: absolute; z-index: 2; left: .625rem; right: .625rem; bottom: .5rem;
+  height: 3px; border-radius: 3px; overflow: hidden; }
+.работа__шкала i { display: block; width: 38%; height: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, var(--цвет-акцент-яркий, var(--цвет-акцент)), var(--цвет-тёплый, var(--цвет-акцент-тёмный))); }
+.светлый .работа, .тёмный .работа { border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 22%, transparent);
+  box-shadow: 0 1rem 2.5rem color-mix(in srgb, var(--цвет-тёмный-фон) 35%, transparent); }
+.светлый .работа::before, .тёмный .работа::before { background-image:
+  radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 24%, transparent), transparent 60%),
+  linear-gradient(155deg, var(--цвет-тёмный-фон-2, var(--цвет-тёмный-фон)), var(--цвет-тёмный-фон) 80%); }
+.светлый .работа::after, .тёмный .работа::after { background-image:
+  linear-gradient(color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 9%, transparent) 1px, transparent 1px),
+  linear-gradient(90deg, color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 9%, transparent) 1px, transparent 1px); }
+.светлый .работа__формат, .тёмный .работа__формат { color: var(--цвет-тёмный-текст);
+  background: color-mix(in srgb, var(--цвет-тёмный-фон) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 40%, transparent); }
+.светлый .работа__подпись, .тёмный .работа__подпись { color: color-mix(in srgb, var(--цвет-тёмный-текст) 80%, transparent); }
+.светлый .работа__подпись b, .тёмный .работа__подпись b { color: var(--цвет-тёмный-текст); }
+.светлый .работа__шкала, .тёмный .работа__шкала { background: color-mix(in srgb, var(--цвет-тёмный-текст) 16%, transparent); }
+
+/* ── Тариф: метка, имя, цена, состав и медальон автора ── */
+/* Медальон — портрет на верхней кромке главной карточки; на телефоне его нет вовсе: он лезет на
+   метку и на заголовок, а места под него там всё равно нет. */
+.тарифы { position: relative; z-index: 2; display: grid; gap: 1.25rem; }
+.тариф { position: relative; display: grid; gap: 1rem; padding: 1.625rem 1.5rem;
+  border-radius: var(--радиус-карточки, var(--радиус)); }
+.тариф__метка { justify-self: start; display: inline-block; padding: .3125rem .75rem; border-radius: 9em;
+  font: 600 calc(var(--кегль-мелкий) * .93)/1.2 var(--шрифт-заголовков);
+  color: var(--цвет-тёмный-фон); background: var(--цвет-тёплый, var(--цвет-акцент-тёмный)); }
+.тариф__имя { font-family: var(--шрифт-заголовков); font-weight: 700; font-size: calc(var(--кегль-текст) * 1.25); }
+.тариф__цена { display: flex; align-items: baseline; gap: .625rem; flex-wrap: wrap; }
+.тариф__цена b { font: 700 var(--кегль-цифра)/1 var(--шрифт-заголовков); letter-spacing: -0.01em; }
+.тариф__цена s { font-size: calc(var(--кегль-мелкий) * 1.07); }
+.тариф__состав { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.тариф__состав li { position: relative; padding-left: 1.375rem; font-size: var(--кегль-текст); line-height: 1.55; }
+.тариф__состав li::before { content: ""; position: absolute; left: 0; top: .375rem; width: .75rem; height: .75rem;
+  border-radius: 50%; background: var(--цвет-тёплый, var(--цвет-акцент-тёмный)); }
+.тариф .кнопка { margin-top: .25rem; }
+.тариф__фото { display: none; position: absolute; right: 1.375rem; top: -1.125rem; width: 4rem; height: 4rem;
+  border-radius: 50%; overflow: hidden; border: 2px solid var(--цвет-тёплый, var(--цвет-акцент-тёмный)); }
+.тариф__фото img { width: 100%; height: 100%; aspect-ratio: auto; object-fit: cover; }
+.светлый .тариф { background: var(--цвет-фон-карточки); border: 1px solid var(--цвет-линия);
+  box-shadow: 0 1rem 2.5rem color-mix(in srgb, var(--цвет-тёмный-фон) 8%, transparent); }
+.светлый .тариф--акцент { border-color: var(--цвет-тёплый, var(--цвет-акцент-тёмный));
+  box-shadow: 0 1.625rem 3.5rem color-mix(in srgb, var(--цвет-тёмный-фон) 16%, transparent); }
+.светлый .тариф__имя, .светлый .тариф__цена b { color: var(--цвет-текст); }
+.светлый .тариф__цена s, .светлый .тариф__состав li { color: var(--цвет-текст-мягкий); }
+.светлый .тариф__фото { box-shadow: 0 .75rem 1.875rem color-mix(in srgb, var(--цвет-тёмный-фон) 25%, transparent); }
+.тёмный .тариф { background: color-mix(in srgb, var(--цвет-тёмный-фон) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 26%, transparent);
+  box-shadow: var(--тень-глубокая); }
+.тёмный .тариф--акцент { border-color: var(--тёплый-ключа, var(--цвет-акцент-тёмный));
+  background: color-mix(in srgb, var(--цвет-тёмный-фон) 90%, transparent);
+  box-shadow: var(--тень-плиты, var(--тень-глубокая)); }
+.тёмный .тариф__имя, .тёмный .тариф__цена b { color: var(--текст-ключа, var(--цвет-тёмный-текст)); }
+.тёмный .тариф__цена s { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 50%, transparent); }
+.тёмный .тариф__состав li { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 82%, transparent); }
+.тёмный .тариф__фото { box-shadow: 0 .75rem 1.875rem color-mix(in srgb, var(--цвет-тёмный-фон) 50%, transparent); }
+
+/* ── Отзыв-заглушка: место под отзыв, честно свёрстанное и честно пустое ── */
+/* Пунктир вместо сплошной кромки — сразу видно, что отзыва ещё нет, и никто не примет заглушку
+   за настоящий отзыв. Выдуманных отзывов система не пишет. */
+.отзывы-сетка { position: relative; z-index: 2; display: grid; gap: 1.125rem; }
+.отзыв-заглушка { display: grid; gap: .875rem; justify-items: start; padding: 1.5rem 1.375rem;
+  border-radius: var(--радиус-карточки, var(--радиус)); }
+.отзыв-заглушка__аватар { width: 3rem; height: 3rem; border-radius: 50%; display: grid; place-items: center; }
+.отзыв-заглушка__аватар svg, .отзыв-заглушка__аватар .иконка { width: 1.375rem; height: 1.375rem; }
+.отзыв-заглушка__метка { padding: .3125rem .75rem; border-radius: 9em;
+  font: 600 calc(var(--кегль-мелкий) * .93)/1.2 var(--шрифт-заголовков); }
+.отзыв-заглушка__звёзды { display: flex; gap: 3px; }
+.отзыв-заглушка__звёзды svg, .отзыв-заглушка__звёзды .иконка { width: .9375rem; height: .9375rem; }
+.отзыв-заглушка__текст { font-size: var(--кегль-текст); line-height: 1.6; font-style: italic;
+  padding-left: .75rem; margin-bottom: 0; }
+.отзыв-заглушка__имя { font-size: calc(var(--кегль-мелкий) * .93); }
+.светлый .отзыв-заглушка { background: var(--цвет-фон-карточки);
+  border: 1px dashed color-mix(in srgb, var(--цвет-тёплый-тёмный, var(--цвет-акцент-тёмный)) 40%, transparent); }
+.светлый .отзыв-заглушка__аватар { color: color-mix(in srgb, var(--цвет-тёплый-тёмный, var(--цвет-акцент-тёмный)) 60%, transparent);
+  border: 1.5px dashed color-mix(in srgb, var(--цвет-тёплый-тёмный, var(--цвет-акцент-тёмный)) 50%, transparent); }
+.светлый .отзыв-заглушка__метка { color: var(--цвет-акцент);
+  background: color-mix(in srgb, var(--цвет-акцент) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-акцент) 25%, transparent); }
+.светлый .отзыв-заглушка__звёзды svg { color: color-mix(in srgb, var(--цвет-тёплый-тёмный, var(--цвет-акцент-тёмный)) 35%, transparent); }
+.светлый .отзыв-заглушка__текст { color: var(--цвет-текст-мягкий);
+  border-left: 2px dashed color-mix(in srgb, var(--цвет-тёплый-тёмный, var(--цвет-акцент-тёмный)) 35%, transparent); }
+.светлый .отзыв-заглушка__имя { color: var(--цвет-текст-мягкий); }
+.тёмный .отзыв-заглушка { background: color-mix(in srgb, var(--цвет-тёмный-фон) 50%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 40%, transparent); }
+.тёмный .отзыв-заглушка__аватар { color: color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 60%, transparent);
+  border: 1.5px dashed color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 50%, transparent); }
+.тёмный .отзыв-заглушка__метка { color: var(--тёплый-ключа, var(--цвет-акцент-тёмный));
+  background: color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 30%, transparent); }
+.тёмный .отзыв-заглушка__звёзды svg { color: color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 35%, transparent); }
+.тёмный .отзыв-заглушка__текст { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 50%, transparent);
+  border-left: 2px dashed color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 35%, transparent); }
+.тёмный .отзыв-заглушка__имя { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 45%, transparent); }
+
+/* ── Вопросы: список слева, карточка «не нашли ответ» справа ── */
+/* Раскрывается `details`, шеврон поворачивается переходом. Базовый плюсик вопросов здесь не нужен:
+   у этой формы свой шеврон, и два значка на одной строке — это дефект, а не украшение. */
+.вопросы-сетка { position: relative; z-index: 2; display: grid; gap: 1.5rem; align-items: start; }
+.вопросы { display: grid; gap: .75rem; }
+.вопросы .вопрос { padding: 0; border-radius: var(--радиус-модуля, var(--радиус)); overflow: hidden; }
+.вопросы .вопрос > summary::after { display: none; }
+.вопросы .вопрос__шапка { display: flex; align-items: center; gap: .875rem; padding: 1.125rem 1.25rem;
+  cursor: pointer; list-style: none; font: 600 var(--кегль-текст)/1.35 var(--шрифт-заголовков); }
+.вопросы .вопрос__шапка::-webkit-details-marker { display: none; }
+.вопросы .вопрос__шеврон { flex: none; margin-left: auto; width: 1.25rem; height: 1.25rem;
+  transition: transform var(--длительность) var(--плавность); }
+.вопросы .вопрос[open] .вопрос__шеврон { transform: rotate(180deg); }
+.вопросы .вопрос__тело { padding: 0 1.25rem 1.125rem; font-size: var(--кегль-текст); line-height: 1.6; }
+.вопрос-карточка { display: grid; gap: .75rem; justify-items: start; padding: 1.625rem 1.5rem;
+  border-radius: var(--радиус-карточки, var(--радиус)); }
+.вопрос-карточка__икон { width: 2.75rem; height: 2.75rem; border-radius: .75rem; display: grid; place-items: center; }
+.вопрос-карточка b { font-family: var(--шрифт-заголовков); font-weight: 700; font-size: var(--кегль-текст); }
+.вопрос-карточка p { font-size: var(--кегль-текст); line-height: 1.6; margin-bottom: 0; }
+.светлый .вопросы .вопрос { background: var(--цвет-фон-карточки); border: 1px solid var(--цвет-линия); }
+.светлый .вопросы .вопрос__шеврон { color: var(--цвет-акцент); }
+.светлый .вопросы .вопрос__тело { color: var(--цвет-текст-мягкий); }
+.светлый .вопрос-карточка { background: color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 40%, transparent); }
+.светлый .вопрос-карточка__икон { color: var(--цвет-акцент);
+  background: color-mix(in srgb, var(--цвет-акцент) 10%, transparent); }
+.светлый .вопрос-карточка b { color: var(--цвет-текст); }
+.светлый .вопрос-карточка p { color: var(--цвет-текст-мягкий); }
+.тёмный .вопросы .вопрос { background: color-mix(in srgb, var(--цвет-тёмный-фон) 50%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 20%, transparent); }
+.тёмный .вопросы .вопрос__шеврон { color: var(--тёплый-ключа, var(--цвет-акцент-тёмный)); }
+.тёмный .вопросы .вопрос__тело { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 80%, transparent); }
+.тёмный .вопрос-карточка { background: color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 32%, transparent); }
+.тёмный .вопрос-карточка__икон { color: var(--тёплый-ключа, var(--цвет-акцент-тёмный));
+  background: color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 16%, transparent); }
+.тёмный .вопрос-карточка b { color: var(--текст-ключа, var(--цвет-тёмный-текст)); }
+.тёмный .вопрос-карточка p { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 75%, transparent); }
+
+/* ── Условия: короткие строки-плитки с тире вместо маркера ── */
+.условия { position: relative; z-index: 2; display: grid; gap: .625rem; max-width: 47.5rem;
+  margin: 0; padding: 0; list-style: none; }
+.условия li { position: relative; list-style: none; padding: .875rem 1rem .875rem 2.75rem;
+  border-radius: .875rem; font-size: var(--кегль-текст); line-height: 1.55; }
+.условия li::before { content: "—"; position: absolute; left: 1rem; top: .875rem; font-weight: 700; }
+.светлый .условия li { background: var(--цвет-фон-карточки); border: 1px solid var(--цвет-линия); color: var(--цвет-текст-мягкий); }
+.светлый .условия li::before { color: var(--цвет-тёплый-тёмный, var(--цвет-акцент-тёмный)); }
+.тёмный .условия li { background: color-mix(in srgb, var(--цвет-тёмный-фон) 40%, transparent);
+  border: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 16%, transparent);
+  color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 82%, transparent); }
+.тёмный .условия li::before { color: var(--тёплый-ключа, var(--цвет-акцент-тёмный)); }
+
+/* ── Финал: фотография во всю секцию, текст поверх неё ── */
+/* Кадр медленно наезжает — движение уже видимой картинки, не появление при прокрутке. Оверлей на
+   телефоне идёт снизу вверх (текст внизу), на компьютере — сбоку (текст слева). */
+.блок--финал { position: relative; overflow: hidden; }
+.финал__фото { position: absolute; inset: 0; margin: 0; overflow: hidden; }
+.финал__фото img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; aspect-ratio: auto;
+  object-fit: cover; object-position: 50% 12%; animation: зум-финала 34s ease-in-out infinite alternate; }
+.финал__оверлей { position: absolute; inset: 0; }
+.финал__текст { position: relative; z-index: 2; display: grid; gap: 1rem; max-width: 35rem; }
+.финал__контакты { font-size: var(--кегль-текст); margin-bottom: 0; }
+.светлый .финал__оверлей { background: linear-gradient(0deg,
+  color-mix(in srgb, var(--цвет-фон) 97%, transparent) 8%,
+  color-mix(in srgb, var(--цвет-фон) 88%, transparent) 42%,
+  color-mix(in srgb, var(--цвет-фон) 50%, transparent) 100%); }
+.светлый .финал__контакты { color: var(--цвет-текст-мягкий); }
+.тёмный .финал__оверлей { background: linear-gradient(0deg,
+  color-mix(in srgb, var(--цвет-тёмный-фон) 95%, transparent) 10%,
+  color-mix(in srgb, var(--цвет-тёмный-фон) 82%, transparent) 45%,
+  color-mix(in srgb, var(--цвет-тёмный-фон) 50%, transparent) 100%); }
+.тёмный .финал__контакты { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 65%, transparent); }
+
+/* ── Подвал: три колонки — знак и юр-блок, ссылки, контакты; внизу строка года ── */
+.блок--подвал { padding-block: 2.5rem 1.5rem; }
+.подвал__сетка { display: grid; gap: 1.75rem; }
+.подвал__лого { display: flex; align-items: center; gap: .5rem; margin-bottom: .625rem;
+  font: 700 .9375rem/1 var(--шрифт-заголовков); text-decoration: none; }
+.подвал__лого img { width: 1.75rem; height: 1.75rem; border-radius: 50%; flex: none; aspect-ratio: auto; }
+.подвал__ссылки { display: grid; gap: .5rem; }
+.блок--подвал h4 { font-family: var(--шрифт-заголовков); font-weight: 600; letter-spacing: .03em;
+  font-size: calc(var(--кегль-мелкий) * .93); margin-bottom: .625rem; }
+.подвал__низ { margin-top: 1.875rem; padding-top: 1.125rem; display: flex; flex-wrap: wrap;
+  gap: .5rem 1rem; justify-content: space-between; font-size: calc(var(--кегль-мелкий) * .93); }
+.светлый .блок--подвал h4 { color: var(--цвет-текст); }
+.светлый .подвал__низ { color: var(--цвет-текст-мягкий); border-top: 1px solid var(--цвет-линия); }
+.светлый .подвал__ссылки a:hover { color: var(--цвет-тёплый-тёмный, var(--цвет-акцент-тёмный)); }
+.тёмный .блок--подвал h4 { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 85%, transparent); }
+.тёмный .подвал__низ { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 45%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 10%, transparent); }
+.тёмный .подвал__ссылки a:hover { color: var(--тёплый-ключа, var(--цвет-акцент-тёмный)); }
+
+/* ── Планшет: кадры работ втроём в ряд ── */
+@media (min-width: 640px) {
+  .работы__сетка { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ── Компьютер: колонки, нить между шагами, медальон тарифа и макетные кегли ── */
+@media (min-width: 900px) {
+  .секция__шапка { margin-bottom: 3rem; }
+  .текстура__список { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.125rem; }
+  .роль:first-child { grid-column: 1 / -1; }
+  .роль p { font-size: calc(var(--кегль-мелкий) * 1.07); }
+  .врезка b, .врезка p { font-size: calc(var(--кегль-мелкий) * 1.07); }
+  .рамка-телефона .остров { width: 4.75em; height: 1.375em; }
+  .рамка-телефона .остров--крупный { width: 6em; height: 1.625em; }
+  .разворот__сетка { grid-template-columns: 1.05fr .95fr; gap: 2.75rem; align-items: center; }
+  .разворот__сетка--лево { grid-template-columns: .95fr 1.05fr; }
+  .разворот__сетка--лево .фото { order: -1; }
+  .разворот__сетка .фото { min-height: 27.5rem; }
+  /* Лента: макет держит ровно пять шагов, у системы их бывает три и четыре — поэтому не «пять
+     колонок», а колонка от 9rem: пять шагов встанут впятером, три — втроём, и пустых клеток не
+     останется. Нить дорисовывается вправо от карточки, у последней её нет. */
+  .лента { grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .875rem; }
+  .лента .шаг b { font-size: calc(var(--кегль-мелкий) * 1.07); }
+  .лента .шаг p { font-size: var(--кегль-мелкий); }
+  .лента .шаг:not(:last-child)::after { content: ""; position: absolute; right: -.875rem; top: 1.8125rem;
+    width: .875rem; height: var(--нить, 2px); }
+  .светлый .лента .шаг:not(:last-child)::after { background: color-mix(in srgb, var(--цвет-тёплый-тёмный, var(--цвет-акцент-тёмный)) 40%, transparent); }
+  .тёмный .лента .шаг:not(:last-child)::after { background: color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 40%, transparent); }
+  .модуль__шапка { padding: 1.125rem 1.5rem; }
+  .модуль__номер { width: 2.75rem; height: 2.75rem; font-size: var(--кегль-мелкий); }
+  .модуль__тело { padding: 0 1.5rem 1.375rem 6rem; }
+  .модуль__тело p, .модуль__результат { font-size: var(--кегль-мелкий); }
+  .работы__сетка { gap: 1.25rem; }
+  .работа__подпись b { font-size: var(--кегль-мелкий); }
+  .тарифы { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.375rem; align-items: stretch; }
+  .тариф__состав li { font-size: var(--кегль-мелкий); }
+  .тариф__фото { display: block; }
+  .отзывы-сетка { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+  .отзыв-заглушка__текст { font-size: calc(var(--кегль-мелкий) * 1.04); }
+  .вопросы-сетка { grid-template-columns: 1.5fr 1fr; gap: 2rem; }
+  .вопросы .вопрос__тело { font-size: calc(var(--кегль-мелкий) * 1.04); }
+  .вопрос-карточка p { font-size: var(--кегль-мелкий); }
+  .условия li { font-size: calc(var(--кегль-мелкий) * 1.07); }
+  .блок--финал { min-height: 70vh; display: flex; align-items: center; }
+  .финал__фото img { object-position: 50% 4%; }
+  .финал__контакты { font-size: var(--кегль-мелкий); }
+  .светлый .финал__оверлей { background: linear-gradient(100deg,
+    color-mix(in srgb, var(--цвет-фон) 97%, transparent) 0%,
+    color-mix(in srgb, var(--цвет-фон) 90%, transparent) 40%,
+    color-mix(in srgb, var(--цвет-фон) 50%, transparent) 68%); }
+  .тёмный .финал__оверлей { background: linear-gradient(100deg,
+    color-mix(in srgb, var(--цвет-тёмный-фон) 95%, transparent) 0%,
+    color-mix(in srgb, var(--цвет-тёмный-фон) 85%, transparent) 38%,
+    color-mix(in srgb, var(--цвет-тёмный-фон) 45%, transparent) 70%); }
+  .блок--подвал { padding-block: 3.25rem 1.75rem; }
+  .подвал__сетка { grid-template-columns: 1.2fr 1fr 1fr; gap: 2rem; }
+}
+
+@keyframes зум-финала { from { scale: 1.04; } to { scale: 1; } }
+
+/* Всё, что движется в этом файле, здесь и выключается: наезд кадра финала, поворот шеврона у
+   модуля и у вопроса, подъём кнопки плей под курсором, плавная кромка раскрытого модуля. Новое
+   движение — сразу сюда же, поимённо. */
+@media (prefers-reduced-motion: reduce) {
+  .финал__фото img { animation: none; }
+  .модуль, .модуль__шеврон, .вопросы .вопрос__шеврон, .работа .плей { transition: none; }
+  .работа:hover .плей { scale: 1; }
+}
