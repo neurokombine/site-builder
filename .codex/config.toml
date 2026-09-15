@@ -7,9 +7,13 @@ max_concurrent_threads_per_session = 3
 max_depth = 1
 
 [agents.screen_builder]
-description = "Use to build ONE screen of the site, screen 2 and below — the caller names the screen number N and the work folder. Screen 1 is filled by the system itself (витрина.заполнить_первый_экран) and is never touched here. Reads screen N of прототип.md, «Решения» of дизайн.md and ядро/блоки.md and the profile; copies the block template into сайты/<имя>/экраны/NN-<тип>.html, fills the slots with the prototype texts verbatim, runs собрать.py --экран N --без-показа until nothing is 🔴, and returns the paths plus what it took from where and what it could not find. Invents no text, edits no дизайн.md, shows nothing to the human itself."
+description = "Use to build ONE screen of the site, screen 2 and below — the caller names the screen number N and the work folder. Screen 1 is filled by the system itself (витрина.заполнить_первый_экран) and is never touched here. Reads screen N of прототип.md, «Решения» of дизайн.md, ядро/вёрстка.md (Contract В), the type instruction from ядро/экраны/<type>.md, gallery examples and the profile; writes сайты/<имя>/экраны/NN-<тип>.html as free markup inside its own #экран-NN, runs собрать.py --экран N --без-показа until nothing is 🔴, and returns the paths plus what it took from where and what it could not find. Invents no text, edits no дизайн.md, shows nothing to the human itself."
 config_file = "./agents/screen-builder.toml"
 
 [agents.site_checker]
 description = "Use after a screen or the whole site is assembled, as a FRESH pair of eyes — never the agent that built it. Runs проверить.py on both viewports, looks at the screenshots, checks each screen against the requirements of its type (ядро/экраны.md, section «Обязательно» of the type's instruction), checks the page rhythm — no two neighbours with the same layout, a picture at least once every three screens, never two loud screens in a row — and the site against ядро/проверка.md and the reference numbers. Returns a defect list with severity, or a clean verdict. Fixes nothing itself."
 config_file = "./agents/site-checker.toml"
+
+[agents.style_critic]
+description = "Use after screens below the cover are built, before showing the page to the human — a critic of VISUAL CONSISTENCY, never the agent that built the screens. Runs проверить.py, reads the Contract В findings (style without its own #экран-NN prefix, colour outside the profile, size/radius/shadow outside the tokens, font-family set, two connection slots, picture without a wrapper) and the uniformity report (ядро/скрипты/однородность.py), then looks at the long screenshots of both viewports against ядро/канон.md. Reports what makes one page read as several, with severity. Fixes nothing itself."
+config_file = "./agents/style-critic.toml"

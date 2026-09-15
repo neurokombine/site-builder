@@ -1,0 +1,17 @@
+<section class="блок блок--боль ключ--глубже" id="экран-02" data-тип="боль" data-вёрстка="своя">
+<style>
+  #экран-02 .сетка { display: grid; grid-template-columns: 1.4fr 1fr; gap: 32px; }
+  #экран-02 .сетка > * { background: var(--цвет-фон-карточки); color: var(--цвет-текст);
+      border-radius: var(--радиус-карточки); box-shadow: var(--тень); padding: 24px;
+      font-size: var(--кегль-текст); }
+  @media (max-width: 899px) { #экран-02 .сетка { grid-template-columns: 1fr; } }
+</style>
+<div class="блок__внутри">
+  <div class="секция__шапка"><h2>Для кого это</h2></div>
+  <div class="сетка">
+    <div><b>Новичок</b><p>Короткое пояснение к первому пункту.</p></div>
+    <div><b>Родитель</b><p>Короткое пояснение ко второму пункту.</p></div>
+    <div><b>Взрослый</b><p>Короткое пояснение к третьему пункту.</p></div>
+  </div>
+</div>
+</section>
