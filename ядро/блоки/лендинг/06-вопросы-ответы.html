@@ -1,33 +1,68 @@
-<section class="блок блок--вопросы-ответы ключ--глубже" id="экран-{{НОМЕР}}" data-тип="вопросы-ответы">
-  <!-- Возражения / условия и гарантии: слева заголовок, справа раскрывающийся список — на компьютере
-       две колонки, на телефоне одна. Один файл идёт на оба экрана. Вопросов не пять — сотри лишние details. -->
+<section class="блок блок--вопросы-ответы блок--тихо блок--текстура ключ--глубже" id="экран-{{НОМЕР}}" data-тип="вопросы-ответы">
+  <!-- Возражения · вопросы: тихая секция без картинки — фактура с тающей сеткой, обычная левая
+       шапка, тело в две колонки. Слева список вопросов, справа карточка приглашения: «не нашли
+       свой вопрос — напишите». На телефоне колонка одна, и карточка встаёт ПОД списком сама —
+       она идёт следом в разметке, переставлять ничего не надо.
+       Раскрывает вопрос сам тег details, без единой строки скрипта — механика та же, что у
+       аккордеона программы: у кого JS выключен, тот всё равно откроет любой вопрос.
+       🔴 Открыт по умолчанию только ПЕРВЫЙ вопрос: атрибут open стоит у него одного. Раскрыть
+       заранее ещё пару — и на телефоне список вытянется, а человек так и не увидит, сколько в
+       нём вопросов. Ниже это показано образцовыми копиями: у первой open есть, у остальных нет.
+       Вопросов 3–8, копий ниже восемь: нужно меньше — стирай лишние целиком, вместе с тегом
+       details и его нутром. Больше восьми не бывает: девятый на телефоне уже не дочитывают.
+       ⛔ Вопросы берём настоящие — те, что люди задают в переписке перед покупкой, а не удобные
+       выдуманные. Экран честный, а не рекламный.
+       Карточка приглашения — одно и то же место на двух экранах, вопросов и контактов, и имена
+       её слотов там и тут одни. Строки «Приглашение» в прототипе нет — сотри карточку целиком,
+       список займёт всю ширину, и пустой правой половины не останется.
+       Кнопка в карточке — единственное место этого экрана, где человек делает шаг; куда она
+       ведёт, знает профиль, а не рецепт: адреса и номера в ядре не живут. -->
+  <span class="сетка-текстура" aria-hidden="true"></span>
   <div class="блок__внутри">
-    <div class="пара">
-      <div class="пара__текст">
-        <p class="кикер">{{КИКЕР}}</p>
-        <h2>{{ЗАГОЛОВОК}}</h2>
+    <div class="секция__шапка">
+      <p class="кикер">{{КИКЕР}}</p>
+      <h2>{{ЗАГОЛОВОК}}</h2>
+    </div>
+    <div class="вопросы-сетка секция__тело">
+      <div class="вопросы">
+        <details class="вопрос" open>
+          <summary class="вопрос__шапка"><span>{{ВОПРОС_1}}</span><svg class="вопрос__шеврон" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="вопрос__тело">{{ОТВЕТ_1}}</div>
+        </details>
+        <details class="вопрос">
+          <summary class="вопрос__шапка"><span>{{ВОПРОС_2}}</span><svg class="вопрос__шеврон" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="вопрос__тело">{{ОТВЕТ_2}}</div>
+        </details>
+        <details class="вопрос">
+          <summary class="вопрос__шапка"><span>{{ВОПРОС_3}}</span><svg class="вопрос__шеврон" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="вопрос__тело">{{ОТВЕТ_3}}</div>
+        </details>
+        <details class="вопрос">
+          <summary class="вопрос__шапка"><span>{{ВОПРОС_4}}</span><svg class="вопрос__шеврон" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="вопрос__тело">{{ОТВЕТ_4}}</div>
+        </details>
+        <details class="вопрос">
+          <summary class="вопрос__шапка"><span>{{ВОПРОС_5}}</span><svg class="вопрос__шеврон" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="вопрос__тело">{{ОТВЕТ_5}}</div>
+        </details>
+        <details class="вопрос">
+          <summary class="вопрос__шапка"><span>{{ВОПРОС_6}}</span><svg class="вопрос__шеврон" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="вопрос__тело">{{ОТВЕТ_6}}</div>
+        </details>
+        <details class="вопрос">
+          <summary class="вопрос__шапка"><span>{{ВОПРОС_7}}</span><svg class="вопрос__шеврон" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="вопрос__тело">{{ОТВЕТ_7}}</div>
+        </details>
+        <details class="вопрос">
+          <summary class="вопрос__шапка"><span>{{ВОПРОС_8}}</span><svg class="вопрос__шеврон" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="вопрос__тело">{{ОТВЕТ_8}}</div>
+        </details>
       </div>
-      <div>
-        <details class="вопрос">
-          <summary>{{ВОПРОС_1}}</summary>
-          <p>{{ОТВЕТ_1}}</p>
-        </details>
-        <details class="вопрос">
-          <summary>{{ВОПРОС_2}}</summary>
-          <p>{{ОТВЕТ_2}}</p>
-        </details>
-        <details class="вопрос">
-          <summary>{{ВОПРОС_3}}</summary>
-          <p>{{ОТВЕТ_3}}</p>
-        </details>
-        <details class="вопрос">
-          <summary>{{ВОПРОС_4}}</summary>
-          <p>{{ОТВЕТ_4}}</p>
-        </details>
-        <details class="вопрос">
-          <summary>{{ВОПРОС_5}}</summary>
-          <p>{{ОТВЕТ_5}}</p>
-        </details>
+      <div class="вопрос-карточка">
+        <span class="вопрос-карточка__икон">{{ИКОНКА:чат}}</span>
+        <b>{{ПРИГЛАШЕНИЕ_ЗАГОЛОВОК}}</b>
+        <p>{{ПРИГЛАШЕНИЕ_ТЕКСТ}}</p>
+        {{СВЯЗЬ:Написать}}
       </div>
     </div>
   </div>
