@@ -495,6 +495,11 @@ body, .светлый { --фон-ключа: var(--цвет-фон); --фон-2-
     padding: .6em 1em calc(.6em + env(safe-area-inset-bottom));
     background: color-mix(in srgb, var(--цвет-фон) 88%, transparent);
     backdrop-filter: blur(.6em); -webkit-backdrop-filter: blur(.6em); border-top: 1px solid var(--цвет-линия); }
+  /* Полоса берёт светлоту ВСЕЙ СТРАНИЦЫ, а не соседней секции: она прибита к окну и висит над
+     любым экраном сразу. Класс ставит сборка тем же выбором обложки, которым красит секции;
+     на светлой странице полоса светлая, на тёмной — тёмная, ровно как в обоих макетах. */
+  .липкая-кнопка--тёмная { background: color-mix(in srgb, var(--цвет-тёмный-фон) 88%, transparent);
+    border-top-color: color-mix(in srgb, var(--цвет-тёмный-текст) 12%, transparent); }
   .липкая-кнопка .кнопка { width: 100%; min-height: 3.375rem; font-size: 1rem; }
   /* Решение 11: снизу ещё и safe-area, иначе на iPhone подвал прячется под панелью. */
   body.с-липкой-кнопкой { padding-bottom: calc(5em + env(safe-area-inset-bottom)); }

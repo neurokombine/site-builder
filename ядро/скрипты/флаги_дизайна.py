@@ -66,7 +66,11 @@ from находки import К_СВЕДЕНИЮ, ПОПРАВИТЬ, ЧИНИТЬ
   const фото = [...document.querySelectorAll('img')].filter(isVisible).filter(и => {
     const р = и.parentElement;
     return !(маска(и) || маска(р) || parseFloat(ст(и).borderRadius) > 0 || parseFloat(ст(р).borderRadius) > 0
-             || и.classList.contains('аватар') || и.closest('.мокап, .картинка'));
+             || и.classList.contains('аватар') || и.closest('.мокап, .картинка, .финал__фото'));
+  // `.финал__фото` — та же семья, что `.картинка` первого экрана: кадр лежит на всей секции, его
+  // кромка совпадает с кромкой экрана, и скруглять там нечего. Родителем у картинки в этих
+  // обёртках стоит `<picture>` (у него ни радиуса, ни маски не бывает), поэтому проверка смотрит
+  // выше — на саму обёртку.
   }).length;
   const т = document.querySelector('[data-дедлайн]');
   const ячейки = т ? [...т.querySelectorAll('.таймер__ячейка b')] : [];   // без ячеек every() дал бы true

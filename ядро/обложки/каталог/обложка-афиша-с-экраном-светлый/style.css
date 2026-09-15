@@ -495,6 +495,11 @@ body, .светлый { --фон-ключа: var(--цвет-фон); --фон-2-
     padding: .6em 1em calc(.6em + env(safe-area-inset-bottom));
     background: color-mix(in srgb, var(--цвет-фон) 88%, transparent);
     backdrop-filter: blur(.6em); -webkit-backdrop-filter: blur(.6em); border-top: 1px solid var(--цвет-линия); }
+  /* Полоса берёт светлоту ВСЕЙ СТРАНИЦЫ, а не соседней секции: она прибита к окну и висит над
+     любым экраном сразу. Класс ставит сборка тем же выбором обложки, которым красит секции;
+     на светлой странице полоса светлая, на тёмной — тёмная, ровно как в обоих макетах. */
+  .липкая-кнопка--тёмная { background: color-mix(in srgb, var(--цвет-тёмный-фон) 88%, transparent);
+    border-top-color: color-mix(in srgb, var(--цвет-тёмный-текст) 12%, transparent); }
   .липкая-кнопка .кнопка { width: 100%; min-height: 3.375rem; font-size: 1rem; }
   /* Решение 11: снизу ещё и safe-area, иначе на iPhone подвал прячется под панелью. */
   body.с-липкой-кнопкой { padding-bottom: calc(5em + env(safe-area-inset-bottom)); }
@@ -1136,12 +1141,17 @@ h2 .хвост-акцент { display: block; font-weight: 600; font-size: .6em;
 /* Кадр медленно наезжает — движение уже видимой картинки, не появление при прокрутке. Оверлей на
    телефоне идёт снизу вверх (текст внизу), на компьютере — сбоку (текст слева). */
 .блок--финал { position: relative; overflow: hidden; }
-.финал__фото { position: absolute; inset: 0; margin: 0; overflow: hidden; }
+/* Кадр лежит на всей секции, поэтому общая обёртка кадра теряет здесь скругление и тень: кромка
+   кадра совпадает с кромкой экрана, скруглять нечего, а тень под ней только мутит нижний край. */
+.финал__фото { position: absolute; inset: 0; margin: 0; overflow: hidden; border-radius: 0; box-shadow: none; }
 .финал__фото img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; aspect-ratio: auto;
   object-fit: cover; object-position: 50% 12%; animation: зум-финала 34s ease-in-out infinite alternate; }
 .финал__оверлей { position: absolute; inset: 0; }
 .финал__текст { position: relative; z-index: 2; display: grid; gap: 1rem; max-width: 35rem; }
 .финал__контакты { font-size: var(--кегль-текст); margin-bottom: 0; }
+/* Почта и телефон в этой строке подчёркнуты, но своего цвета не берут: строка и так тише лида, а
+   акцентная краска на двух ссылках подряд перетянула бы взгляд с главной кнопки рядом. */
+.финал__контакты a { color: inherit; }
 .светлый .финал__оверлей { background: linear-gradient(0deg,
   color-mix(in srgb, var(--цвет-фон) 97%, transparent) 8%,
   color-mix(in srgb, var(--цвет-фон) 88%, transparent) 42%,
@@ -1155,6 +1165,11 @@ h2 .хвост-акцент { display: block; font-weight: 600; font-size: .6em;
 
 /* ── Подвал: три колонки — знак и юр-блок, ссылки, контакты; внизу строка года ── */
 .блок--подвал { padding-block: 2.5rem 1.5rem; }
+/* Черта над подвалом идёт во всю ширину экрана, а не по колонке содержимого: подвал отделяется от
+   страницы целиком, как в макете. Общую черту базы (она стоит на колонке) здесь и снимаем. */
+.блок--подвал .блок__внутри { border-top: 0; padding-top: 0; }
+.светлый.блок--подвал { border-top: 1px solid var(--цвет-линия); }
+.тёмный.блок--подвал { border-top: 1px solid color-mix(in srgb, var(--цвет-тёплый, var(--цвет-акцент-тёмный)) 14%, transparent); }
 .подвал__сетка { display: grid; gap: 1.75rem; }
 .подвал__лого { display: flex; align-items: center; gap: .5rem; margin-bottom: .625rem;
   font: 700 .9375rem/1 var(--шрифт-заголовков); text-decoration: none; }
@@ -1164,10 +1179,18 @@ h2 .хвост-акцент { display: block; font-weight: 600; font-size: .6em;
   font-size: calc(var(--кегль-мелкий) * .93); margin-bottom: .625rem; }
 .подвал__низ { margin-top: 1.875rem; padding-top: 1.125rem; display: flex; flex-wrap: wrap;
   gap: .5rem 1rem; justify-content: space-between; font-size: calc(var(--кегль-мелкий) * .93); }
-.светлый .блок--подвал h4 { color: var(--цвет-текст); }
+/* Ссылок в подвале десяток подряд, и акцентной краской они превращаются в пёструю лесенку: цвет у
+   них общий с текстом колонки, подчёркивание приходит под курсором. Наводка красит тёплым. */
+.блок--подвал a { color: inherit; text-decoration: none; }
+.блок--подвал a:hover { text-decoration: underline; }
+/* Ключ стоит на самой секции подвала, поэтому селектор СОСТАВНОЙ, а не через пробел: подвал и
+   светлота — один элемент, и правило через пробел не находит ничего (оно и не находило). */
+.светлый.блок--подвал p, .светлый.блок--подвал a { color: var(--цвет-текст-мягкий); }
+.светлый.блок--подвал h4, .светлый.блок--подвал .подвал__лого { color: var(--цвет-текст); }
 .светлый .подвал__низ { color: var(--цвет-текст-мягкий); border-top: 1px solid var(--цвет-линия); }
 .светлый .подвал__ссылки a:hover { color: var(--цвет-тёплый-тёмный, var(--цвет-акцент-тёмный)); }
-.тёмный .блок--подвал h4 { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 85%, transparent); }
+.тёмный.блок--подвал p, .тёмный.блок--подвал a { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 62%, transparent); }
+.тёмный.блок--подвал h4 { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 85%, transparent); }
 .тёмный .подвал__низ { color: color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 45%, transparent);
   border-top: 1px solid color-mix(in srgb, var(--текст-ключа, var(--цвет-тёмный-текст)) 10%, transparent); }
 .тёмный .подвал__ссылки a:hover { color: var(--тёплый-ключа, var(--цвет-акцент-тёмный)); }
