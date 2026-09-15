@@ -5,7 +5,9 @@ from pathlib import Path
 ФИКСТУРЫ = Path(__file__).resolve().parent / "фикстуры"
 ЯДРО = СКРИПТЫ.parent
 sys.path.insert(0, str(СКРИПТЫ))
+import глаза  # noqa: E402
 import находки  # noqa: E402
+import проверить  # noqa: E402
 import собрать  # noqa: E402
 import флаги_дизайна  # noqa: E402
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # общий список личных слов
@@ -107,10 +109,24 @@ class ЧистыеТесты(unittest.TestCase):
 
 
 class ПоказТесты(unittest.TestCase):
+    """Браузер поднимается один раз на класс: на каждый показ по разу — лишняя минута."""
+
+    @classmethod
+    def setUpClass(cls):
+        from playwright.sync_api import sync_playwright
+
+        cls._playwright = sync_playwright().start()
+        cls.браузер = глаза.запустить_браузер(cls._playwright)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.браузер.close()
+        cls._playwright.stop()
+
     def test_1_показ_двух_размеров(self):
         with tempfile.TemporaryDirectory() as д:
             путь, _ = собрать.собрать(ФИКСТУРЫ / "работа-образец", куда=Path(д) / "сайт")
-            показ = собрать.показать(путь.parent, Path(д) / "показ", экран=2)
+            показ = собрать.показать(путь.parent, Path(д) / "показ", экран=2, браузер=self.браузер)
             self.assertTrue((Path(д) / "показ" / "компьютер.png").exists())
             self.assertTrue((Path(д) / "показ" / "телефон.png").exists())
             self.assertIn("Одобрение = одобрение обоих", показ.read_text(encoding="utf-8"))
@@ -128,9 +144,13 @@ class ПоказТесты(unittest.TestCase):
             shutil.copytree(ФИКСТУРЫ / "работа-образец" / "video", работа / "video")
             путь, н = собрать.собрать(работа)
             self.assertNotIn(находки.ЧИНИТЬ, [x["уровень"] for x in н], н)
-            р = subprocess.run([sys.executable, str(СКРИПТЫ / "проверить.py"), str(путь.parent)],
-                               capture_output=True, text=True, timeout=300)
-            self.assertEqual(р.returncode, 0, р.stdout[-3000:])
+            # Тот же вердикт, что даёт команда: её код выхода — это `код_выхода(находки)`,
+            # то есть ровно «есть ли красное». Здесь проверяется страница, а не запуск из
+            # командной строки (его сторожит test_проверить.test_коды_выхода_у_командной_строки),
+            # поэтому зовём проверку прямо — без второго интерпретатора и второго браузера.
+            итог = проверить.проверить(путь.parent, Path(д) / "проверка",
+                                       браузер=self.браузер, ждать_сек=0.2)
+            self.assertFalse(находки.есть_красное(итог["находки"]), итог["отчёт"])
 
     def test_3_cli_без_показа(self):
         with tempfile.TemporaryDirectory() as д:
