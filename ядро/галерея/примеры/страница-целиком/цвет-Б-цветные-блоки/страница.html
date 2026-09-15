@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Вариант Б · «Цветные блоки» — цветовая партитура страницы студии</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+ --navy:#0D1B2A;--graphite:#1A1A2E;--charcoal:#212133;--surface:#16213E;
+ --burgundy:#6B1520;--wine:#8B1A1A;--rich:#A52422;--warm:#C62828;--signal:#D32F2F;
+ --white:#FAF8F5;--cream:#F5F0EB;--gray:#E8E4E0;--beige:#D4C5B5;--gold:#C8A97E;
+ --ink:#2D2D3F;--ink2:#4A4A5A;--subtle:#8A8A9A;
+ --заг:'Montserrat',-apple-system,'Segoe UI',Roboto,sans-serif;
+ --осн:'Manrope',-apple-system,'Segoe UI',Roboto,sans-serif;
+ --ход:cubic-bezier(.22,.61,.36,1);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--white);color:var(--ink);font-family:var(--осн);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;padding-bottom:92px}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+h2,h3,h4{font-family:var(--заг);margin:0;line-height:1.04;letter-spacing:-.03em}
+p{margin:0}
+ul{margin:0;padding:0;list-style:none}
+figure{margin:0}
+
+.метка{background:var(--charcoal);color:var(--gray);font-size:13px;letter-spacing:.06em;text-transform:uppercase;font-family:var(--заг);font-weight:600;padding:11px 20px;text-align:center}
+.метка b{color:var(--gold);font-weight:700}
+
+.обёртка{width:min(1240px,100% - 36px);margin-inline:auto;position:relative;z-index:3}
+.секция{position:relative;overflow:hidden;padding:clamp(56px,6.6vw,108px) 0}
+.блок-навy{background:var(--navy);color:var(--white)}
+.блок-бордо{background:var(--burgundy);color:var(--white)}
+.блок-бело{background:var(--white);color:var(--ink)}
+.блок-беж{background:var(--gold);color:var(--navy)}
+.блок-графит{background:var(--graphite);color:var(--white)}
+.блок-навy h2,.блок-бордо h2,.блок-графит h2{color:var(--white)}
+.блок-беж h2{color:var(--navy)}
+
+/* кикер — плотный стикер, а не строка */
+.стикер{display:inline-block;font-family:var(--заг);font-weight:800;font-size:13.5px;letter-spacing:.16em;text-transform:uppercase;padding:9px 16px;border-radius:8px;transform:rotate(-1.4deg);margin-bottom:18px}
+.с-беж{background:var(--gold);color:var(--navy)}
+.с-бордо{background:var(--burgundy);color:var(--cream)}
+.с-навy{background:var(--navy);color:var(--gold)}
+.с-крем{background:var(--cream);color:var(--burgundy)}
+.с-красный{background:var(--warm);color:#FFFFFF}
+.с-сигнал{background:var(--signal);color:#FFFFFF;transform:rotate(2deg)}
+.тариф .стикер,.отзыв .стикер{align-self:flex-start}
+
+h2{font-size:clamp(32px,5vw,62px);font-weight:900;text-wrap:balance}
+h2 em{font-style:normal;color:var(--gold)}
+.блок-бело h2 em,.блок-беж h2 em{color:var(--warm)}
+.лид{font-size:clamp(17px,1.4vw,21px);line-height:1.5;max-width:60ch;margin-top:18px;font-weight:500}
+.блок-навy .лид,.блок-графит .лид{color:rgba(250,248,245,.76)}
+.блок-бордо .лид{color:rgba(245,240,235,.86)}
+.блок-бело .лид{color:var(--ink2)}
+.блок-беж .лид{color:rgba(13,27,42,.8)}
+.шапка{margin-bottom:38px}
+.шапка--центр{text-align:center}
+.шапка--центр .лид{margin-inline:auto}
+
+.кнопка{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 28px;border-radius:10px;font-family:var(--заг);font-weight:800;font-size:16px;line-height:1.1;border:0;cursor:pointer;letter-spacing:.01em;transition:transform .22s var(--ход),background .22s var(--ход),box-shadow .22s var(--ход)}
+.кнопка--гл{background:var(--warm);color:#FFFFFF;box-shadow:0 8px 0 0 var(--burgundy);animation:пульс 2.8s var(--ход) infinite}
+.кнопка--гл:hover{background:var(--rich);transform:translateY(3px);box-shadow:0 5px 0 0 var(--burgundy);animation:none}
+@keyframes пульс{0%{box-shadow:0 8px 0 0 var(--burgundy),0 0 0 0 rgba(198,40,40,.4)}70%{box-shadow:0 8px 0 0 var(--burgundy),0 0 0 16px rgba(198,40,40,0)}100%{box-shadow:0 8px 0 0 var(--burgundy),0 0 0 0 rgba(198,40,40,0)}}
+.кнопка--крем{background:var(--cream);color:var(--burgundy);box-shadow:0 8px 0 0 rgba(13,27,42,.45)}
+.кнопка--крем:hover{background:var(--white);transform:translateY(3px);box-shadow:0 5px 0 0 rgba(13,27,42,.45)}
+.кнопка--навy{background:var(--navy);color:var(--white);box-shadow:0 8px 0 0 rgba(13,27,42,.3)}
+.кнопка--навy:hover{background:var(--surface);transform:translateY(3px);box-shadow:0 5px 0 0 rgba(13,27,42,.3)}
+.кнопка--беж{background:var(--gold);color:var(--navy);box-shadow:0 8px 0 0 rgba(107,21,32,.4)}
+.кнопка--беж:hover{background:var(--beige);transform:translateY(3px);box-shadow:0 5px 0 0 rgba(107,21,32,.4)}
+
+/* 1 · об авторе — navy-блок */
+.разворот{display:grid;gap:30px;align-items:center}
+@media(min-width:900px){.разворот{grid-template-columns:1.1fr .9fr;gap:52px}}
+.портрет-блок{position:relative;border-radius:14px;overflow:hidden;background:var(--burgundy)}
+.портрет-блок img{width:100%;aspect-ratio:4/5;object-fit:cover;object-position:50% 20%}
+.портрет-блок::after{content:"";position:absolute;left:0;right:0;bottom:0;height:12px;background:var(--gold)}
+.подпись-блок{display:flex;flex-wrap:wrap;gap:0;margin-top:14px}
+.подпись-блок span{font-family:var(--заг);font-weight:800;font-size:13px;letter-spacing:.14em;text-transform:uppercase;padding:10px 14px}
+.пб1{background:var(--gold);color:var(--navy)}
+.пб2{background:var(--cream);color:var(--burgundy)}
+.пб3{background:var(--warm);color:#FFFFFF}
+.абзац{font-size:17.5px;line-height:1.62;margin-top:22px;max-width:60ch}
+.блок-навy .абзац{color:rgba(250,248,245,.84)}
+.абзац--тише{font-size:16.5px;color:rgba(250,248,245,.66)}
+
+/* цифры как цветные плитки */
+.плитки{display:grid;grid-template-columns:repeat(2,1fr);gap:0;margin-top:30px;border-radius:14px;overflow:hidden}
+@media(min-width:760px){.плитки{grid-template-columns:repeat(4,1fr)}}
+.плитка-ц{padding:22px 20px 24px}
+.плитка-ц b{display:block;font-family:var(--заг);font-weight:900;font-size:clamp(30px,3.4vw,42px);line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.плитка-ц span{display:block;font-size:14px;margin-top:8px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.пц1{background:var(--cream);color:var(--burgundy)}
+.пц1 span{color:var(--ink2)}
+.пц2{background:var(--gold);color:var(--navy)}
+.пц2 span{color:rgba(13,27,42,.7)}
+.пц3{background:var(--burgundy);color:var(--cream)}
+.пц3 span{color:rgba(245,240,235,.72)}
+.пц4{background:var(--warm);color:#FFFFFF}
+.пц4 span{color:rgba(255,255,255,.85)}
+
+/* бегущая строка золотом */
+.лента{background:var(--charcoal);border-top:4px solid var(--wine);border-bottom:4px solid var(--wine);overflow:hidden;padding:15px 0}
+.лента__полоса{display:flex;gap:0;width:max-content;animation:бег 34s linear infinite}
+.лента__полоса span{font-family:var(--заг);font-weight:800;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);padding:0 22px;white-space:nowrap}
+.лента__полоса span i{color:var(--rich);font-style:normal;padding-left:22px}
+@keyframes бег{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* 2 · что получите — бордовый блок, кремовые карточки */
+.сетка-форматов{display:grid;gap:18px}
+@media(min-width:820px){.сетка-форматов{grid-template-columns:repeat(6,1fr)}
+ .ф1{grid-column:span 3}.ф2{grid-column:span 3}.ф3{grid-column:span 2}.ф4{grid-column:span 2}.ф5{grid-column:span 2}}
+.карта{border-radius:14px;padding:26px 24px 28px;position:relative;border-top:8px solid transparent}
+.карта h3{font-size:21px;font-weight:800;margin-bottom:10px;letter-spacing:-.02em;line-height:1.15}
+.карта p{font-size:16.5px;line-height:1.55}
+.к-крем{background:var(--cream);color:var(--ink);border-top-color:var(--warm)}
+.к-крем p{color:var(--ink2)}
+.к-бело{background:var(--white);color:var(--ink);border-top-color:var(--gold)}
+.к-бело p{color:var(--ink2)}
+.к-беж{background:var(--gold);color:var(--navy);border-top-color:var(--burgundy)}
+.к-беж p{color:rgba(13,27,42,.8)}
+.к-навy{background:var(--navy);color:var(--white);border-top-color:var(--rich)}
+.к-навy p{color:rgba(250,248,245,.78)}
+.номерок{font-family:var(--заг);font-weight:900;font-size:15px;letter-spacing:.1em;color:var(--rich);display:block;margin-bottom:12px}
+.к-беж .номерок{color:var(--burgundy)}
+.к-навy .номерок{color:var(--gold)}
+.актив{margin-top:22px;background:var(--cream);color:var(--ink);border-radius:14px;padding:26px;border-left:10px solid var(--gold);display:grid;gap:18px}
+@media(min-width:820px){.актив{grid-template-columns:auto 1fr;align-items:center}}
+.актив b{font-family:var(--заг);font-weight:900;font-size:22px;color:var(--burgundy);letter-spacing:-.02em;white-space:nowrap}
+.актив p{font-size:16.5px;line-height:1.55;color:var(--ink2)}
+
+/* 3 · как работаем — белый блок, цветные номера */
+.лестница{display:grid;gap:14px}
+.ступень{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;padding:22px 22px 24px;border-radius:14px;background:var(--cream);border-left:10px solid var(--warm)}
+.ступень:nth-child(2){border-left-color:var(--rich);background:var(--white);box-shadow:inset 0 0 0 1px var(--gray)}
+.ступень:nth-child(3){border-left-color:var(--burgundy)}
+.ступень:nth-child(4){border-left-color:var(--navy);background:var(--white);box-shadow:inset 0 0 0 1px var(--gray)}
+.ступень:nth-child(5){border-left-color:var(--gold)}
+.ступень__н{font-family:var(--заг);font-weight:900;font-size:clamp(40px,5vw,64px);line-height:.85;letter-spacing:-.05em;color:var(--warm);font-variant-numeric:tabular-nums;min-width:56px}
+.ступень:nth-child(2) .ступень__н{color:var(--rich)}
+.ступень:nth-child(3) .ступень__н{color:var(--burgundy)}
+.ступень:nth-child(4) .ступень__н{color:var(--navy)}
+.ступень:nth-child(5) .ступень__н{color:var(--gold)}
+.ступень b{display:block;font-family:var(--заг);font-weight:800;font-size:20px;margin-bottom:6px;letter-spacing:-.02em}
+.ступень p{font-size:16.5px;line-height:1.55;color:var(--ink2)}
+
+/* 4 · тарифы — золотой беж, карточки контрастны блоку */
+.тарифы{display:grid;gap:20px}
+@media(min-width:900px){.тарифы{grid-template-columns:repeat(3,1fr);align-items:stretch}}
+.тариф{display:flex;flex-direction:column;border-radius:14px;padding:30px 26px 32px;position:relative}
+.т-навy{background:var(--navy);color:var(--white)}
+.т-бордо{background:var(--burgundy);color:var(--cream);box-shadow:0 22px 50px rgba(107,21,32,.35)}
+@media(min-width:900px){.т-бордо{transform:translateY(-16px) scale(1.03);z-index:2}}
+.т-бело{background:var(--white);color:var(--ink)}
+.тариф__метка{font-family:var(--заг);font-weight:800;font-size:13px;letter-spacing:.16em;text-transform:uppercase}
+.т-навy .тариф__метка{color:var(--gold)}
+.т-бордо .тариф__метка{color:var(--beige)}
+.т-бело .тариф__метка{color:var(--warm)}
+.тариф__имя{display:block;font-family:var(--заг);font-weight:900;font-size:clamp(32px,3.4vw,42px);line-height:1;letter-spacing:-.03em;margin:10px 0 18px}
+.тариф__цена{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.тариф__цена b{font-family:var(--заг);font-weight:900;font-size:clamp(30px,3.2vw,40px);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.т-навy .тариф__цена b{color:var(--gold)}
+.т-бордо .тариф__цена b{color:var(--cream)}
+.т-бело .тариф__цена b{color:var(--warm)}
+.тариф__цена s{font-size:16px;opacity:.6}
+.тариф__состав{display:grid;gap:12px;margin-bottom:24px;flex:1}
+.тариф__состав li{position:relative;padding-left:26px;font-size:16.5px;line-height:1.5}
+.тариф__состав li::before{content:"";position:absolute;left:0;top:9px;width:10px;height:10px;border-radius:3px}
+.т-навy .тариф__состав li::before{background:var(--gold)}
+.т-бордо .тариф__состав li::before{background:var(--beige)}
+.т-бело .тариф__состав li::before{background:var(--rich)}
+.т-навy .тариф__состав li{color:rgba(250,248,245,.82)}
+.т-бордо .тариф__состав li{color:rgba(245,240,235,.88)}
+.т-бело .тариф__состав li{color:var(--ink2)}
+.тариф__фото{position:absolute;right:22px;top:-28px;width:64px;height:64px;border-radius:12px;overflow:hidden;border:4px solid var(--gold)}
+.тариф__фото img{width:100%;height:100%;object-fit:cover}
+.сноска{margin-top:28px;font-size:15px;line-height:1.55;max-width:78ch}
+.блок-беж .сноска{color:rgba(13,27,42,.72)}
+.блок-графит .сноска{color:rgba(250,248,245,.6)}
+.блок-бело .сноска{color:var(--ink2)}
+
+/* 5 · программа — графит, части цветными полосами */
+.часть{margin-bottom:24px}
+.часть__полоса{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;background:var(--burgundy);color:var(--cream);border-radius:10px;padding:13px 18px;margin-bottom:12px}
+.часть:nth-child(2n) .часть__полоса{background:var(--wine)}
+.часть__имя{font-family:var(--заг);font-weight:900;font-size:18px;letter-spacing:-.02em}
+.часть__метка{font-size:14px;color:rgba(245,240,235,.72)}
+.модуль{background:var(--surface);border-radius:10px;margin-bottom:9px;overflow:hidden;border-left:6px solid var(--gold)}
+.модуль[open]{border-left-color:var(--warm)}
+.модуль summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:14px;padding:16px 18px}
+.модуль summary::-webkit-details-marker{display:none}
+.модуль__н{flex:none;min-width:48px;height:34px;border-radius:7px;background:var(--gold);color:var(--navy);font-family:var(--заг);font-weight:900;font-size:15px;display:flex;align-items:center;justify-content:center}
+.модуль[open] .модуль__н{background:var(--warm);color:#FFFFFF}
+.модуль__заг{flex:1;min-width:0}
+.модуль__заг b{display:block;font-family:var(--заг);font-weight:800;font-size:17.5px;line-height:1.2;color:var(--white);letter-spacing:-.02em}
+.модуль__мета{display:block;font-size:13.5px;color:rgba(250,248,245,.58);margin-top:4px}
+.шеврон{flex:none;width:18px;height:18px;border-right:3px solid var(--gold);border-bottom:3px solid var(--gold);transform:rotate(45deg) translate(-2px,-2px);transition:transform .3s var(--ход)}
+.модуль[open] .шеврон{transform:rotate(225deg) translate(-2px,-2px)}
+.модуль__тело{background:var(--cream);color:var(--ink);padding:20px 20px 22px;margin:0}
+.модуль__тело p{font-size:16.5px;line-height:1.55;color:var(--ink2)}
+.тег{display:inline-block;margin:14px 0;background:var(--navy);color:var(--gold);border-radius:7px;padding:8px 14px;font-size:13.5px;font-weight:700;font-family:var(--заг)}
+.итог{font-size:16px;line-height:1.5;padding-top:14px;border-top:2px solid var(--beige);color:var(--ink)}
+.итог b{color:var(--burgundy);font-family:var(--заг);font-weight:800}
+.скорости{margin-top:22px;background:var(--warm);color:#FFFFFF;border-radius:14px;padding:26px;max-width:820px}
+.скорости b{display:block;font-family:var(--заг);font-weight:900;font-size:22px;margin-bottom:10px;letter-spacing:-.02em}
+.скорости p{font-size:16.5px;line-height:1.55;color:rgba(255,255,255,.92)}
+.подсказка{font-size:14px;margin-top:16px;color:rgba(250,248,245,.55)}
+
+/* 6 · отзывы — белый блок, три цветные карточки */
+.отзывы{display:grid;gap:18px}
+@media(min-width:760px){.отзывы{grid-template-columns:repeat(3,1fr)}}
+.отзыв{border-radius:14px;padding:26px;display:flex;flex-direction:column;gap:16px}
+.о1{background:var(--navy);color:var(--white)}
+.о2{background:var(--burgundy);color:var(--cream)}
+.о3{background:var(--gold);color:var(--navy)}
+.отзыв p{font-size:16.5px;line-height:1.55}
+.о1 p{color:rgba(250,248,245,.8)}
+.о2 p{color:rgba(245,240,235,.86)}
+.о3 p{color:rgba(13,27,42,.8)}
+.заглушка{background:var(--gray);color:var(--subtle);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--заг);font-weight:800;font-size:13px;letter-spacing:.2em;text-transform:uppercase;min-height:108px}
+.отзыв__низ{font-size:14px;opacity:.7}
+
+/* подвал */
+.подвал{background:var(--charcoal);color:rgba(250,248,245,.78);padding:54px 0 34px}
+.подвал__сетка{display:grid;gap:26px}
+@media(min-width:760px){.подвал__сетка{grid-template-columns:1.2fr 1fr 1.4fr}}
+.подвал h4{font-family:var(--заг);font-weight:800;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:0 0 14px}
+.подвал__лого{display:flex;align-items:center;gap:10px;font-family:var(--заг);font-weight:900;font-size:19px;color:var(--white);margin-bottom:10px;letter-spacing:-.02em}
+.подвал__лого img{width:34px;height:34px;border-radius:8px}
+.подвал p,.подвал a{font-size:15px;line-height:1.7}
+.подвал__ссылки{display:grid;gap:7px}
+.подвал__ссылки a:hover{color:var(--gold)}
+.подвал__низ{margin-top:30px;padding-top:18px;border-top:2px solid rgba(250,248,245,.12);display:grid;gap:6px;font-size:13.5px;color:var(--subtle)}
+
+.липкая{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--navy);padding:9px 14px;padding-bottom:calc(9px + env(safe-area-inset-bottom));border-top:3px solid var(--gold)}
+.липкая .кнопка{width:100%;min-height:54px}
+@media(min-width:900px){.липкая{display:none}body{padding-bottom:0}}
+
+.партитура{background:var(--white);color:var(--ink);padding:clamp(48px,5vw,80px) 0}
+.партитура table{width:100%;border-collapse:collapse;font-size:15px;min-width:660px}
+.партитура th{text-align:left;font-family:var(--заг);font-weight:800;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--subtle);padding:10px 12px;border-bottom:3px solid var(--beige)}
+.партитура td{padding:12px;border-bottom:1px solid var(--gray);vertical-align:top;line-height:1.5}
+.партитура tr:nth-child(even) td{background:var(--cream)}
+.обзор{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.цв{display:inline-flex;align-items:center;gap:10px;white-space:nowrap;font-family:var(--заг);font-weight:800;font-size:14px}
+.цв i{width:22px;height:22px;border-radius:5px;border:1px solid rgba(45,45,63,.18);flex:none}
+.хекс{font-family:var(--заг);font-weight:700;font-size:14px;color:var(--ink2);white-space:nowrap}
+
+@media(max-width:600px){
+ .секция{padding:44px 0}
+ .карта,.тариф,.отзыв,.ступень,.актив,.скорости{padding:22px 20px}
+ .ступень{grid-template-columns:auto 1fr;gap:14px}
+ .тариф__фото{right:16px;top:-22px;width:54px;height:54px}
+ .актив b{white-space:normal}
+}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="метка">Макет · вариант <b>Б «Цветные блоки»</b> · шесть экранов студии, тексты из прототипа</div>
+<section class="секция блок-навy" id="об-авторе">
+<div class="обёртка"><div class="разворот">
+<div>
+<span class="стикер с-беж">Об авторе</span>
+<h2>Нейросетям учат все. <em>Видео — почти никто</em></h2>
+<p class="лид">Натэла Зубченко · продюсер онлайн-школ · телесценарист с 22 годами в телепроизводстве, дважды лауреат премии ТЭФИ</p>
+<p class="абзац">Нейросетям сегодня учат все. Видео — почти никто. Эту программу собирает команда с двадцатью двумя годами телевизионного производства и двумя ТЭФИ. Отсюда в курсе то, чего нет у остальных: модуль про крупность плана, правило оси и эффект Кулешова, разговор про хук в первые три секунды и про то, почему смысл рождается на стыке кадров. Нейросеть выдаёт кадры. Роликом их делает режиссура — и вот ей мы и учим. Инструменты за год сменятся, эта часть останется с вами навсегда</p>
+<p class="абзац абзац--тише">Программу собирала не она одна: режиссёр Дмитрий Краснов, лауреат ТЭФИ, который работает с федеральными каналами, и режиссёр монтажа Сергей Семичаснов, эксперт по постпродакшну. А сама Натэла ещё и уволила весь контент-отдел школы: шесть соцсетей три часа в неделю, без ассистентов, силами тех же нейросетей, которым учит здесь</p>
+</div>
+<div>
+<figure class="портрет-блок"><img src="img/портрет-кресло-верт.jpg" alt="Натэла Зубченко"></figure>
+<div class="подпись-блок"><span class="пб1">22 года на ТВ</span><span class="пб2">2 ТЭФИ</span><span class="пб3">43 страны</span></div>
+</div>
+</div>
+<div class="плитки"><div class="плитка-ц пц1"><b>34 900</b><span>учеников</span></div><div class="плитка-ц пц2"><b>43</b><span>страны</span></div><div class="плитка-ц пц3"><b>22 года</b><span>на ТВ</span></div><div class="плитка-ц пц4"><b>2</b><span>ТЭФИ</span></div></div>
+</div></section>
+<div class="лента"><div class="лента__полоса"><span>Сценарий<i>·</i></span><span>Кадр<i>·</i></span><span>Герой<i>·</i></span><span>Анимация<i>·</i></span><span>Озвучка<i>·</i></span><span>Монтаж<i>·</i></span><span>Деньги<i>·</i></span><span>Kling 3.0<i>·</i></span><span>GPT Image 2<i>·</i></span><span>ElevenLabs<i>·</i></span><span>HeyGen<i>·</i></span><span>Veo 3.1<i>·</i></span><span>CapCut<i>·</i></span><span>Runway Aleph 2.0<i>·</i></span><span>Сценарий<i>·</i></span><span>Кадр<i>·</i></span><span>Герой<i>·</i></span><span>Анимация<i>·</i></span><span>Озвучка<i>·</i></span><span>Монтаж<i>·</i></span><span>Деньги<i>·</i></span><span>Kling 3.0<i>·</i></span><span>GPT Image 2<i>·</i></span><span>ElevenLabs<i>·</i></span><span>HeyGen<i>·</i></span><span>Veo 3.1<i>·</i></span><span>CapCut<i>·</i></span><span>Runway Aleph 2.0<i>·</i></span></div></div>
+<section class="секция блок-бордо" id="что-получите">
+<div class="обёртка">
+<div class="шапка"><span class="стикер с-крем">Что получите</span><h2>Что вы будете уметь делать</h2><p class="лид">Не «знания про нейросети», а форматы, которые делают людям и за которые платят</p></div>
+<div class="сетка-форматов">
+<div class="карта к-крем ф1"><span class="номерок">01</span><h3>Мини-сериалы с сюжетом и своим героем</h3><p>то, что держит подписчика и продаётся заказчику сезоном, а не роликом</p></div>
+<div class="карта к-беж ф2"><span class="номерок">02</span><h3>Товарные видео и креативы для маркетплейсов</h3><p>дефиле, демонстрация, переодевания, размерная сетка на разных фигурах, карточки под площадку</p></div>
+<div class="карта к-бело ф3"><span class="номерок">03</span><h3>Нейроаватары и говорящие головы</h3><p>ваш двойник, который говорит вашим голосом</p></div>
+<div class="карта к-навy ф4"><span class="номерок">04</span><h3>Рилсы под тренды</h3><p>по системе, а не по вдохновению</p></div>
+<div class="карта к-крем ф5"><span class="номерок">05</span><h3>Оживлённые фото, логотипы и заставки</h3><p>поздравления, интро, анимированная графика</p></div>
+</div>
+<div class="актив"><b>Остаётся в руках как актив</b><p>Карточка своего героя и своего товара, шоурил и портфолио из 4–6 работ, мини-сезон из 3–4 серий, расчёт себестоимости и тритмент-презентация</p></div>
+</div></section>
+<section class="секция блок-бело" id="как-работаем">
+<div class="обёртка">
+<div class="шапка"><span class="стикер с-навy">Как работаем</span><h2>Пять шагов от заявки до записи, которая останется навсегда</h2></div>
+<div class="лестница">
+<div class="ступень"><span class="ступень__н">1</span><div><b>Заявка</b><p>Оставляете заявку прямо на сайте — обсуждаем тариф и отвечаем на вопросы</p></div></div>
+<div class="ступень"><span class="ступень__н">2</span><div><b>Поток</b><p>Модуль в неделю. Открывается по расписанию потока — чтобы вы шли вместе с остальными, а не в одиночку</p></div></div>
+<div class="ступень"><span class="ступень__н">3</span><div><b>Первый ролик</b><p>Инструмент появляется в тот момент, когда он нужен для задачи — и ни минутой раньше. Первый ролик — в первый вечер</p></div></div>
+<div class="ступень"><span class="ступень__н">4</span><div><b>Поддержка</b><p>Муся отвечает круглосуточно на всех тарифах. Живой куратор проверяет задания с тарифа «Студия». Разбор от Натэлы — на эфирах потока</p></div></div>
+<div class="ступень"><span class="ступень__н">5</span><div><b>Навсегда</b><p>Доступ навсегда и рассрочка ×12 на любом тарифе. Записи остаются, вернуться можно когда угодно</p></div></div>
+</div></div></section>
+<section class="секция блок-беж" id="тарифы">
+<div class="обёртка">
+<div class="шапка шапка--центр"><span class="стикер с-бордо">Тарифы</span><h2>Три тарифа: Кадр, Студия, Режиссёр</h2><p class="лид">Доступ навсегда и рассрочка ×12 на любом тарифе. Ближайший поток стартует 1&nbsp;октября</p></div>
+<div class="тарифы">
+<div class="тариф т-навy">
+<span class="тариф__метка">для себя</span><span class="тариф__имя">Кадр</span>
+<div class="тариф__цена"><b>35 900 ₽</b><s>46 900 ₽</s></div>
+<ul class="тариф__состав"><li>9 модулей из 13 — вход, база и нейроаватары</li><li>Конспект и промпты к своим урокам</li><li>Муся 24/7 безлимитно, самопроверка по критерию</li><li>Витрина инструментов и Карта доступа</li></ul>
+<a class="кнопка кнопка--беж" href="#заявка">Выбрать «Кадр»</a>
+</div>
+<div class="тариф т-бордо">
+<span class="тариф__фото"><img src="img/портрет-квадрат.webp" alt="Натэла Зубченко"></span>
+<span class="тариф__метка">с куратором</span><span class="тариф__имя">Студия</span>
+<span class="стикер с-сигнал" style="margin-bottom:12px">Ранняя цена</span>
+<div class="тариф__цена"><b>44 900 ₽</b><s>57 900 ₽</s></div>
+<ul class="тариф__состав"><li>Все 13 модулей — товар, маркетплейсы, нейрорилс, мини-сериал, заработок и право</li><li>Живой куратор и проверка заданий человеком</li><li>Чат потока и 5 эфиров-разборов Натэлы</li><li>Библиотеки промптов, карточки-заготовки, шаблоны монтажа</li></ul>
+<a class="кнопка кнопка--крем" href="#заявка">Выбрать «Студию»</a>
+</div>
+<div class="тариф т-бело">
+<span class="тариф__метка">на заказ</span><span class="тариф__имя">Режиссёр</span>
+<div class="тариф__цена"><b>98 900 ₽</b><s>128 900 ₽</s></div>
+<ul class="тариф__состав"><li>Всё из «Студии» плюс анимированные бесшовные карусели</li><li>Фирменный стиль серии на Midjourney, пакеты под нишу</li><li>Документы для заказчика и сборка портфолио с разбором</li><li>Библиотека наработок Натэлы и бонус-курс «Миллион за эфир»</li></ul>
+<a class="кнопка кнопка--навy" href="#заявка">Выбрать «Режиссёра»</a>
+</div>
+</div>
+<p class="сноска">Прежняя версия студии — 6 блоков, доступ на месяц-полгода, монтаж отдельным бонусом за 26 000 ₽. Теперь — 13 модулей и 87 уроков, доступ навсегда, монтаж в базе даже на младшем тарифе</p>
+</div></section>
+<section class="секция блок-графит" id="программа">
+<div class="обёртка">
+<div class="шапка"><span class="стикер с-красный">Программа</span><h2>Тринадцать модулей — по одному в неделю</h2><p class="лид">Не «оживление картинок» — полный цикл видеопроизводства: сценарий → кадр → герой → анимация → озвучка → монтаж → деньги</p>
+<div class="плитки" style="margin-top:26px;max-width:620px">
+<div class="плитка-ц пц2"><b>13</b><span>модулей</span></div>
+<div class="плитка-ц пц4"><b>87</b><span>уроков</span></div>
+<div class="плитка-ц пц1"><b>12</b><span>недель</span></div>
+</div>
+<p class="подсказка">Нажмите на модуль, чтобы увидеть уроки, инструменты и результат</p></div>
+<div class="часть">
+<div class="часть__полоса"><span class="часть__имя">Часть I · Вход и ранний результат</span><span class="часть__метка">М1–М3 · 17 уроков · недели 1–2</span></div>
+<details class="модуль" open>
+<summary><span class="модуль__н">М1</span><span class="модуль__заг"><b>Первый ролик сегодня вечером</b><span class="модуль__мета">4 урока · неделя 1</span></span><span class="шеврон"></span></summary>
+<div class="модуль__тело"><p>Вы приходите вечером после работы и уходите с готовым роликом на телефоне: регистрация и оплата рублями по шагам, первый ролик из фото или из идеи текстом, честный расчёт стоимости генерации.</p><span class="тег">Работаем в: SYNTX · Kling 3.0</span><p class="итог"><b>На руках:</b> готовый ролик, скачанный на устройство</p></div>
+</details>
+<details class="модуль">
+<summary><span class="модуль__н">М2</span><span class="модуль__заг"><b>Промпт — это постановка задачи</b><span class="модуль__мета">5 уроков · неделя 1</span></span><span class="шеврон"></span></summary>
+<div class="модуль__тело"><p>Структура промпта кадра из шести полей, мини-словарь по каждому, бот-интервьюер и промпт-машины школы — шаблоны-сборщики под карточку товара, слайд карусели, сцену с героем.</p><span class="тег">Работаем в: ChatGPT/Claude/Gemini через SYNTX · Kling 3.0</span><p class="итог"><b>На руках:</b> тот же ролик из М1, переснятый по структуре — разница видна без объяснений</p></div>
+</details>
+<details class="модуль">
+<summary><span class="модуль__н">М3</span><span class="модуль__заг"><b>Оживляем: фото, логотипы, продукты</b><span class="модуль__мета">8 уроков · неделя 2</span></span><span class="шеврон"></span></summary>
+<div class="модуль__тело"><p>Живая фотография, логотип и шапка профиля петлёй без рывка, живые фоны, товар в 3D с прозрачным фоном, маскот, парящая раскладка, виртуальные объятия и разбор типовых поломок генерации.</p><span class="тег">Работаем в: Kling 3.0 · GPT Image 2 · Supa · CapCut</span><p class="итог"><b>На руках:</b> серия коротких роликов и шоурил, который не стыдно выложить</p></div>
+</details>
+</div>
+<div class="часть">
+<div class="часть__полоса"><span class="часть__имя">Часть II · База</span><span class="часть__метка">М4–М8 · 31 урок · недели 3–7</span></div>
+<details class="модуль">
+<summary><span class="модуль__н">М4</span><span class="модуль__заг"><b>Кадр и история</b><span class="модуль__мета">6 уроков · неделя 3</span></span><span class="шеврон"></span></summary>
+<div class="модуль__тело"><p>Крупности и движение камеры, раскадровка одним изображением, эффект Кулешова и правило оси, драматургия короткой формы и хук в первые три секунды, микроистория из трёх-пяти кадров.</p><span class="тег">Работаем в: текстовая нейросеть из М2</span><p class="итог"><b>На руках:</b> разбор чужого залетевшего ролика по кадрам и свой мини-сценарий с хуком</p></div>
+</details>
+<details class="модуль">
+<summary><span class="модуль__н">М5</span><span class="модуль__заг"><b>Ваш герой и ваш товар</b><span class="модуль__мета">6 уроков · неделя 4</span></span><span class="шеврон"></span></summary>
+<div class="модуль__тело"><p>Карточка героя из 11 полей и референс-лист, карточка товара, визуальный паспорт проекта, банка локации 3×3, двойной ввод карточки в каждую генерацию и три теста «рабочая ли карточка».</p><span class="тег">Работаем в: GPT Image 2 (запасной Nano Banana Pro) · Kling 3.0</span><p class="итог"><b>На руках:</b> карточка своего героя и карточка своего товара — работают до конца курса</p></div>
+</details>
+<details class="модуль">
+<summary><span class="модуль__н">М6</span><span class="модуль__заг"><b>Голос и озвучка</b><span class="модуль__мета">6 уроков · неделя 5</span></span><span class="шеврон"></span></summary>
+<div class="модуль__тело"><p>Клонирование голоса с оплатой рублями через агрегатор, честно про липсинк на русском, переиспользуемый блок «описание голоса», говорящая фотография вообще без клонирования.</p><span class="тег">Работаем в: ElevenLabs через SYNTX · Kling 3.0 / Veo 3.1</span><p class="итог"><b>На руках:</b> ваш герой из М5 говорит вашим голосом</p></div>
+</details>
+<details class="модуль">
+<summary><span class="модуль__н">М7</span><span class="модуль__заг"><b>Монтаж и автоматика</b><span class="модуль__мета">7 уроков · неделя 6</span></span><span class="шеврон"></span></summary>
+<div class="модуль__тело"><p>Черновик за пять минут автоматикой и три места, где её нужно перепроверить глазами, автосубтитры, правило непрерывности времени, единая озвучка поверх разрозненных клипов, ИИ-редактор по чек-листу.</p><span class="тег">Работаем в: CapCut (запасной Movavi) · текстовая нейросеть</span><p class="итог"><b>На руках:</b> связный смонтированный ролик, экспортированный файл</p></div>
+</details>
+<details class="модуль">
+<summary><span class="модуль__н">М8</span><span class="модуль__заг"><b>Производство: как не переделывать по десять раз</b><span class="модуль__мета">6 уроков · неделя 7</span></span><span class="шеврон"></span></summary>
+<div class="модуль__тело"><p>Чиним картинку до анимации, вертикаль 9:16 переписыванием промпта, русский текст в кадре картинкой-референсом, ролик длиннее лимита цепочкой кадров, QC-чек-лист, правка готового ролика словами.</p><span class="тег">Работаем в: Runway Aleph 2.0 · Kling 3.0 · GPT Image 2</span><p class="итог"><b>На руках:</b> починенный собственный брак — открыли неудачу и вернули её в работу</p></div>
+</details>
+</div>
+<div class="часть">
+<div class="часть__полоса"><span class="часть__имя">Часть III · Форматы</span><span class="часть__метка">М9–М12 · 32 урока · недели 8–12</span></div>
+<details class="модуль">
+<summary><span class="модуль__н">М9</span><span class="модуль__заг"><b>Товар, дефиле и маркетплейсы</b><span class="модуль__мета">9 уроков · неделя 8 · тарифы «Студия», «Режиссёр»</span></span><span class="шеврон"></span></summary>
+<div class="модуль__тело"><p>Комплект карточек под категорию, карточка товара в десятках сцен, фотомодель с каталожными позами, нейродефиле, один товар на разных фигурах и росте, товар меняет цвет, видеографика для маркетплейсов в Supa.</p><span class="тег">Работаем в: GPT Image 2 · Kling 3.0 · Supa · Hypic · Nano Banana Pro</span><p class="итог"><b>На руках:</b> серия товарных роликов и карточка, готовая к заливке на площадку</p></div>
+</details>
+<details class="модуль">
+<summary><span class="модуль__н">М10</span><span class="модуль__заг"><b>Нейроаватары</b><span class="модуль__мета">8 уроков · неделя 9</span></span><span class="шеврон"></span></summary>
+<div class="модуль__тело"><p>Три типа аватара, честно про зловещую долину — где работает, где выглядит жутковато, видеоисходник и оплата рублями через агрегатор, смена фона за спиной, реалтайм-аватар для живого диалога.</p><span class="тег">Работаем в: HeyGen через SYNTX · ElevenLabs · CapCut</span><p class="итог"><b>На руках:</b> говорящий двойник и законченный ролик с ним</p></div>
+</details>
+<details class="модуль">
+<summary><span class="модуль__н">М11</span><span class="модуль__заг"><b>Нейрорилс</b><span class="модуль__мета">8 уроков · неделя 10 · тарифы «Студия», «Режиссёр»</span></span><span class="шеврон"></span></summary>
+<div class="модуль__тело"><p>Метод поиска тренда, а не список «что сейчас в трендах»: заголовки словами аудитории, сценарий рилса за десять минут, десять роликов за час с вашим героем из М5, разбор чужого вирусного ролика, готовые вертикальные форматы.</p><span class="тег">Работаем в: Popsters · GPT-агенты · GPT Image 2 · Kling 3.0 · HeyGen · CapCut</span><p class="итог"><b>На руках:</b> рилсы под тренды, сделанные по системе, а не по вдохновению</p></div>
+</details>
+<details class="модуль">
+<summary><span class="модуль__н">М12</span><span class="модуль__заг"><b>Мини-сериал</b><span class="модуль__мета">7 уроков · недели 11–12 · флагман курса</span></span><span class="шеврон"></span></summary>
+<div class="модуль__тело"><p>Честная экономика в начале модуля, карточка героя на дистанции сезона, три уровня удержания — хук, вопрос-крючок, клиффхэнгер, связка серий цепочкой кадров, бот-шоураннер, бренд-сериал для заказчика.</p><span class="тег">Работаем в: весь рабочий набор курса</span><p class="итог"><b>На руках:</b> мини-сезон из 3–4 серий со своим героем — главное задание курса</p></div>
+</details>
+</div>
+<div class="часть">
+<div class="часть__полоса"><span class="часть__имя">Часть IV · Деньги</span><span class="часть__метка">М13 · 7 уроков · неделя 12</span></div>
+<details class="модуль">
+<summary><span class="модуль__н">М13</span><span class="модуль__заг"><b>Заработок и право</b><span class="модуль__мета">7 уроков · неделя 12</span></span><span class="шеврон"></span></summary>
+<div class="модуль__тело"><p>Себестоимость ролика в рублях, цена по хронометражу и ставке за секунду, поэтапная оплата, режиссёрский тритмент, право — маркировка, чужое лицо и чужой голос, портфолио из 4–6 работ с подписями.</p><span class="тег">Работаем в: текстовая нейросеть · калькулятор себестоимости · конструктор презентаций</span><p class="итог"><b>На руках:</b> расчёт цены, питч-презентация и собранное портфолио</p></div>
+</details>
+</div>
+<div class="скорости"><b>Две скорости</b><p>Не все дойдут до сериала, и это нормально. Короткий путь — база плюс один-два формата под свою задачу. Полный путь — всё, с сезоном и заработком. Записи остаются навсегда, вернуться можно когда угодно</p></div>
+</div></section>
+<section class="секция блок-бело" id="отзывы">
+<div class="обёртка">
+<div class="шапка"><span class="стикер с-бордо">Отзывы</span><h2>Отзывы: место есть, вранья нет</h2><p class="лид">Студию в этом виде запускаем впервые — отзывов на новую программу физически ещё нет. Первый поток стартует 1&nbsp;октября, и до этого момента мы не подставим сюда чужие лица из фотостока и не купим пятизвёздочные тексты. Экран свёрстан полностью — тексты встанут на место заглушек, как только придут</p></div>
+<div class="отзывы">
+<div class="отзыв о1">
+<span class="стикер с-беж" style="margin:0">Тариф «Кадр»</span>
+<div class="заглушка">заглушка</div>
+<p>Текст отзыва появится здесь</p>
+<span class="отзыв__низ">Имя и город — после потока</span>
+</div>
+<div class="отзыв о2">
+<span class="стикер с-крем" style="margin:0">Тариф «Студия»</span>
+<div class="заглушка">заглушка</div>
+<p>Текст отзыва появится здесь</p>
+<span class="отзыв__низ">Имя и город — после потока</span>
+</div>
+<div class="отзыв о3">
+<span class="стикер с-навy" style="margin:0">Тариф «Режиссёр»</span>
+<div class="заглушка">заглушка</div>
+<p>Текст отзыва появится здесь</p>
+<span class="отзыв__низ">Имя и город — после потока</span>
+</div>
+</div>
+<p class="сноска">Три карточки — честная заглушка макета, а не отзывы: сочинять слова за учеников не будем. Как только придут реальные истории первого потока — с именами тех, кто согласится, и без имён тех, кто не согласится, — они встанут сюда вместо этих плашек</p>
+<div style="margin-top:30px;display:flex;flex-wrap:wrap;gap:16px;align-items:center" id="заявка">
+<a class="кнопка кнопка--гл" href="#заявка">Хочу в студию</a>
+<span style="font-size:16px;color:var(--ink2)">Вопросы до записи — на почту <a href="mailto:info@ritoriks.org" style="color:var(--burgundy);text-decoration:underline">info@ritoriks.org</a></span>
+</div>
+</div></section>
+<footer class="подвал"><div class="обёртка"><div class="подвал__сетка">
+<div><div class="подвал__лого"><img src="img/nz-logo.webp" alt="">НейроВидеоСтудия</div><p>Натэла Зубченко · ritoriks.ru<br>Видео нейросетями — с нуля, за 12 недель</p></div>
+<div><h4>Разделы</h4><div class="подвал__ссылки"><a href="#программа">Программа курса</a><a href="#что-получите">Что получите</a><a href="#тарифы">Тарифы и цены</a><a href="#отзывы">Отзывы</a></div></div>
+<div><h4>Документы и контакты</h4><div class="подвал__ссылки"><a href="https://ritoriks.ru/pl/fileservice/user/file/download/h/e8bbd1330c69bde9e7751ecc77a84707.pdf" target=_blank rel=noopener>Оферта</a><a href="https://ritoriks.ru/pl/fileservice/user/file/download/h/589973058ca88ec94a2657429ac4771c.pdf" target=_blank rel=noopener>Политика конфиденциальности</a><a href="https://ritoriks.ru/pl/fileservice/user/file/download/h/28c4195f098bd901c5e96b7ddcbf0530.pdf" target=_blank rel=noopener>Согласие на обработку данных</a><a href="https://ritoriks.ru/official-info/osnovnye-svedeniya" target=_blank rel=noopener>Сведения об организации</a><a href="mailto:info@ritoriks.org">info@ritoriks.org</a><a href="tel:+79021118213">+7 902 111-82-13</a></div></div>
+</div><div class="подвал__низ"><span>ИП Зубченко Натэла Валерьевна · ИНН 511500145670 · ОГРНИП 318302500000130</span><span>414056, Россия, г. Астрахань, ул. Савушкина, д. 26</span><span>Образовательная лицензия № Л035-01261-30/01053865</span></div></div></footer>
+<section class="партитура"><div class="обёртка">
+<span class="стикер с-красный">Партитура</span><h2>Цвет → где он стоит на этой странице</h2>
+<p class="лид" style="margin-bottom:24px">Вариант Б · «Цветные блоки»: ритм страницы держит не светлота, а цвет — шесть экранов залиты шестью разными цветами брендбука подряд, и карточка внутри всегда спорит со своей заливкой. Задействовано 17 цветов из 17</p>
+<div class="обзор"><table><thead><tr><th>Цвет</th><th>HEX</th><th>Где стоит</th></tr></thead><tbody>
+<tr><td><span class="цв"><i style="background:#0D1B2A"></i>Deep Navy</span></td><td class="хекс">#0D1B2A</td><td>заливка экрана «Об авторе» — первый блок ритма; карточка тарифа «Кадр»; первая карточка отзыва; теги «работаем в» в программе; фон липкой панели</td></tr>
+<tr><td><span class="цв"><i style="background:#1A1A2E"></i>Dark Graphite</span></td><td class="хекс">#1A1A2E</td><td>заливка экрана «Программа» — пятый блок ритма</td></tr>
+<tr><td><span class="цв"><i style="background:#212133"></i>Charcoal</span></td><td class="хекс">#212133</td><td>бегущая строка и подвал; верхняя метка макета</td></tr>
+<tr><td><span class="цв"><i style="background:#16213E"></i>Dark Surface</span></td><td class="хекс">#16213E</td><td>закрытые модули аккордеона внутри графитового экрана — светлота выше фона, чтобы блоки читались</td></tr>
+<tr><td><span class="цв"><i style="background:#6B1520"></i>Deep Burgundy</span></td><td class="хекс">#6B1520</td><td>заливка экрана «Что получите» — второй блок ритма; карточка тарифа «Студия»; полоса части I и III программы; вторая карточка отзыва; опора у главной кнопки</td></tr>
+<tr><td><span class="цв"><i style="background:#8B1A1A"></i>Wine Red</span></td><td class="хекс">#8B1A1A</td><td>полосы частей II и IV программы; кромки бегущей строки сверху и снизу</td></tr>
+<tr><td><span class="цв"><i style="background:#A52422"></i>Rich Red</span></td><td class="хекс">#A52422</td><td>номерки форматов; маркеры состава белого тарифа; разделители в бегущей строке; hover главной кнопки</td></tr>
+<tr><td><span class="цв"><i style="background:#C62828"></i>Warm Red</span></td><td class="хекс">#C62828</td><td>главная кнопка и липкая кнопка; цена выделенного тарифа на белом; номер первого шага; кромка кремовых карточек; блок «Две скорости»</td></tr>
+<tr><td><span class="цв"><i style="background:#D32F2F"></i>Signal Red</span></td><td class="хекс">#D32F2F</td><td>один стикер «ранняя цена» у тарифа «Студия» — единственное срочное на странице</td></tr>
+<tr><td><span class="цв"><i style="background:#FAF8F5"></i>Warm White</span></td><td class="хекс">#FAF8F5</td><td>заливка экранов «Как работаем» и «Отзывы» — третий и шестой блоки ритма; карточка тарифа «Режиссёр»; текст на тёмных блоках</td></tr>
+<tr><td><span class="цв"><i style="background:#F5F0EB"></i>Cream</span></td><td class="хекс">#F5F0EB</td><td>карточки форматов на бордовом; ступени на белом; раскрытое тело модуля на графите; кнопка на бордовом тарифе; плитка цифры «34 900»</td></tr>
+<tr><td><span class="цв"><i style="background:#E8E4E0"></i>Light Gray</span></td><td class="хекс">#E8E4E0</td><td>заливка заглушек отзывов; внутренняя обводка белых ступеней</td></tr>
+<tr><td><span class="цв"><i style="background:#D4C5B5"></i>Warm Beige</span></td><td class="хекс">#D4C5B5</td><td>метки и маркеры на бордовой карточке тарифа; линейка над итогом модуля; hover бежевых кнопок</td></tr>
+<tr><td><span class="цв"><i style="background:#C8A97E"></i>Golden Beige</span></td><td class="хекс">#C8A97E</td><td>заливка экрана «Тарифы» — четвёртый блок ритма; бегущая строка; номера модулей; третья карточка отзыва; плитка цифры «43 страны»; кромка липкой панели</td></tr>
+<tr><td><span class="цв"><i style="background:#2D2D3F"></i>Body Dark</span></td><td class="хекс">#2D2D3F</td><td>заголовки и текст на светлых блоках и светлых карточках</td></tr>
+<tr><td><span class="цв"><i style="background:#4A4A5A"></i>Body Light</span></td><td class="хекс">#4A4A5A</td><td>абзацы и описания на светлом</td></tr>
+<tr><td><span class="цв"><i style="background:#8A8A9A"></i>Subtle</span></td><td class="хекс">#8A8A9A</td><td>мета, подписи, слово «заглушка», перечёркнутая полная цена</td></tr>
+</tbody></table></div>
+<p class="сноска">Отдельно про кнопку: Warm Red на Deep Burgundy даёт 2,1 : 1 и правило «CTA ≥ 3 : 1» не проходит, поэтому на бордовой карточке тарифа главная кнопка становится кремовой (10,6 : 1), а красной остаётся на светлом — там 5,0 : 1. Это ограничение цвета, а не вкуса</p>
+</div></section>
+<div class="липкая"><a class="кнопка кнопка--гл" href="#заявка">Хочу в студию</a></div>
+</body>
+</html>
