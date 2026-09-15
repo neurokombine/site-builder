@@ -11,5 +11,5 @@ description = "Use to build ONE screen of the site, screen 2 and below — the c
 config_file = "./agents/screen-builder.toml"
 
 [agents.site_checker]
-description = "Use after a screen or the whole site is assembled, as a FRESH pair of eyes — never the agent that built it. Runs проверить.py on both viewports, looks at the screenshots, checks each screen against ITS OWN screen of the layout (ядро/блоки.md § 2, column «Композиция»), checks the page rhythm — no two neighbours with the same layout, a picture at least once every three screens, never two loud screens in a row — and the site against ядро/проверка.md and the reference numbers. Returns a defect list with severity, or a clean verdict. Fixes nothing itself."
+description = "Use after a screen or the whole site is assembled, as a FRESH pair of eyes — never the agent that built it. Runs проверить.py on both viewports, looks at the screenshots, checks each screen against the requirements of its type (ядро/экраны.md, section «Обязательно» of the type's instruction), checks the page rhythm — no two neighbours with the same layout, a picture at least once every three screens, never two loud screens in a row — and the site against ядро/проверка.md and the reference numbers. Returns a defect list with severity, or a clean verdict. Fixes nothing itself."
 config_file = "./agents/site-checker.toml"
