@@ -133,6 +133,15 @@ h2 .хвост-акцент { display: block; font-weight: 600; font-size: .6em;
   border-radius: var(--радиус-карточки, var(--радиус)); }
 .разворот__сетка .фото img { grid-area: 1 / 1; width: 100%; height: 100%; aspect-ratio: auto; object-fit: cover; }
 .фото__подпись { position: absolute; left: .875rem; right: .875rem; bottom: .875rem; }
+/* Заглушка картинки (решение владелицы 15.09.2026, § 2): серый прямоугольник со словом «заглушка»
+   там, где кадр нужен по смыслу экрана, а его ещё нет. Просто и честно — видно, что место занято
+   и ждёт материала. Серый выводится из палитры профиля через цвета ключа, поэтому заглушка
+   остаётся заглушкой и на светлой странице, и на тёмной, и на любой палитре. */
+.заглушка-картинки { display: grid; place-items: center; margin: 0; min-height: 10rem; aspect-ratio: 3 / 4;
+  background: color-mix(in srgb, var(--текст-ключа, var(--цвет-текст)) 18%, var(--фон-ключа, var(--цвет-фон)));
+  color: color-mix(in srgb, var(--текст-ключа, var(--цвет-текст)) 82%, var(--фон-ключа, var(--цвет-фон)));
+  font-size: var(--кегль-мелкий); letter-spacing: .08em; }
+.разворот__сетка .фото .заглушка-картинки { grid-area: 1 / 1; height: 100%; aspect-ratio: auto; }
 .светлый .разворот__сетка .фото { box-shadow: 0 1.5rem 3.75rem color-mix(in srgb, var(--цвет-тёмный-фон) 18%, transparent); }
 .тёмный .разворот__сетка .фото { box-shadow: 0 1.5rem 3.75rem color-mix(in srgb, var(--цвет-тёмный-фон) 40%, transparent); }
 /* Ряд доказательств внутри разворота (об авторе). Первое число стоит у самого края колонки —
