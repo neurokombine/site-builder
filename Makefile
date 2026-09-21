@@ -1,4 +1,4 @@
-.PHONY: setup check profile research look proto-check showcase build refresh image verify publish clean
+.PHONY: setup check profile research look proto-check showcase build refresh image verify tech publish clean
 
 setup:          ## разовая установка окружения: питон, зависимости, браузер
 	bash ядро/скрипты/setup.sh
@@ -44,6 +44,11 @@ image:          ## вставить и сжать картинку: make image F
 
 verify:         ## проверить свой сайт: make verify SITE=сайты/моё-дело/сайт
 	.venv/bin/python ядро/скрипты/проверить.py $(SITE)
+
+## Скорость на медленном мобильном интернете, пять экранов с Safari, картинки, шрифты и — по живому
+## адресу — Google PageSpeed. Главный прогон — по адресу после выкладки; минута-две сверху обычной.
+tech:           ## техприёмка: make tech SITE=https://логин.github.io/моё-дело/ (или папка сайта)
+	.venv/bin/python ядро/скрипты/проверить.py $(SITE) --техника
 
 ## Первый раз полка заводится скриптом напрямую: опубликовать.py сайты/<имя>/сайт --завести <имя-латиницей> --выкладываем.
 ## Открыть поиску — тоже напрямую, флагом --открыть-поиску вместе с --выкладываем (ядро/публикация.md).

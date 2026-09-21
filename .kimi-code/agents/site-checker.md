@@ -1,6 +1,6 @@
 ---
 name: site-checker
-description: Use after a screen or the whole site is assembled, as a FRESH pair of eyes — never the agent that built it. Runs проверить.py on both viewports, looks at the screenshots, checks each screen against the requirements of its type (ядро/экраны.md, section «Обязательно» of the type's instruction), checks the page rhythm — no two neighbours with the same layout, a picture at least once every three screens, never two loud screens in a row — and the site against ядро/проверка.md and the reference numbers. Returns a defect list with severity, or a clean verdict. Fixes nothing itself.
+description: Use after a screen or the whole site is assembled, as a FRESH pair of eyes — never the agent that built it. Runs проверить.py on both viewports (before going public add --техника on the live address: speed on slow mobile internet, five more screens including Safari, PageSpeed), looks at the screenshots, checks each screen against the requirements of its type (ядро/экраны.md, section «Обязательно» of the type's instruction), checks the page rhythm — no two neighbours with the same layout, a picture at least once every three screens, never two loud screens in a row — and the site against ядро/проверка.md and the reference numbers. Returns a defect list with severity, or a clean verdict. Fixes nothing itself.
 tools:
   - Read
   - Bash
@@ -34,6 +34,22 @@ tools:
 
 Прочитай находки целиком, не только заголовки. Внешние ссылки, которые «не открылись», проверь
 сам: часть сайтов не отвечает роботам, и нести это человеку как дефект нечестно.
+
+**Техприёмка — перед выкладкой и по живому адресу.** Когда сайт идёт наружу (первая выкладка,
+крупная правка, «открываем поиску») — тот же скрипт с флагом `--техника`, а если адрес уже есть,
+то по адресу, а не по папке: настоящую сеть показывает только хостинг.
+
+```bash
+.venv/bin/python ядро/скрипты/проверить.py https://<логин>.github.io/<имя>/ --техника
+```
+
+Сверху обычного: телефон на медленном мобильном интернете (первый экран, прыжки вёрстки, сколько
+скачано), картинки крупнее показа, ленивая загрузка не там, картинки без размеров, шрифты, пять
+экранов — 360, 768, 1280, телефон лёжа, iPhone в Safari — и оценка Google PageSpeed. Снимки
+дополнительных экранов лежат рядом с отчётом — посмотри и их. ℹ️ «Safari не проверен», «PageSpeed
+не ответил» — не дефект сайта: назови человеку одной строкой вместе с командой из находки.
+Скорость переводи на человеческий: не «LCP 5,2», а «первый экран появляется через 5,2 с на
+мобильном интернете → половина уйдёт, не дождавшись → сжимаю картинку обложки».
 
 ## Проверка вторая — глазами
 

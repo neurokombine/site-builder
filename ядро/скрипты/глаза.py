@@ -55,6 +55,37 @@ MOBILE_UA = (
     ),
 }
 
+# Ещё пять экранов — для технической приёмки (`проверить.py --техника`, модуль `техника.py`).
+# В обычной проверке их нет: она обязана оставаться около минуты, а два главных размера выше
+# ловят почти всё. Здесь — то, что ломается реже, но у живых людей встречается каждый день:
+# маленький телефон, планшет, ноутбук с узким экраном, телефон, повёрнутый набок, и iPhone с
+# его собственным движком Safari (WebKit) — Chrome и Safari рисуют одну страницу не одинаково.
+IPAD_UA = (
+    "Mozilla/5.0 (iPad; CPU OS 17_5 like Mac OS X) AppleWebKit/605.1.15 "
+    "(KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
+)
+ЕЩЁ_РАЗМЕРЫ = {
+    "телефон-360": dict(viewport={"width": 360, "height": 740}, user_agent=MOBILE_UA,
+                        device_scale_factor=3, is_mobile=True, has_touch=True),
+    "планшет": dict(viewport={"width": 768, "height": 1024}, user_agent=IPAD_UA,
+                    device_scale_factor=2, is_mobile=True, has_touch=True),
+    "ноутбук": dict(viewport={"width": 1280, "height": 800}, user_agent=DESKTOP_UA,
+                    device_scale_factor=1),
+    "телефон-лёжа": dict(viewport={"width": 844, "height": 390}, user_agent=MOBILE_UA,
+                         device_scale_factor=3, is_mobile=True, has_touch=True),
+    # тот же телефон, что и главный, — но открывается в WebKit, а не в Chromium
+    "телефон-safari": dict(РАЗМЕРЫ["телефон"]),
+}
+ПОДПИСИ_РАЗМЕРОВ = {
+    "компьютер": "компьютер 1440 × 900",
+    "телефон": "телефон 390 × 844",
+    "телефон-360": "маленький телефон 360 × 740",
+    "планшет": "планшет 768 × 1024",
+    "ноутбук": "ноутбук 1280 × 800",
+    "телефон-лёжа": "телефон лёжа 844 × 390",
+    "телефон-safari": "iPhone в Safari 390 × 844",
+}
+
 # Одно число на систему: канон разрешает мелким служебным строкам 13 px («ядро/канон.md»,
 # «Текст и шрифты»), и сторож меряет тем же числом. Раньше их было два — канон 13, сторож 14, —
 # и собственная шапка ядра со строкой лицензии (.8125em на телефоне = ровно 13 px) вечно давала
@@ -257,6 +288,17 @@ MOBILE_UA = (
 
   // «вылезает» = картинка частично видна на экране и уходит за его край. Слайды каруселей
   // и скрытые варианты под другой размер лежат за экраном целиком — это не дефект вёрстки.
+  // Картинку, которую обрезает предок с `overflow: hidden` в пределах экрана, человек видит
+  // целой рамкой: кадр обложки «cover» шире окна на ноутбуке 1280 — не дефект, а замысел.
+  function clippedInside(el) {
+    for (let p = el.parentElement; p && p !== document.documentElement; p = p.parentElement) {
+      const ox = getComputedStyle(p).overflowX;
+      if (ox !== 'hidden' && ox !== 'clip') continue;
+      const pr = p.getBoundingClientRect();
+      if (pr.left >= -3 && pr.right <= vw + 3) return true;
+    }
+    return false;
+  }
   const overflowingImgs = [];
   document.querySelectorAll('img,svg,picture,video').forEach(el => {
     if (!isVisible(el)) return;
@@ -264,7 +306,7 @@ MOBILE_UA = (
     if (!(r.left < vw && r.right > 0 && r.top < vh && r.bottom > 0)) return;
     const overflowsRight = r.left < vw - 2 && r.right > vw + 3;
     const overflowsLeft = r.right > 2 && r.left < -3;
-    if (overflowsRight || overflowsLeft) {
+    if ((overflowsRight || overflowsLeft) && !clippedInside(el)) {
       overflowingImgs.push({tag: el.tagName,
         src: (el.getAttribute('src')||el.getAttribute('data-src')||'').slice(0,120),
         width: Math.round(r.width), left: Math.round(r.left), right: Math.round(r.right)});
@@ -318,10 +360,12 @@ def запустить_браузер(playwright):
 
 
 def контекст(browser, размер):
-    """Новый контекст браузера под один из двух размеров — «компьютер» или «телефон»."""
-    if размер not in РАЗМЕРЫ:
-        raise ValueError(f"Неизвестный размер «{размер}» — есть только {list(РАЗМЕРЫ)}")
-    return browser.new_context(locale="ru-RU", **РАЗМЕРЫ[размер])
+    """Новый контекст браузера под размер: два главных — «компьютер» и «телефон» — или один из
+    дополнительных для технической приёмки (`ЕЩЁ_РАЗМЕРЫ`)."""
+    все = {**РАЗМЕРЫ, **ЕЩЁ_РАЗМЕРЫ}
+    if размер not in все:
+        raise ValueError(f"Неизвестный размер «{размер}» — есть только {list(все)}")
+    return browser.new_context(locale="ru-RU", **все[размер])
 
 
 def адрес_из(аргумент) -> str:

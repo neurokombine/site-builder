@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Учебная страница для технической приёмки: каждая беда здесь нарочно.">
+<meta name="robots" content="noindex">
+<title>Мастерская у реки — техника</title>
+<style>
+  body { margin: 0; font-family: Arial, sans-serif; font-size: 18px; color: rgb(26, 26, 26);
+         background: rgb(255, 255, 255); }
+  /* 370 px: на телефоне 390 помещается, на маленьком телефоне 360 — страница ездит вбок */
+  .широкий { width: 370px; padding: 16px 0; }
+  .обложка { width: 300px; height: 150px; display: block; }
+  .ниже { width: 100%; height: auto; display: block; }
+  /* кадр шире любого экрана, но рамка с overflow: hidden обрезает его — это не «вылезает» */
+  .рамка { overflow: hidden; width: 100%; }
+  .полоса { width: 1500px; max-width: none; height: 60px; display: block; }
+  .вставка { height: 240px; background: rgb(230, 236, 242); }
+</style>
+</head>
+<body>
+<div class="широкий">
+  <h1>Мастерская у реки</h1>
+  <p>Чиним деревянные лодки и делаем вёсла на заказ.</p>
+</div>
+<!-- файл шире нужного больше чем вдвое, и на первом экране он зачем-то ленивый -->
+<img class="обложка" src="img/большая.png" alt="Лодка у причала" width="300" height="150" loading="lazy">
+<div class="рамка"><img class="полоса" src="img/полоса.png" alt="" width="1500" height="60"></div>
+<div style="height: 2400px"></div>
+<!-- ниже первого экрана: грузится сразу и места под себя не держит -->
+<img class="ниже" src="img/ниже.png" alt="Вёсла на стене">
+<p>Точную сумму считаем после осмотра лодки.</p>
+<script>
+  // Поздняя вставка сверху — вёрстка прыгает, как от баннера, пришедшего после загрузки.
+  addEventListener('load', () => setTimeout(() => {
+    const вставка = document.createElement('div');
+    вставка.className = 'вставка';
+    document.body.prepend(вставка);
+  }, 400));
+</script>
+</body>
+</html>
