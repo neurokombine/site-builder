@@ -1276,3 +1276,85 @@ class КонтрактВПриСборкеТесты(unittest.TestCase):
         self.assertIn('class="блок блок--боль светлый"', итог)
         self.assertIn('data-вёрстка="своя"', итог)
         self.assertIs(собрать.СЕКЦИЯ_В, проверить.СЕКЦИЯ_В)
+
+
+class ЛенивыеКартинкиТесты(unittest.TestCase):
+    """`техника.py` меряет собранный сайт и зовёт находкой «Ленивая загрузка не там, где нужно»:
+    картинка ниже первого экрана без `loading="lazy"` грузится сразу вместе с ним, а картинка
+    первого экрана с этой пометкой заставляет браузер ждать её, хотя это она и есть LCP. Сборка
+    расставляет пометку сама — human больше не должен думать об этом на каждом экране."""
+
+    СТРАНИЦА = (
+        '<section class="блок блок--первый-экран" id="экран-1" data-тип="первый-экран">'
+        '<header class="шапка"><a class="шапка__лого" href="#">'
+        '<img src="img/знак.svg" alt="Знак дела"></a></header>'
+        '<figure class="первый-экран__картинка">'
+        '<img src="img/обложка.webp" alt="Обложка" fetchpriority="high"></figure>'
+        '</section>'
+        '<section class="блок блок--боль" id="экран-02" data-тип="боль">'
+        '<img src="img/ниже.webp" alt="Ниже сгиба">'
+        '<img src="img/явная.webp" alt="Явная пометка" loading="eager">'
+        '</section>'
+    )
+
+    def test_картинки_первого_экрана_не_трогаются(self):
+        итог = собрать.ленивая_загрузка(self.СТРАНИЦА)
+        первый = итог[:итог.index('<section class="блок блок--боль')]
+        self.assertNotIn("loading=", первый, "обложка и знак в шапке ждут не долистывания")
+        self.assertIn('fetchpriority="high"', первый, "приоритет главной картинки — как в разметке")
+
+    def test_картинка_ниже_сгиба_получает_ленивую_загрузку(self):
+        итог = собрать.ленивая_загрузка(self.СТРАНИЦА)
+        self.assertIn('<img src="img/ниже.webp" alt="Ниже сгиба" loading="lazy" decoding="async">', итог)
+
+    def test_явный_loading_в_разметке_экрана_не_перетирается(self):
+        итог = собрать.ленивая_загрузка(self.СТРАНИЦА)
+        self.assertIn('<img src="img/явная.webp" alt="Явная пометка" loading="eager">', итог)
+        self.assertNotIn('alt="Явная пометка" loading="eager" loading', итог)
+
+    def test_самозакрытый_тег_не_ломается(self):
+        self.assertEqual(собрать._полениться('<img src="img/a.webp" alt="a" />'),
+                         '<img src="img/a.webp" alt="a" loading="lazy" decoding="async" />')
+
+    def test_без_первого_экрана_не_трогаем_ни_одной_картинки(self):
+        """Копия старого образца без класса `блок--первый-экран» — где кончается первый экран, не
+        видно; лучше явная 🟡 от `техника.py`, чем отложить то, что должно быть видно сразу."""
+        страница = ('<section class="блок блок--боль" id="экран-02">'
+                    '<img src="img/a.webp" alt="a"></section>')
+        self.assertEqual(собрать.ленивая_загрузка(страница), страница)
+
+    def test_видео_picture_source_и_фон_css_не_трогаются(self):
+        страница = (
+            '<section class="блок блок--первый-экран" id="экран-1"></section>'
+            '<section class="блок блок--видео" id="экран-02">'
+            '<video poster="video/постер.jpg" src="video/ролик.mp4"></video>'
+            '<picture><source media="(max-width: 899px)" srcset="img/телефон.webp">'
+            '<img src="img/комп.webp" alt="Кадр"></picture>'
+            '<div class="фон" style="background-image: url(img/фон.webp)"></div>'
+            '</section>')
+        итог = собрать.ленивая_загрузка(страница)
+        self.assertIn('<video poster="video/постер.jpg" src="video/ролик.mp4"></video>', итог,
+                      "video не трогаем — у него нет своего loading")
+        self.assertIn('<source media="(max-width: 899px)" srcset="img/телефон.webp">', итог,
+                      "source не трогаем — атрибут loading у него не существует")
+        self.assertIn('background-image: url(img/фон.webp)', итог, "фон в CSS — не наше дело")
+        self.assertIn('<img src="img/комп.webp" alt="Кадр" loading="lazy" decoding="async"></picture>', итог)
+
+    def test_на_собранном_сайте_ниже_сгиба_ленивая_а_обложка_нет(self):
+        """Сквозная проверка тем же путём, что и в бою: `собрать()` берёт фикстуру, дописывает
+        экрану ниже обложки картинку — и на выходе именно её, а не обложку, метит `техника.py`."""
+        with tempfile.TemporaryDirectory() as д:
+            работа = Path(д) / "работа"
+            shutil.copytree(ФИКСТУРЫ / "работа-образец", работа)
+            файл = работа / "экраны" / "02-услуги-и-цены.html"
+            файл.write_text(файл.read_text(encoding="utf-8").replace(
+                "</section>",
+                '  <img src="img/пример.svg" alt="Витрина работ" width="320" height="200">\n'
+                '  <img src="img/пример.svg" alt="Своя пометка" loading="eager">\n</section>'), encoding="utf-8")
+            путь, _ = собрать.собрать(работа)
+            html = путь.read_text(encoding="utf-8")
+            self.assertIn('alt="Витрина работ" width="320" height="200" loading="lazy" decoding="async">', html)
+            self.assertIn('alt="Своя пометка" loading="eager">', html)
+            первый = html[:html.index('id="экран-2"')]
+            self.assertNotIn("loading=", первый, "картинка первого экрана фикстуры осталась без пометки")
+            self.assertIn('fetchpriority="high"', первый)
