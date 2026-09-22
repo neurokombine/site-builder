@@ -1,0 +1,23 @@
+body { font: 17px/1.6 system-ui, sans-serif; color: var(--цвет-текст); background: var(--цвет-фон); margin: 0; }
+*, *::before, *::after { box-sizing: border-box; }
+h1 { font-family: var(--шрифт-заголовков); line-height: 1.05; margin: 0 0 .5em; }
+p, ul { margin: 0 0 1em; }
+.блок { padding: var(--отступ-секции) 0; position: relative; }
+.блок__внутри { width: min(100% - 2rem, 70rem); margin: 0 auto; }
+.тёмный { background: var(--цвет-тёмный-фон); color: #FAF8F5; }
+.светлый { background: var(--цвет-фон); }
+.кнопка { display: inline-flex; padding: .8em 1.6em; border-radius: .875rem; text-decoration: none; }
+.кнопка--главная { background: var(--цвет-кнопки, var(--цвет-акцент)); color: #fff; animation: пульс 2s infinite; }
+.кнопка--контур { background: transparent; }
+.отзыв { font-style: italic; }
+.таблица-цен { display: grid; }
+@keyframes пульс { 50% { transform: scale(1.03); } }
+@keyframes никому-не-нужна { to { opacity: 0; } }
+.липкая-кнопка { display: none; }
+@media (max-width: 899px) {
+  .липкая-кнопка { display: block; position: fixed; inset: auto 0 0; z-index: 90; padding: .75rem; }
+  body.с-липкой-кнопкой { padding-bottom: 5em; }
+  body.с-липкой-кнопкой .блок--первый-экран { padding-bottom: 6rem; }
+  body.главная-на-виду .липкая-кнопка { transform: translateY(100%); }
+  .таблица-цен { gap: 1rem; }
+}

@@ -350,7 +350,7 @@ def снять_разметку(браузер, адрес: str) -> dict:
     запросы = []
     страница.on("requestfinished", lambda запрос: запросы.append(запрос))
     try:
-        страница.goto(адрес, wait_until="load", timeout=глаза.ТАЙМАУТ_ЗАГРУЗКИ_МС)
+        глаза.открыть(страница, адрес)
         try:
             страница.wait_for_load_state("networkidle", timeout=3000)
         except Exception:

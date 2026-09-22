@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Мастерская у реки — лодки и вёсла</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+:root {
+  --шрифт-заголовков: Montserrat, system-ui, sans-serif;  --цвет-фон: #FAF8F5;
+  --цвет-текст: #2B2B33;  --цвет-акцент: #6B1520;  --цвет-тёмный-фон: #0D1B2A;
+  --отступ-секции: clamp(3rem, 8vw, 7.5rem);
+}
+.кнопка--главная { --цвет-кнопки: var(--цвет-акцент); }
+</style>
+<script>
+(function () { document.documentElement.setAttribute("data-очко", "1"); })();
+</script>
+</head>
+<body class="с-липкой-кнопкой">
+<section class="блок блок--первый-экран тёмный" id="экран-1" data-тип="первый-экран">
+  <style>
+    #экран-1 h1 { font-size: 2.5rem; }
+  </style>
+  <div class="блок__внутри">
+    <h1>Мастерская у реки</h1>
+    <p class="лид">Чиним деревянные лодки и делаем вёсла на заказ.</p>
+    <div class="первый-экран__действие"><a class="кнопка кнопка--главная" href="#экран-3">Записаться</a></div>
+    <figure class="картинка"><img src="img/обложка.webp" alt="Лодка у причала" width="600" height="400"></figure>
+  </div>
+</section>
+<section class="блок блок--отзывы светлый" id="экран-02" data-тип="отзывы" data-вёрстка="своя">
+  <div class="блок__внутри" style="background-image: url('img/фон.webp'); padding: 1.5rem">
+    <blockquote class="отзыв">Вёсла служат третий сезон.</blockquote>
+    <ul class="список"><li>Ремонт за неделю</li><li>Вёсла из ясеня</li></ul>
+  </div>
+</section>
+<section class="блок блок--подвал светлый" id="экран-03" data-тип="подвал">
+  <div class="блок__внутри"><p class="мелкий">ИП Пример · ИНН 0000000000</p></div>
+</section>
+<div class="липкая-кнопка"><a class="кнопка кнопка--главная" href="#экран-3">Записаться</a></div>
+<script>
+(function () {
+  var кнопка = document.querySelector(".первый-экран__действие .кнопка--главная");
+  if (!кнопка) { return; }
+  кнопка.addEventListener("focus", function () {
+    document.body.classList.add("главная-на-виду");
+  });
+})();
+</script>
+</body>
+</html>

@@ -304,5 +304,94 @@ class ТехприёмкаВживуюТесты(unittest.TestCase):
         json.loads((куда / "замеры.json").read_text(encoding="utf-8"))
 
 
+class ПлощадкаСЧужимиСкриптамиТесты(unittest.TestCase):
+    """Страница на площадке (GetCourse, Тильда) тянет чужие скрипты — счётчики, чаты, проверки, —
+    и какой-нибудь из них не отвечает вовсе: событие «загрузилась» не наступает минутами, хотя
+    сама страница давно на экране. Техприёмка по такому адресу не имеет права упасть или
+    объявить страницу неоткрывшейся: мерим то, что открылось, а про висящее говорим ℹ️."""
+
+    ВИСИТ_СЕК = 20
+
+    @classmethod
+    def setUpClass(cls):
+        import http.server
+        import threading
+        import time
+        from functools import partial
+        from playwright.sync_api import sync_playwright
+
+        cls._временная = tempfile.TemporaryDirectory()
+        корень = Path(cls._временная.name)
+        сайт = корень / "сайт"
+        сайт.mkdir()
+        висит = cls.ВИСИТ_СЕК
+
+        class Площадка(http.server.SimpleHTTPRequestHandler):
+            def log_message(self, *аргументы):
+                pass
+
+            def do_GET(self):
+                if self.path.startswith("/vendor/"):
+                    time.sleep(висит)          # чужой скрипт площадки, который не отвечает
+                    try:
+                        self.send_response(204)
+                        self.end_headers()
+                    except OSError:
+                        pass
+                    return
+                super().do_GET()
+
+        cls._сервер = http.server.ThreadingHTTPServer(("127.0.0.1", 0), partial(Площадка, directory=str(сайт)))
+        cls._сервер.daemon_threads = True
+        threading.Thread(target=cls._сервер.serve_forever, daemon=True).start()
+        порт = cls._сервер.server_port
+        (сайт / "index.html").write_text(
+            "<!DOCTYPE html><html lang=\"ru\"><head><meta charset=\"utf-8\">"
+            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+            "<title>Страница на площадке</title>"
+            f"<script async src=\"http://127.0.0.1:{порт}/vendor/counter.js\"></script>"
+            "<style>body{margin:0;font:18px/1.5 Arial,sans-serif;color:#1a1a1a;background:#fff}"
+            ".блок{padding:40px 16px}</style></head><body>"
+            "<section class=\"блок\"><h1>Мастерская у реки</h1><p>Чиним лодки и делаем вёсла.</p></section>"
+            f"<script>setInterval(function(){{fetch('http://127.0.0.1:{порт}/vendor/ping').catch(function(){{}})}}, 300);"
+            "</script></body></html>", encoding="utf-8")
+
+        cls._playwright = sync_playwright().start()
+        cls.браузер = проверить.глаза.запустить_браузер(cls._playwright)
+        with patch.object(проверить.глаза, "ТАЙМАУТ_ЗАГРУЗКИ_МС", 3000), \
+                patch.object(проверить.глаза, "ТАЙМАУТ_ТИШИНЫ_МС", 500), \
+                patch.object(техника, "ТАЙМАУТ_МЕДЛЕННОЙ_ЗАГРУЗКИ_МС", 4000), \
+                patch.object(техника, "ТАЙМАУТ_ТИШИНЫ_МС", 500), \
+                patch.object(техника, "спросить_google", return_value=техника.разобрать_google(ОТВЕТ_GOOGLE)):
+            cls.итог = проверить.проверить(None, корень / "проверка", адрес=f"http://127.0.0.1:{порт}/",
+                                           браузер=cls.браузер, ждать_сек=0.2,
+                                           техприёмка=True, движок=None)
+        cls.находки = cls.итог["находки"]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.браузер.close()
+        cls._playwright.stop()
+        cls._сервер.shutdown()
+        cls._сервер.server_close()
+        cls._временная.cleanup()
+
+    def test_страница_считается_открывшейся(self):
+        for н in self.находки:
+            self.assertFalse(н["что"].startswith("Страница не открылась"), н)
+        self.assertIsNone(по_имени(self.находки, "Разметку прочитать не вышло"),
+                          "висящий чужой скрипт не повод бросать разбор разметки")
+
+    def test_висящее_это_сведение_а_не_красное(self):
+        красные = [н["что"] for н in self.находки if н["уровень"] == ЧИНИТЬ]
+        self.assertEqual(красные, [], красные)
+
+    def test_скорость_замерена_и_честная_оговорка(self):
+        сводка = по_имени(self.находки, "Как сайт открывается на телефоне")
+        self.assertIsNotNone(сводка, "первый экран на экране — значит, его можно измерить")
+        self.assertEqual(сводка["уровень"], К_СВЕДЕНИЮ)
+        self.assertIn("чужие скрипты", текст(сводка))
+
+
 if __name__ == "__main__":
     unittest.main()
