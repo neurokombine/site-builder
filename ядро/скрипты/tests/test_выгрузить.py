@@ -188,6 +188,38 @@ class СтилиВнутриБлокаТесты(unittest.TestCase):
                 self.assertNotIn("document.documentElement", б["html"])
 
 
+class КлассыИзСкриптаЭкранаТесты(unittest.TestCase):
+    """Класс-состояние, который ставит только скрипт самого экрана (<script> внутри секции), в
+    разметке не виден. Выгрузка выбрасывала его правило — так ролик обложки на площадке был
+    невидим. Слова из скрипта экрана теперь держат такие правила в блоке."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.р = Работа()
+        страница = cls.р.работа / "сайт" / "index.html"
+        html = страница.read_text(encoding="utf-8")
+        начало = html.index('<section class="блок блок--отзывы')
+        конец = html.index("</section>", начало)
+        вставка = ('<style>#экран-02 .отзыв.раскрыт { opacity: .5; } #экран-02 .нигде-нет { opacity: .4; }</style>'
+                   '<script>document.querySelector("#экран-02 .отзыв").classList.add("раскрыт");</script>')
+        страница.write_text(html[:конец] + вставка + html[конец:], encoding="utf-8")
+        cls.блоки = выгрузить.выгрузить(cls.р.работа, "getcourse")["блоки"]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.р.закрыть()
+
+    def test_правило_класса_из_скрипта_экрана_остаётся(self):
+        второй = стили(self.блоки[1]["html"])
+        self.assertIn(".раскрыт", второй)
+        self.assertNotIn(".нигде-нет", второй, "класса нет ни в разметке, ни в скрипте — правило уходит, как раньше")
+
+    def test_слова_из_скриптов(self):
+        слова = выгрузить.слова_из_скриптов(['a.classList.add("картинка--постер"); b.className = "x y";',
+                                             "q('#экран-1 .ролик.ждёт');"])
+        self.assertTrue({"картинка--постер", "x", "y", "ролик", "ждёт"} <= слова)
+
+
 class СоСсылкамиТесты(unittest.TestCase):
     def setUp(self):
         self.р = Работа()

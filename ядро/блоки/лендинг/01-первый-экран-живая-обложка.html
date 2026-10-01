@@ -3,7 +3,7 @@
     <a class="шапка__лого" href="#">{{ЗНАК}}</a>
     <span class="шапка__лиц">{{ИКОНКА:щит}}<span><span class="полн">{{ДОВЕРИЕ_ШАПКИ}}</span><span class="кратко">{{ДОВЕРИЕ_ШАПКИ_КОРОТКО}}</span></span></span>
   </header>
-  <figure class="картинка картинка--видео первый-экран__картинка"><video autoplay muted loop playsinline preload="metadata" poster="video/{{ПОСТЕР}}" data-телефон="video/{{ВИДЕО_ТЕЛЕФОН}}.mp4" data-телефон-постер="video/{{ПОСТЕР_ТЕЛЕФОН}}" data-лицо="{{ЛИЦО}}" aria-label="{{ПОДПИСЬ_ФОТО}}"><source src="video/{{ВИДЕО}}.webm" type="video/webm"><source src="video/{{ВИДЕО}}.mp4" type="video/mp4"></video><img src="video/{{ПОСТЕР}}" alt="{{ПОДПИСЬ_ФОТО}}" data-лицо="{{ЛИЦО}}"></figure>
+  <figure class="картинка картинка--видео картинка--постер первый-экран__картинка"><video muted loop playsinline preload="none" poster="video/{{ПОСТЕР}}" data-ролик-компьютер="video/{{ВИДЕО}}.mp4" data-постер-компьютер="video/{{ПОСТЕР}}" data-ролик-телефон="video/{{ВИДЕО_ТЕЛЕФОН}}.mp4" data-постер-телефон="video/{{ПОСТЕР_ТЕЛЕФОН}}" data-лицо="{{ЛИЦО}}" aria-label="{{ПОДПИСЬ_ФОТО}}"></video><picture><source media="(max-width: 899px)" srcset="video/{{ПОСТЕР_ТЕЛЕФОН}}"><img src="video/{{ПОСТЕР}}" alt="{{ПОДПИСЬ_ФОТО}}" data-лицо="{{ЛИЦО}}" fetchpriority="high"></picture></figure>
   <span class="живое">живая обложка · без звука</span>
   <div class="блок__внутри">
     <div class="первый-экран__текст">
