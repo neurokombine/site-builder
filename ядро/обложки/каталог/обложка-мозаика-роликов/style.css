@@ -121,19 +121,24 @@ body, .светлый { --фон-ключа: var(--цвет-фон); --фон-2-
   font: 600 var(--кегль-текст)/1.2 var(--шрифт-текста); text-decoration: none; cursor: pointer;
   border: 1px solid transparent; transition: transform var(--длительность) var(--плавность),
   box-shadow var(--длительность) var(--плавность); }
-.кнопка--главная { background: var(--цвет-кнопки, var(--цвет-акцент)); color: var(--цвет-на-кнопке, var(--цвет-на-акценте)); box-shadow: var(--тень-глубокая); }
-.кнопка--главная:hover { transform: translateY(-2px); background: var(--цвет-кнопки-навёл, var(--цвет-акцент-тёмный)); }
+.кнопка--главная { background: var(--цвет-кнопки, var(--цвет-акцент)); color: var(--цвет-на-кнопке, var(--цвет-на-акценте)); position: relative; overflow: hidden; isolation: isolate;
+  /* объём (правило владелицы 01.10.2026): заливка — чистый акцент, свет и тень — слоем `::before`, нижняя кромка и падающая тень цвета кнопки */
+  --заливка: var(--цвет-кнопки, var(--цвет-акцент)); --свет-кнопки: var(--цвет-на-кнопке, var(--цвет-на-акценте));
+  --объём: inset 0 1px 0 color-mix(in srgb, var(--свет-кнопки) 30%, transparent), 0 4px 0 color-mix(in srgb, var(--заливка) 55%, var(--цвет-тёмный-фон)), 0 .75em 1.5em -.5em color-mix(in srgb, var(--заливка) 70%, transparent);
+  box-shadow: var(--объём); animation: зов-кнопки 2.6s ease-in-out infinite; }
+/* Главная кнопка движется ВСЕГДА — и при «Уменьшении движения» (её должно быть видно): дыхание и свечение на самой кнопке, блик — `::after`. */
+.кнопка--главная::before, .кнопка--главная::after { content: ""; position: absolute; z-index: -1; inset: 0; pointer-events: none; }
+.кнопка--главная::before { background: linear-gradient(180deg, color-mix(in srgb, var(--свет-кнопки) 10%, transparent), transparent 50%, color-mix(in srgb, var(--цвет-тёмный-фон) 22%, transparent)); }
+.кнопка--главная::after { width: 45%; animation: блик-кнопки 3s ease-in-out infinite; transform: translateX(-160%) skewX(-18deg);
+  background: linear-gradient(100deg, transparent, color-mix(in srgb, var(--свет-кнопки) 40%, transparent), transparent); }
+.кнопка--главная:hover, .тёмный .кнопка--главная:hover { background: var(--цвет-кнопки-навёл, var(--цвет-акцент-тёмный)); }   /* под курсором темнеет, объём и движение остаются */
 .кнопка--контур { background: transparent; color: inherit; border-color: currentColor; }  .кнопка--пульс { animation: пульс-кнопки 2.4s ease-out infinite; }
 /* Главная кнопка на тёмном — чистый акцент со светлой кромкой (кромка — текст с прозрачностью, не акцент с белым). */
 .тёмный .кнопка--главная { background: var(--цвет-кнопки, var(--цвет-акцент)); color: var(--цвет-на-кнопке, var(--цвет-на-акценте));
   border-color: color-mix(in srgb, var(--цвет-тёмный-текст) 30%, transparent); }
-.тёмный .кнопка--главная:hover { background: var(--цвет-кнопки-навёл, var(--цвет-акцент-тёмный)); }
 .кнопка--контур:hover { background: color-mix(in srgb, currentColor 8%, transparent); }
 .кнопка--пульс:hover { animation: none; }
-.кнопка:active { transform: translateY(0); }   /* после :hover главной, иначе нажатие на ней не видно */
-/* Правило 12: главная кнопка героя и липкой панели пульсирует сама — класс `--пульс` ей не нужен. */
-.первый-экран__действие .кнопка--главная, .липкая-кнопка .кнопка--главная { animation: пульс-кнопки 2.4s ease-out infinite; }
-.первый-экран__действие .кнопка--главная:hover, .липкая-кнопка .кнопка--главная:hover { animation: none; }
+.кнопка:active { transform: translateY(0); }  .кнопка--главная:active { transform: translateY(3px); animation: none; box-shadow: 0 1px 0 color-mix(in srgb, var(--заливка) 55%, var(--цвет-тёмный-фон)); }   /* после :hover главной, иначе нажатие на ней не видно */
 .кнопка .иконка { color: inherit; width: 1.2em; height: 1.2em; }
 
 /* ── Кикер: пилюля на светлом (умолчание везде); на тёмном умолчание — «золотой текст с чертой»,
@@ -536,6 +541,10 @@ body, .светлый { --фон-ключа: var(--цвет-фон); --фон-2-
   70%  { box-shadow: var(--тень-глубокая), 0 0 0 .8em color-mix(in srgb, var(--цвет-акцент) 0%, transparent); }
   100% { box-shadow: var(--тень-глубокая), 0 0 0 0 color-mix(in srgb, var(--цвет-акцент) 0%, transparent); }
 }
+@keyframes зов-кнопки {
+  0%, 100% { transform: scale(1); box-shadow: var(--объём), 0 0 .5em 0 color-mix(in srgb, var(--заливка) 35%, transparent); }
+  50% { transform: scale(1.04); box-shadow: var(--объём), 0 0 2.1em .375em color-mix(in srgb, var(--заливка) 70%, transparent); } }
+@keyframes блик-кнопки { 0% { transform: translateX(-160%) skewX(-18deg); } 55%, 100% { transform: translateX(330%) skewX(-18deg); } }
 @keyframes вращение { to { rotate: 360deg; } }
 @keyframes парение { 50% { transform: translateY(-.5em); } }
 @keyframes дрейф { 0% { translate: 0 0; scale: 1; } 50% { translate: 4% -5%; scale: 1.08; } 100% { translate: -3% 4%; scale: .96; } }
@@ -552,7 +561,6 @@ body, .светлый { --фон-ключа: var(--цвет-фон); --фон-2-
 @media (prefers-reduced-motion: reduce) {
   .кнопка--пульс { animation: none; }  .кнопка, .карточка { transition: none; }
   .кнопка--главная:hover, .карточка:hover { transform: none; }
-  .первый-экран__действие .кнопка--главная, .липкая-кнопка .кнопка--главная { animation: none; }
   .вопрос > summary::after { transition: none; }
   .парит, .фон--пятна::before, .фон--пятна::after, .пятно, .нода, .плей { animation: none; }
   .бенто__ячейка { transition: none; }  .бенто__ячейка:hover { transform: none; }
