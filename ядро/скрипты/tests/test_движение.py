@@ -96,13 +96,15 @@ class ГенерацияТесты(unittest.TestCase):
             постер = Image.open(итог["постер"]).convert("RGB")
             for формат in ("avif", "webp"):
                 ф = итог["файлы"][формат]
-                self.assertLessEqual(ф["путь"].stat().st_size, ролик_обложки.БЮДЖЕТ_МБ[итог["вид"]] * 1_048_576)
+                self.assertLessEqual(ф["путь"].stat().st_size, ролик_обложки.бюджет_анимации_байт(формат, итог["вид"]))
+                if формат == "webp":
+                    self.assertLessEqual(ф["путь"].stat().st_size, 1_048_576, "анимированный WebP — не больше 1 МБ")
                 with Image.open(ф["путь"]) as клип:
                     self.assertGreater(getattr(клип, "n_frames", 1), 10, f"{ф['путь'].name}: не анимация")
                     первый = клип.convert("RGB").resize(постер.size)
                 разница = ImageStat.Stat(ImageChops.difference(первый, постер).convert("L")).mean[0]
                 self.assertLess(разница, 12, f"{ф['путь'].name}: первый кадр не постер — подмена прыгнет")
-                self.assertIn(ф["кадров_в_с"], (15, 12))
+                self.assertIn(ф["кадров_в_с"], (15, 12, 10, 8))
 
     def test_исходник_не_тронут_и_рядом_пишется_ios(self):
         тут = self.куда / "oblozhka-telefon.mp4"
@@ -405,7 +407,7 @@ class ЗамерДвиженияТесты(unittest.TestCase):
         находки = self.красные("стоит")
         self.assertEqual([н["что"] for н in находки], ["Обложка стоит, когда автозапуск запрещён"])
         строки = находки[0]["строки"]
-        self.assertTrue(any("компьютер, Chromium, play() отклонён: два снимка через 1 с одинаковые" in с for с in строки), строки)
+        self.assertTrue(any("компьютер, Chromium, play() отклонён: три снимка с шагом 1 с одинаковые" in с for с in строки), строки)
         self.assertTrue(any("play() завис" in с for с in строки))
         self.assertTrue(any("нет data-анимация" in с for с in строки), строки)
 
@@ -478,6 +480,128 @@ class ОстальноеДвижениеПриУменьшенииТесты(uni
         self.assertEqual(результат["reduce"]["парит"], "none", "при reduce парение обязано гаснуть")
         self.assertNotEqual(результат["reduce"]["видео"], "none", "ролик обложки при reduce прятать нельзя")
         self.assertNotEqual(результат["reduce"]["звук"], "none", "кнопка звука при reduce остаётся")
+
+
+# ── Устойчивость замера движения и вес запасного кадра ────────────────────────────────────
+
+@unittest.skipUnless(FFMPEG, НЕТ_FFMPEG)
+class СпокойныйРоликТесты(unittest.TestCase):
+    """Спокойный ролик (квадрат ползёт по серому, меняется ~3 % кадра в секунду) — это «движется»; стоп-кадр — нет."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._временная = tempfile.TemporaryDirectory()
+        cls.корень = Path(cls._временная.name)
+        ролик = cls.корень / "спокойный.mp4"
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i",
+                        "color=c=0x303030:s=320x180:r=24:d=4[a];color=c=white:s=30x30:r=24:d=4[b];"
+                        "[a][b]overlay=x='10+t*14':y=70",
+                        "-pix_fmt", "yuv420p", str(ролик)], check=True)
+        cls.кадры = []
+        for секунда in (1, 2, 3):
+            png = cls.корень / f"к{секунда}.png"
+            subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", str(секунда), "-i", str(ролик),
+                            "-frames:v", "1", str(png)], check=True)
+            cls.кадры.append(png.read_bytes())
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._временная.cleanup()
+
+    def test_спокойный_ролик_движется_с_запасом(self):
+        доли = [движение.доля_изменений(а, б) for а, б in zip(self.кадры, self.кадры[1:])]
+        for доля in доли:
+            self.assertGreaterEqual(доля, 3 * движение.ПОРОГ_ДОЛИ, доли)
+            self.assertLess(доля, .1, "ролик нарочно спокойный")
+
+    def test_стоп_кадр_стоит(self):
+        self.assertEqual(движение.доля_изменений(self.кадры[0], self.кадры[0]), 0.0)
+        красные = [н for н in движение.находки({"есть": True, "прогоны": [
+            {"движок": "Safari", "размер": "телефон", "режим": "обычный", "доля": 0.0, "картинки": ["p.jpg"],
+             "анимация": []}]}) if н["уровень"] == ЧИНИТЬ]
+        self.assertEqual([н["что"] for н in красные], ["Обложка стоит даже без запрета автозапуска"])
+
+    def test_три_снимка_и_максимум_пар(self):
+        self.assertEqual(len(движение.СНИМКИ_С), 3)
+        self.assertGreaterEqual(движение.СНИМКИ_С[0], 2.0, "запасной ход ждёт ролик 1 с — снимать после")
+        self.assertLessEqual(движение.СНИМКИ_С[1] - движение.СНИМКИ_С[0], 1.0)
+
+
+class ПовторЗамераТесты(unittest.TestCase):
+    """Первый «стоит» в медленном браузере — не вердикт: красным делает только повтор."""
+
+    def прогнать(self, ответы):
+        вызовы = []
+
+        def подмена(браузер, адрес, движок, настройки, куда, только=None):
+            вызовы.append(только)
+            return ответы[min(len(вызовы), len(ответы)) - 1]
+
+        старое = движение._прогоны
+        движение._прогоны = подмена
+        try:
+            итог = движение._с_повтором(None, "http://x", "Safari", {"телефон": {}}, None)
+        finally:
+            движение._прогоны = старое
+        return итог, вызовы
+
+    def запись(self, доля):
+        return {"движок": "Safari", "размер": "телефон", "режим": "обычный", "доля": доля, "картинки": [],
+                "анимация": []}
+
+    def test_стояло_потом_пошло_не_красное(self):
+        итог, вызовы = self.прогнать([[self.запись(0.0)], [self.запись(0.03)]])
+        self.assertEqual(len(вызовы), 2)
+        self.assertEqual(вызовы[1], {("телефон", "обычный")})
+        self.assertGreaterEqual(итог[0]["доля"], движение.ПОРОГ_ДОЛИ)
+        self.assertEqual([н for н in движение.находки({"есть": True, "прогоны": итог}) if н["уровень"] == ЧИНИТЬ], [])
+
+    def test_стоит_оба_раза_красное_с_пометкой_повтора(self):
+        итог, вызовы = self.прогнать([[self.запись(0.0)], [self.запись(0.0)]])
+        self.assertEqual(len(вызовы), 2, "ровно одно повторение")
+        красные = [н for н in движение.находки({"есть": True, "прогоны": итог}) if н["уровень"] == ЧИНИТЬ]
+        self.assertEqual(len(красные), 1)
+        self.assertTrue(any("при повторе" in с for с in красные[0]["строки"]), красные[0]["строки"])
+
+    def test_идущее_не_перепрогоняется(self):
+        _, вызовы = self.прогнать([[self.запись(0.05)]])
+        self.assertEqual(len(вызовы), 1)
+
+
+class ВесЗапасногоКадраТесты(unittest.TestCase):
+    """Проверка веса и генератор берут порог из одного места (`ролик_обложки.БЮДЖЕТ_АНИМАЦИИ_МБ`)."""
+
+    def красные(self, файлы: dict[str, int], атрибуты: list[dict]):
+        import проверить
+
+        with tempfile.TemporaryDirectory() as папка:
+            папка = Path(папка)
+            for имя, байт in файлы.items():
+                (папка / имя).write_bytes(b"0" * байт)
+            return [н for н in проверить.находки_по_весу([], папка, 2048, атрибуты) if н["уровень"] == ЧИНИТЬ]
+
+    def test_кадр_в_бюджете_не_ругается(self):
+        мб = 1_048_576
+        красные = self.красные({"a-anim.webp": мб - 1000, "a-anim.avif": 2 * мб},
+                               [{"имя": "data-анимация-webp-компьютер", "сырой": "a-anim.webp"},
+                                {"имя": "data-анимация-avif-компьютер", "сырой": "a-anim.avif"}])
+        self.assertEqual(красные, [], "AVIF 2 МБ — в бюджете компьютера 2,5 МБ, WebP чуть меньше 1 МБ — в своём")
+
+    def test_webp_больше_мегабайта_красный(self):
+        красные = self.красные({"a-anim.webp": 1_048_576 + 5000},
+                               [{"имя": "data-анимация-webp", "сырой": "a-anim.webp"}])
+        self.assertEqual([н["что"] for н in красные], ["Тяжёлые картинки"])
+
+    def test_avif_телефона_больше_бюджета_красный(self):
+        байт = ролик_обложки.бюджет_анимации_байт("avif", "телефон") + 5000
+        красные = self.красные({"t-anim.avif": байт}, [{"имя": "data-анимация-avif-телефон", "сырой": "t-anim.avif"}])
+        self.assertEqual([н["что"] for н in красные], ["Тяжёлые картинки"])
+
+    def test_обычная_картинка_по_прежнему_мегабайт(self):
+        import проверить
+
+        self.assertEqual(проверить.КАРТИНКА_ТЯЖЁЛАЯ, ролик_обложки.бюджет_анимации_байт("webp", "компьютер"))
+        self.assertEqual(ролик_обложки.БЮДЖЕТ_WEBP_МБ, 1.0)
 
 
 if __name__ == "__main__":
