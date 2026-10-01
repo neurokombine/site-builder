@@ -157,6 +157,56 @@ class ПланПодIosТесты(unittest.TestCase):
         self.assertIn("brew install ffmpeg", ролик_обложки.НЕТ_FFMPEG)
 
 
+@unittest.skipUnless(FFMPEG, НЕТ_FFMPEG)
+class ВесРоликаТесты(unittest.TestCase):
+    """Совместимый с iOS, но тяжёлый ролик пережимается; лёгкий совместимый — не трогается."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._временная = tempfile.TemporaryDirectory()
+        корень = Path(cls._временная.name)
+        cls.куда = корень / "video"
+        cls.куда.mkdir()
+        общее = ("-c:v", "libx264", "-profile:v", "high", "-level", "4.0", "-pix_fmt", "yuv420p",
+                 "-movflags", "+faststart")
+        cls.тяжёлый = нарисовать_ролик(корень / "тяжёлый.mp4", 1920, 1080, "-vf", "noise=alls=12:allf=t", *общее,
+                                       "-crf", "10")
+        cls.лёгкий = нарисовать_ролик(корень / "лёгкий.mp4", 320, 180, *общее, "-crf", "28")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._временная.cleanup()
+
+    def test_тяжёлый_совместимый_пережат_и_легче(self):
+        до = self.тяжёлый.stat().st_size
+        итог = ролик_обложки.под_ios(self.тяжёлый, self.куда, "компьютер")
+        self.assertEqual(итог["действие"], "перекодировать")
+        self.assertTrue(итог["тяжёлый"])
+        self.assertLess(итог["путь"].stat().st_size, до)
+        self.assertLess(итог["стало_мб"], итог["было_мб"])
+        р = ролик_обложки.разобрать(итог["путь"])
+        self.assertEqual((р["кодек"], р["пиксели"], р["ширина"], р["высота"]), ("h264", "yuv420p", 1920, 1080))
+        self.assertTrue(ролик_обложки.faststart(итог["путь"]))
+        слова = "\n".join(ролик_обложки.слова({"ролик": итог, "постер": итог["путь"], "файлы": {}, "слова": [],
+                                              "вид": "компьютер", "имя": "x"}))
+        self.assertIn("было", слова)
+        self.assertIn("стало", слова)
+
+    def test_лёгкий_не_трогается(self):
+        итог = ролик_обложки.под_ios(self.лёгкий, self.куда, "компьютер")
+        self.assertEqual(итог["действие"], "ничего")
+        self.assertFalse(итог["тяжёлый"])
+        self.assertEqual(итог["путь"].read_bytes(), self.лёгкий.read_bytes())
+
+    def test_пороги_на_числах(self):
+        р = ПланПодIosТесты.РОЛИК
+        self.assertEqual(ролик_обложки.порог_потока(р), 2500)
+        self.assertEqual(ролик_обложки.порог_потока(dict(р, ширина=1280, высота=720)), 1500)
+        self.assertTrue(ролик_обложки.тяжесть(dict(р, поток_кбит=5400), None, "компьютер"))
+        self.assertTrue(ролик_обложки.тяжесть(dict(р, поток_кбит=900), 3_000_000, "компьютер"))
+        self.assertFalse(ролик_обложки.тяжесть(dict(р, поток_кбит=900), 1_000_000, "компьютер"))
+
+
 # ── Разметка рецептов ─────────────────────────────────────────────────────────────────────
 
 class РазметкаРецептовТесты(unittest.TestCase):
