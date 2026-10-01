@@ -113,7 +113,7 @@ from test_личное import ЛИЧНЫЕ_СЛОВА  # noqa: E402
 ЗВУК_JS = ROOT / "ядро" / "блоки" / "звук.js"
 РОЗОВОЕ = re.compile(r"color-mix\(in srgb, var\(--цвет-акцент\) \d+%, var\(--цвет-(?!акцент)")
 ГАСИТСЯ = ("парит", "опора", "кольцо", "окно", "бегущая-строка__лента", "ряд-роликов__лента", "звук",
-           "картинка--сцена img", "живое::before", "фон--пятна::before", "бенто__ячейка", "картинка--видео-с-голосом video",
+           "картинка--сцена img", "живое::before", "фон--пятна::before", "бенто__ячейка",
            "пятно", "нода", "плей",
            "финал__фото img", "модуль__шеврон", "вопрос__шеврон", "работа .плей")
 ПЕРЕМЕННЫЕ = ("--радиус-малый --тень --тень-глубокая --плавность --длительность --цвет-стекло --цвет-фон-карточки "
@@ -589,18 +589,33 @@ class Стили(unittest.TestCase):
         # картинка того же клипа при запрете автозапуска, возврат ролика, AVIF → WebP → постер) и
         # повторы play() на событиях. Потолок по размеру с малым запасом: расти дальше — делить по смыслу.
         self.assertLessEqual(len(js.splitlines()), 90)
-        for слово in ("data-телефон", "prefers-reduced-motion", "canPlayType", "картинка--постер", ".catch("):
+        # reduce обложку не останавливает: ни ветки «тихо → постер», ни matchMedia на уменьшение движения
+        self.assertNotIn('matchMedia("(prefers-reduced-motion', js)
+        self.assertNotIn("тихо", js)
+        for слово in ("data-телефон", "canPlayType", "картинка--постер", ".catch("):
             self.assertIn(слово, js)
         звук = ЗВУК_JS.read_text(encoding="utf-8")
         self.assertLessEqual(len(звук.splitlines()), 30)
         for слово in ("muted = false", "loop = false", "currentTime = 0", '"ended"', "visibilitychange", "aria-pressed", "data-звук"):
             self.assertIn(слово, звук)
+        self.assertNotIn('matchMedia("(prefers-reduced-motion', звук, "ролик обложки играет и при reduce")
         self.assertNotIn("Date.now", js + звук)
 
     def test_reduced_motion_гасит_обложки(self):
         хвост = self.css[self.css.index("@media (prefers-reduced-motion"):]
         for имя in ГАСИТСЯ:
             self.assertIn(имя, хвост, f"{имя} не выключен при reduced-motion")
+
+    def test_reduced_motion_не_прячет_ролик_обложки(self):
+        """Решение после проверки на живых телефонах: спокойная петля играет и при reduce — ни видео, ни кнопка
+        звука, ни картинка обложки в блоках reduce не гасятся и не прячутся."""
+        import re
+        for текст in re.findall(r"@media \(prefers-reduced-motion: reduce\) \{.*?\n\}", self.css, flags=re.S):
+            for правило in re.findall(r"([^{}]+)\{([^{}]*)\}", re.sub(r"/\*.*?\*/", "", текст, flags=re.S)):
+                селектор, тело = правило
+                if "display: none" in тело or "animation: none" in тело:
+                    self.assertNotIn("video", селектор.replace("картинка--видео", ""), селектор)
+                    self.assertNotIn("звук-блок", селектор)
 
 
 class ВБраузере(unittest.TestCase):

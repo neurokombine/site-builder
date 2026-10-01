@@ -184,138 +184,81 @@
 (function () {
   var ролики = [].slice.call(document.querySelectorAll(".первый-экран__картинка video"));
   if (!ролики.length) { return; }
-  var ua = navigator.userAgent, узко = matchMedia("(max-width: 899px)");
-  var тихо = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var сафари = /safari/i.test(ua) && !/chrome|chromium|crios|android|edg/i.test(ua);
-  var жесты = ["touchstart", "pointerdown", "click", "scroll", "keydown"], ждём = false, ЖДАТЬ_МС = 1000;
-
-  function тишина(в) { в.muted = true; в.defaultMuted = true; в.setAttribute("muted", ""); }
+  var узко = matchMedia("(max-width: 899px)"), ua = navigator.userAgent;
+  var сафари = /safari/i.test(ua) && !/chrome|chromium|crios|android|edg/i.test(ua), ждём = false, ЖДАТЬ_МС = 1000;
+  var жесты = ["touchstart", "pointerdown", "click", "scroll", "keydown"], АНИМ = "img[data-анимация-webp], img[data-анимация-webp-телефон], img[data-анимация-webp-компьютер]";
   function вид() { return узко.matches ? "телефон" : "компьютер"; }
-
-  function партнёр(в, фигура) {
-    var сосед = в.parentNode.querySelector("img[data-анимация-webp], img[data-анимация-avif], img[data-анимация-webp-телефон], img[data-анимация-webp-компьютер]");
-    if (сосед) { return сосед; }
-    return фигура.querySelectorAll("video").length === 1 ? фигура.querySelector("img") : null;
-  }
-  function адрес(img, формат) {
-    if (!img) { return ""; }
-    return img.getAttribute("data-анимация-" + формат + "-" + вид()) || img.getAttribute("data-анимация-" + формат) || "";
-  }
-
-  function Ролик(в) {
-    var с = this;
-    с.в = в; с.фигура = в.closest(".картинка") || в.parentNode; с.img = партнёр(в, с.фигура);
-    с.один = с.фигура.querySelectorAll("video").length === 1;   // постер фигуры — только когда ролик в ней один
-    с.играет = false; с.заменён = false; с.сломана = false; с.таймер = 0; с.сохранено = null; с.источник = null;
-    с.альфа = с.фигура.classList.contains("картинка--живой-портрет") && (сафари || !в.canPlayType('video/webm; codecs="vp9"'));
-    в.addEventListener("timeupdate", function () { if (в.currentTime > 0.05 && !в.paused) { с.пошёл(); } });
-    в.addEventListener("loadedmetadata", function () { с.пуск(); });
-    в.addEventListener("canplay", function () { с.пуск(); });
-    ["suspend", "stalled"].forEach(function (имя) {
-      в.addEventListener(имя, function () { if (!с.играет && в.paused && (в.currentSrc || в.src)) { с.запасной(); } });
-    });
-    в.addEventListener("error", function () { с.запасной(); }, true);   // true — ошибку <source> слышно только так
-  }
-  Ролик.prototype.постер = function (да) { if (this.один) { this.фигура.classList.toggle("картинка--постер", да); } };
-  Ролик.prototype.пуск = function () {
-    var с = this, в = с.в, о;
-    if (с.играет || с.альфа || тихо || !(в.currentSrc || в.src || в.querySelector("source"))) { return; }
-    тишина(в);
-    try { о = в.play(); } catch (е) { о = null; }
-    if (о && о.then) { о.then(null, function () { с.запасной(); ждатьЖеста(); }); }
-  };
-  Ролик.prototype.запасной = function () {
-    var с = this;
-    if (с.играет || тихо) { return; }
-    clearTimeout(с.таймер);
-    с.постер(true);
-    if (с.заменён || с.сломана || !с.img) { return; }
-    var avif = адрес(с.img, "avif"), webp = адрес(с.img, "webp"), img = с.img, рамка = img.parentNode;
-    if (!avif && !webp) { return; }
-    var картинка = рамка.tagName === "PICTURE" ? рамка : null;
-    с.сохранено = {src: img.getAttribute("src"), скрыта: img.hidden,
-                   источники: картинка ? [].slice.call(картинка.querySelectorAll("source")) : []};
-    с.сохранено.источники.forEach(function (и) { картинка.removeChild(и); });
-    if (картинка && avif) {
-      с.источник = document.createElement("source");
-      с.источник.type = "image/avif"; с.источник.srcset = avif;
-      картинка.insertBefore(с.источник, img);
-    }
-    img.onerror = function () {
-
-      if (с.источник && webp) { картинка.removeChild(с.источник); с.источник = null; if (img.getAttribute("src") !== webp) { img.src = webp; } return; }
-      с.сломана = true; с.вернуть(); с.постер(true);
+  function адрес(img, ф) { return img.getAttribute("data-анимация-" + ф + "-" + вид()) || img.getAttribute("data-анимация-" + ф) || ""; }
+  var все = ролики.map(function (в) {
+    var фигура = в.closest(".картинка") || в.parentNode, один = фигура.querySelectorAll("video").length === 1;
+    var с = {в: в, img: в.parentNode.querySelector(АНИМ) || (один ? фигура.querySelector("img") : null), играет: false, заменён: false, сломана: false,
+             альфа: фигура.classList.contains("картинка--живой-портрет") && (сафари || !в.canPlayType('video/webm; codecs="vp9"'))};
+    с.постер = function (да) { if (один) { фигура.classList.toggle("картинка--постер", да); } };
+    с.пуск = function () {
+      if (с.играет || с.альфа || !(в.currentSrc || в.src || в.querySelector("source"))) { return; }
+      в.muted = true; в.defaultMuted = true; в.setAttribute("muted", "");
+      var о; try { о = в.play(); } catch (е) { о = null; }
+      if (о && о.catch) { о.catch(function () { с.запасной(); ждатьЖеста(); }); }
     };
-    img.src = webp || avif;
-    img.hidden = false;
-    с.заменён = true;
-  };
-  Ролик.prototype.вернуть = function () {   // картинку — обратно в постер, как в разметке
-    var с = this, img = с.img, сохр = с.сохранено;
-    if (!сохр || !img) { с.заменён = false; return; }
-    img.onerror = null;
-    if (с.источник && с.источник.parentNode) { с.источник.parentNode.removeChild(с.источник); }
-    с.источник = null;
-    сохр.источники.forEach(function (и) { img.parentNode.insertBefore(и, img); });
-    if (сохр.src === null) { img.removeAttribute("src"); } else { img.setAttribute("src", сохр.src); }
-    img.hidden = сохр.скрыта;
-    с.сохранено = null; с.заменён = false;
-  };
-  Ролик.prototype.пошёл = function () {
-    var с = this;
-    if (с.играет) { return; }
-    с.играет = true; clearTimeout(с.таймер);
-    с.вернуть(); с.постер(false);
-  };
-  Ролик.prototype.ждать = function () {
-    var с = this;
-    clearTimeout(с.таймер);
-    с.таймер = setTimeout(function () { if (!с.играет) { с.запасной(); } }, ЖДАТЬ_МС);
-  };
-  Ролик.prototype.выбрать = function () {   // новый способ: адрес только у своего размера
-    var с = this, в = с.в, размер = вид(), путь = в.getAttribute("data-ролик-" + размер);
-    if (в.getAttribute("data-вид") === размер) { return false; }
-    в.setAttribute("data-вид", размер);
-    if (с.заменён) { с.вернуть(); }
-    с.играет = false; с.сломана = false;
-    в.poster = в.getAttribute("data-постер-" + размер) || в.poster;
-    if (!путь || тихо) { с.постер(true); return false; }
-    в.src = путь;
-    return true;
-  };
-  Ролик.prototype.начать = function () {
-    var с = this, в = с.в;
-    тишина(в); в.setAttribute("playsinline", ""); в.setAttribute("webkit-playsinline", "");
-    if (тихо) { в.pause(); в.removeAttribute("autoplay"); с.постер(true); return; }
+    с.запасной = function () {
+      clearTimeout(с.таймер);
+      if (с.играет) { return; }
+      с.постер(true);
+      var img = с.img, avif = img && адрес(img, "avif"), webp = img && адрес(img, "webp"), рамка = img && img.parentNode;
+      if (с.заменён || с.сломана || !(avif || webp)) { return; }
+      var картинка = рамка.tagName === "PICTURE" ? рамка : null;
+      с.было = {src: img.getAttribute("src"), скрыта: img.hidden, источники: картинка ? [].slice.call(картинка.querySelectorAll("source")) : []};
+      с.было.источники.forEach(function (и) { картинка.removeChild(и); });
+      if (картинка && avif) { с.источник = document.createElement("source"); с.источник.type = "image/avif"; с.источник.srcset = avif; картинка.insertBefore(с.источник, img); }
+      img.onerror = function () {   // AVIF не открылся — WebP; и он не открылся — постер того же ролика, а не битая картинка
+        if (с.источник && webp) { картинка.removeChild(с.источник); с.источник = null; if (img.getAttribute("src") !== webp) { img.src = webp; } return; }
+        с.сломана = true; с.вернуть(); с.постер(true);
+      };
+      img.src = webp || avif; img.hidden = false; с.заменён = true;
+    };
+    с.вернуть = function () {   // картинка — обратно в постер из разметки
+      var img = с.img, было = с.было;
+      с.заменён = false;
+      if (!было) { return; }
+      img.onerror = null;
+      if (с.источник && с.источник.parentNode) { с.источник.parentNode.removeChild(с.источник); }
+      было.источники.forEach(function (и) { img.parentNode.insertBefore(и, img); });
+      if (было.src === null) { img.removeAttribute("src"); } else { img.setAttribute("src", было.src); }
+      img.hidden = было.скрыта; с.было = с.источник = null;
+    };
+    с.ждать = function () { clearTimeout(с.таймер); с.таймер = setTimeout(с.запасной, ЖДАТЬ_МС); с.пуск(); };
+    с.выбрать = function () {   // адрес только у своего размера: другой размер свой файл не качает
+      var размер = вид(), путь = в.getAttribute("data-ролик-" + размер);
+      if (в.getAttribute("data-вид") === размер) { return; }
+      в.setAttribute("data-вид", размер); с.вернуть(); с.играет = false; с.сломана = false;
+      в.poster = в.getAttribute("data-постер-" + размер) || в.poster;
+      if (!путь) { с.постер(true); return; }
+      в.src = путь; с.ждать();
+    };
+    в.addEventListener("timeupdate", function () { if (в.currentTime > 0.05 && !в.paused && !с.играет) { с.играет = true; clearTimeout(с.таймер); с.вернуть(); с.постер(false); } });
+    ["loadedmetadata", "canplay"].forEach(function (и) { в.addEventListener(и, с.пуск); });
+    ["suspend", "stalled"].forEach(function (и) { в.addEventListener(и, function () { if (!с.играет && в.paused && (в.currentSrc || в.src)) { с.запасной(); } }); });
+    в.addEventListener("error", с.запасной, true);   // true — ошибку <source> слышно только так
+    return с;
+  });
+  function ждатьЖеста() { if (!ждём) { ждём = true; жесты.forEach(function (и) { addEventListener(и, поЖесту, {capture: true, passive: true}); }); } }
+  function поЖесту() { жесты.forEach(function (и) { removeEventListener(и, поЖесту, {capture: true, passive: true}); }); ждём = false; все.forEach(function (с) { с.пуск(); }); }
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) { все.forEach(function (с) { с.пуск(); }); } });
+  addEventListener("pageshow", function () { все.forEach(function (с) { с.пуск(); }); });
+  все.forEach(function (с) {
+    var в = с.в;
+    в.muted = true; в.setAttribute("playsinline", ""); в.setAttribute("webkit-playsinline", "");
     if (с.альфа) { в.pause(); в.removeAttribute("autoplay"); в.preload = "none"; с.запасной(); return; }
-    var новый = в.hasAttribute("data-ролик-телефон") || в.hasAttribute("data-ролик-компьютер");
-    if (новый) {
-      if (с.выбрать()) { с.ждать(); с.пуск(); }
-      if (узко.addEventListener) { узко.addEventListener("change", function () { if (с.выбрать()) { с.ждать(); с.пуск(); } }); }
-      return;
+    if (в.hasAttribute("data-ролик-телефон") || в.hasAttribute("data-ролик-компьютер")) {
+      с.выбрать(); if (узко.addEventListener) { узко.addEventListener("change", с.выбрать); } return;
     }
     if (узко.matches && в.getAttribute("data-телефон")) {   // старая пара: src элемента сильнее <source>
       в.setAttribute("poster", в.getAttribute("data-телефон-постер") || в.getAttribute("poster"));
-      if (с.один && с.img && !с.img.hasAttribute("data-анимация-webp")) { с.img.src = в.getAttribute("poster"); }
+      if (с.img && !с.img.hasAttribute("data-анимация-webp")) { с.img.src = в.getAttribute("poster"); }
       в.src = в.getAttribute("data-телефон"); в.load();
     }
-    с.ждать(); с.пуск();
-  };
-
-  var все = ролики.map(function (в) { return new Ролик(в); });
-  function пускВсех() { все.forEach(function (с) { с.пуск(); }); }
-  function ждатьЖеста() {
-    if (ждём) { return; }
-    ждём = true;
-    жесты.forEach(function (и) { addEventListener(и, поЖесту, { capture: true, passive: true }); });
-  }
-  function поЖесту() {
-    жесты.forEach(function (и) { removeEventListener(и, поЖесту, { capture: true, passive: true }); });
-    ждём = false; пускВсех();
-  }
-  document.addEventListener("visibilitychange", function () { if (!document.hidden) { пускВсех(); } });
-  addEventListener("pageshow", пускВсех);
-  все.forEach(function (с) { с.начать(); });
+    с.ждать();
+  });
 })();
 </script>
 </body>

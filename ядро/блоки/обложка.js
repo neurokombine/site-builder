@@ -4,12 +4,14 @@
 // первому касанию или прокрутке. Не пошёл за 1 с (отказ, вечное обещание, suspend/stalled, ошибка файла) — на месте
 // постера анимированная картинка того же клипа: data-анимация-avif / -webp на img (у живой обложки с хвостом -телефон /
 // -компьютер), AVIF через <source type="image/avif">, не открылся — WebP, не открылся и он — постер (картинка--постер).
-// Пошёл позже — ролик возвращается; движение — по времени ролика, не по playing. reduced-motion — постер; живой
-// портрет в Safari и без альфа-VP9 — сразу картинка с прозрачностью.
+// Пошёл позже — ролик возвращается; движение — по времени ролика, не по playing. Живой портрет в Safari и без альфа-VP9 — сразу картинка
+// с прозрачностью. prefers-reduced-motion обложку НЕ останавливает: у многих людей «Уменьшение движения» осталось
+// включённым от давней настройки обоев, и неподвижная обложка у них выглядит сломанной. Спокойная петля без вспышек
+// вреда не несёт (решение после проверки на живых телефонах); прочее движение страницы при reduce по-прежнему гаснет в CSS.
 (function () {
   var ролики = [].slice.call(document.querySelectorAll(".первый-экран__картинка video"));
   if (!ролики.length) { return; }
-  var узко = matchMedia("(max-width: 899px)"), тихо = matchMedia("(prefers-reduced-motion: reduce)").matches, ua = navigator.userAgent;
+  var узко = matchMedia("(max-width: 899px)"), ua = navigator.userAgent;
   var сафари = /safari/i.test(ua) && !/chrome|chromium|crios|android|edg/i.test(ua), ждём = false, ЖДАТЬ_МС = 1000;
   var жесты = ["touchstart", "pointerdown", "click", "scroll", "keydown"], АНИМ = "img[data-анимация-webp], img[data-анимация-webp-телефон], img[data-анимация-webp-компьютер]";
   function вид() { return узко.matches ? "телефон" : "компьютер"; }
@@ -20,14 +22,14 @@
              альфа: фигура.classList.contains("картинка--живой-портрет") && (сафари || !в.canPlayType('video/webm; codecs="vp9"'))};
     с.постер = function (да) { if (один) { фигура.classList.toggle("картинка--постер", да); } };
     с.пуск = function () {
-      if (с.играет || с.альфа || тихо || !(в.currentSrc || в.src || в.querySelector("source"))) { return; }
+      if (с.играет || с.альфа || !(в.currentSrc || в.src || в.querySelector("source"))) { return; }
       в.muted = true; в.defaultMuted = true; в.setAttribute("muted", "");
       var о; try { о = в.play(); } catch (е) { о = null; }
       if (о && о.catch) { о.catch(function () { с.запасной(); ждатьЖеста(); }); }
     };
     с.запасной = function () {
       clearTimeout(с.таймер);
-      if (с.играет || тихо) { return; }
+      if (с.играет) { return; }
       с.постер(true);
       var img = с.img, avif = img && адрес(img, "avif"), webp = img && адрес(img, "webp"), рамка = img && img.parentNode;
       if (с.заменён || с.сломана || !(avif || webp)) { return; }
@@ -57,7 +59,7 @@
       if (в.getAttribute("data-вид") === размер) { return; }
       в.setAttribute("data-вид", размер); с.вернуть(); с.играет = false; с.сломана = false;
       в.poster = в.getAttribute("data-постер-" + размер) || в.poster;
-      if (!путь || тихо) { с.постер(true); return; }
+      if (!путь) { с.постер(true); return; }
       в.src = путь; с.ждать();
     };
     в.addEventListener("timeupdate", function () { if (в.currentTime > 0.05 && !в.paused && !с.играет) { с.играет = true; clearTimeout(с.таймер); с.вернуть(); с.постер(false); } });
@@ -73,7 +75,7 @@
   все.forEach(function (с) {
     var в = с.в;
     в.muted = true; в.setAttribute("playsinline", ""); в.setAttribute("webkit-playsinline", "");
-    if (тихо || с.альфа) { в.pause(); в.removeAttribute("autoplay"); в.preload = "none"; if (тихо) { с.постер(true); } else { с.запасной(); } return; }
+    if (с.альфа) { в.pause(); в.removeAttribute("autoplay"); в.preload = "none"; с.запасной(); return; }
     if (в.hasAttribute("data-ролик-телефон") || в.hasAttribute("data-ролик-компьютер")) {
       с.выбрать(); if (узко.addEventListener) { узко.addEventListener("change", с.выбрать); } return;
     }

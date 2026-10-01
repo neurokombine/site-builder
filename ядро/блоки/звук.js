@@ -1,5 +1,5 @@
 // Живая сцена: браузеры запускают видео только без звука — голос по одному нажатию кнопки .звук. По нажатию: звук,
-// без петли, с начала; на ended и при уходе со вкладки — снова тихая петля. reduced-motion: видео стоит, показан постер.
+// без петли, с начала; на ended и при уходе со вкладки — снова тихая петля. Ролик обложки играет и при reduced-motion (спокойная петля, решение после проверки на живых телефонах), звук — по нажатию как всегда.
 (function () {
   var видео = document.querySelector(".картинка--видео-с-голосом video"), кнопка = document.querySelector(".звук");
   if (!видео || !кнопка) { return; }
@@ -13,7 +13,6 @@
     блок.setAttribute("data-звук", звук ? "вкл" : "выкл");
   }
   function тихо() { видео.muted = true; видео.loop = true; состояние(false); var п = видео.play(); if (п && п.catch) { п.catch(function () {}); } }
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) { видео.removeAttribute("autoplay"); видео.pause(); return; }
   кнопка.addEventListener("click", function () {
     if (!видео.muted) { тихо(); return; }
     фигура.classList.remove("картинка--постер");   // автозапуск был заблокирован — обложка.js показала постер; нажатие всё равно запускает

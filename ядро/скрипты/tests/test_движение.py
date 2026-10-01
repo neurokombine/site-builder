@@ -362,7 +362,7 @@ class ЗамерДвиженияТесты(unittest.TestCase):
         замер = self.замеры["движется"]
         self.assertTrue(замер["есть"])
         режимы = {(п["движок"], п["размер"], п["режим"]) for п in замер["прогоны"] if "доля" in п}
-        self.assertTrue({("Chromium", р, м) for р in ("компьютер", "телефон") for м in ("обычный", "отказ", "вечно")}
+        self.assertTrue({("Chromium", р, м) for р in ("компьютер", "телефон") for м in ("обычный", "отказ", "вечно", "уменьшение", "уменьшение-отказ")}
                         <= режимы, режимы)
         self.assertEqual(self.красные("движется"), [])
 
@@ -373,6 +373,28 @@ class ЗамерДвиженияТесты(unittest.TestCase):
                     self.assertFalse(п["ролик_шёл"])
                     self.assertTrue(any(к.endswith("-anim.avif") for к in п["картинки"]), п["картинки"])
                     self.assertGreaterEqual(п["доля"], движение.ПОРОГ_ДОЛИ)
+
+    def test_при_уменьшении_движения_обложка_движется(self):
+        """prefers-reduced-motion: reduce — ролик играет, а с запретом play() — анимированная картинка."""
+        обычные = [п for п in self.замеры["движется"]["прогоны"] if п.get("режим") == "уменьшение" and "доля" in п]
+        self.assertTrue(обычные)
+        for п in обычные:
+            with self.subTest(п=(п["движок"], п["размер"])):
+                self.assertGreaterEqual(п["доля"], движение.ПОРОГ_ДОЛИ)
+                self.assertTrue(п["ролик_шёл"], п)
+        запрет = [п for п in self.замеры["движется"]["прогоны"] if п.get("режим") == "уменьшение-отказ" and "доля" in п]
+        self.assertTrue(запрет)
+        for п in запрет:
+            self.assertTrue(any(к.endswith("-anim.avif") for к in п["картинки"]), п["картинки"])
+            self.assertGreaterEqual(п["доля"], движение.ПОРОГ_ДОЛИ)
+
+    def test_остановка_при_уменьшении_называется_красным(self):
+        стоит = {"есть": True, "прогоны": [{"движок": "Chromium", "размер": "телефон", "режим": "уменьшение",
+                                            "доля": 0.0, "картинки": ["komp-poster.jpg"], "анимация": ["a.avif"]}]}
+        красные = [н for н in движение.находки(стоит) if н["уровень"] == ЧИНИТЬ]
+        self.assertEqual([н["что"] for н in красные], ["Обложка стоит, когда автозапуск запрещён"])
+        self.assertTrue(any("включено уменьшение движения" in с for с in красные[0]["строки"]), красные[0]["строки"])
+        self.assertFalse(any("нет data-анимация" in с for с in красные[0]["строки"]), "причина тут не анимация")
 
     def test_в_обычном_прогоне_идёт_ролик(self):
         for п in self.замеры["движется"]["прогоны"]:
@@ -420,6 +442,42 @@ class ЗамерДвиженияТесты(unittest.TestCase):
         self.assertIn("## Обложка движется", строки)
         self.assertIn("play() завис: движется картинка", строки)
         self.assertTrue(движение.снимки(self.замеры["движется"]))
+
+
+class ОстальноеДвижениеПриУменьшенииТесты(unittest.TestCase):
+    """При reduce прочие CSS-анимации выключены, а ролик обложки и кнопка звука на месте и видны."""
+
+    def test_парение_гаснет_а_ролик_и_звук_остаются(self):
+        from playwright.sync_api import sync_playwright
+
+        import глаза
+
+        стили = "\n".join((БЛОКИ / имя).read_text(encoding="utf-8") for имя in (
+            "стили-база.css", "стили-первый-экран.css", "стили-первый-экран-кадр.css", "стили-первый-экран-компьютер.css"))
+        страница = (f'<!doctype html><meta charset="utf-8"><style>{стили}</style>'
+                    '<span class="парит" id="п">чип</span>'
+                    '<figure class="картинка картинка--видео-с-голосом" style="width:200px;height:200px;position:relative">'
+                    '<video id="в" muted loop playsinline></video><img id="к" alt="" src="data:image/gif;base64,'
+                    'R0lGODlhAQABAAAAACw="></figure><div class="звук-блок" id="з">звук</div>')
+        результат = {}
+        with sync_playwright() as движок:
+            браузер = глаза.запустить_браузер(движок)
+            try:
+                for режим in ("no-preference", "reduce"):
+                    контекст = браузер.new_context(viewport={"width": 1440, "height": 900}, reduced_motion=режим)
+                    п = контекст.new_page()
+                    п.set_content(страница)
+                    результат[режим] = п.evaluate("""() => ({
+                      парит: getComputedStyle(document.getElementById('п')).animationName,
+                      видео: getComputedStyle(document.getElementById('в')).display,
+                      звук: getComputedStyle(document.getElementById('з')).display})""")
+                    контекст.close()
+            finally:
+                браузер.close()
+        self.assertNotEqual(результат["no-preference"]["парит"], "none", "без reduce парение должно идти")
+        self.assertEqual(результат["reduce"]["парит"], "none", "при reduce парение обязано гаснуть")
+        self.assertNotEqual(результат["reduce"]["видео"], "none", "ролик обложки при reduce прятать нельзя")
+        self.assertNotEqual(результат["reduce"]["звук"], "none", "кнопка звука при reduce остаётся")
 
 
 if __name__ == "__main__":
