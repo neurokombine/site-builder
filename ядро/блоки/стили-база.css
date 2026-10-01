@@ -75,6 +75,10 @@ p, ul, ol { margin: 0 0 1em; }  ul, ol { padding-left: 1.25em; }
 a { color: var(--цвет-акцент); text-underline-offset: .15em; }
 /* Содержимое секции выше пятен, сетки и зерна (они — псевдоэлементы секции). */
 .блок__внутри { z-index: 1; }  .блок__внутри > :last-child { margin-bottom: 0; }
+/* Стык соседних экранов без ножа, на каждой границе (`ядро/дизайн/ритм-и-громкость.md` § 4): половинки кладёт сборка, на кромке — средний цвет, дальше тает по кривой. */
+.стык { position: absolute; left: 0; right: 0; z-index: 0; pointer-events: none; height: var(--стык-высота, calc(var(--отступ-секции) * .6)); background: linear-gradient(var(--стык-к),
+  color-mix(in srgb, var(--стык-сосед) 50%, transparent), color-mix(in srgb, var(--стык-сосед) 33%, transparent) 18%, color-mix(in srgb, var(--стык-сосед) 19%, transparent) 40%, color-mix(in srgb, var(--стык-сосед) 8%, transparent) 66%, transparent); }
+.стык--верх { top: 0; --стык-к: to bottom; }  .стык--низ { bottom: 0; --стык-к: to top; }  .блок--подвал { --стык-высота: var(--отступ-блока); }
 .светлый { background: var(--цвет-фон); color: var(--цвет-текст); }  .светлый.второй { background: var(--цвет-фон-2); }
 /* ── Слой ключа (задача 15): одни имена на светлую и тёмную секцию. Схемным стилям не положено
    знать, тёмный сейчас фон или светлый, — они спрашивают. Фикс-раунд Л добавил сюда вторую ступень
