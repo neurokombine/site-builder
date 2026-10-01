@@ -220,6 +220,61 @@ class КлассыИзСкриптаЭкранаТесты(unittest.TestCase):
         self.assertTrue({"картинка--постер", "x", "y", "ролик", "ждёт"} <= слова)
 
 
+class АнимацияОбложкиТесты(unittest.TestCase):
+    """Запасной ход ролика обложки на площадке: анимированная картинка лежит в data-анимация-…, а не в src —
+    выгрузка обязана увидеть её файлы, поставить плейсхолдеры и не выбросить правила состояний подмены
+    (`картинка--постер` ставит обложка.js, `img[hidden]` держит картинку рамки до отказа ролика)."""
+
+    ФАЙЛЫ = ("video/x.mp4", "video/x-poster.jpg", "video/x-anim.avif", "video/x-anim.webp",
+             "video/t-poster.jpg", "video/t-anim.avif", "video/t-anim.webp")
+
+    @classmethod
+    def setUpClass(cls):
+        cls.р = Работа()
+        сайт = cls.р.работа / "сайт"
+        (сайт / "video").mkdir()
+        for имя in cls.ФАЙЛЫ:
+            (сайт / имя).write_bytes(b"0" * 64)
+        страница = сайт / "index.html"
+        html = страница.read_text(encoding="utf-8")
+        старое = '<figure class="картинка"><img src="img/обложка.webp" alt="Лодка у причала" width="600" height="400"></figure>'
+        новое = ('<figure class="картинка картинка--видео первый-экран__картинка"><video autoplay muted loop playsinline '
+                 'webkit-playsinline preload="none" data-ролик-компьютер="video/x.mp4" data-постер-компьютер="video/x-poster.jpg"></video>'
+                 '<picture><source media="(max-width: 899px)" srcset="video/t-poster.jpg"><img src="video/x-poster.jpg" alt="кадр" '
+                 'data-анимация-avif-компьютер="video/x-anim.avif" data-анимация-webp-компьютер="video/x-anim.webp" '
+                 'data-анимация-avif-телефон="video/t-anim.avif" data-анимация-webp-телефон="video/t-anim.webp"></picture></figure>')
+        assert старое in html
+        скрипт = "<script>\n" + (СКРИПТЫ.parent / "блоки" / "обложка.js").read_text(encoding="utf-8") + "\n</script>\n"
+        html = html.replace(старое, новое).replace("</body>", скрипт + "</body>")
+        страница.write_text(html, encoding="utf-8")
+        with open(сайт / "style.css", "a", encoding="utf-8") as ф:
+            ф.write("\n.картинка--постер video { display: none; }\n.картинка img[hidden] { display: none; }\n")
+        cls.итог = выгрузить.выгрузить(cls.р.работа, "getcourse")
+        cls.первый = cls.итог["блоки"][0]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.р.закрыть()
+
+    def test_файлы_анимации_в_списке_заливки(self):
+        for имя in self.ФАЙЛЫ:
+            self.assertIn(имя, self.первый["файлы"])
+        список = (self.р.работа / "на-площадку" / "getcourse" / "картинки-залить.md").read_text(encoding="utf-8")
+        for имя in ("x-anim.avif", "x-anim.webp", "t-anim.avif", "t-anim.webp", "x-poster.jpg"):
+            self.assertIn(имя, список)
+
+    def test_плейсхолдеры_в_data_атрибутах(self):
+        html = self.первый["html"]
+        self.assertIn('data-анимация-avif-телефон="{{КАРТИНКА:video/t-anim.avif}}"', html)
+        self.assertIn('data-анимация-webp-компьютер="{{КАРТИНКА:video/x-anim.webp}}"', html)
+        self.assertNotIn('="video/', html, "свой файл остался относительным адресом — на площадке его нет")
+
+    def test_правила_состояний_подмены_остались(self):
+        css = стили(self.первый["html"])
+        self.assertIn(".картинка--постер video", css, "класс ставит обложка.js — правило выбрасывать нельзя")
+        self.assertIn("img[hidden]", css)
+
+
 class СоСсылкамиТесты(unittest.TestCase):
     def setUp(self):
         self.р = Работа()

@@ -585,7 +585,10 @@ class Стили(unittest.TestCase):
         self.assertEqual([п.name for п in собрать.СТИЛИ], ПОРЯДОК_СКЛЕЙКИ,
                          "порядок склейки — это порядок каскада; менять его нельзя")
         js = ОБЛОЖКА_JS.read_text(encoding="utf-8")
-        self.assertLessEqual(len(js.splitlines()), 40)
+        # 40 → 90: к ролику по размеру и постеру добавился запасной ход, который движется (анимированная
+        # картинка того же клипа при запрете автозапуска, возврат ролика, AVIF → WebP → постер) и
+        # повторы play() на событиях. Потолок по размеру с малым запасом: расти дальше — делить по смыслу.
+        self.assertLessEqual(len(js.splitlines()), 90)
         for слово in ("data-телефон", "prefers-reduced-motion", "canPlayType", "картинка--постер", ".catch("):
             self.assertIn(слово, js)
         звук = ЗВУК_JS.read_text(encoding="utf-8")

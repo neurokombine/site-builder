@@ -102,7 +102,7 @@
   <path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6L12 3z"/>
 </svg><span><span class="полн">Лицензия № Л035-01261-30/01053865</span><span class="кратко">№ Л035-01261-30/01053865</span></span></span>
   </header>
-  <figure class="картинка картинка--видео картинка--постер первый-экран__картинка"><video muted loop playsinline preload="none" poster="../../пример-студия/video/zhivaya-poster.jpg" data-ролик-компьютер="../../пример-студия/video/zhivaya.mp4" data-постер-компьютер="../../пример-студия/video/zhivaya-poster.jpg" data-ролик-телефон="../../пример-студия/video/zhivaya-telefon.mp4" data-постер-телефон="../../пример-студия/video/zhivaya-telefon-poster.jpg" data-лицо="50,22" aria-label="НейроВидеоСтудия вы научитесь делать видео из ничего"></video><picture><source media="(max-width: 899px)" srcset="../../пример-студия/video/zhivaya-telefon-poster.jpg"><img src="../../пример-студия/video/zhivaya-poster.jpg" alt="НейроВидеоСтудия вы научитесь делать видео из ничего" data-лицо="50,22" fetchpriority="high"></picture></figure>
+  <figure class="картинка картинка--видео картинка--постер первый-экран__картинка"><video autoplay muted loop playsinline webkit-playsinline disablepictureinpicture preload="none" poster="../../пример-студия/video/zhivaya-poster.jpg" data-ролик-компьютер="../../пример-студия/video/zhivaya.mp4" data-постер-компьютер="../../пример-студия/video/zhivaya-poster.jpg" data-ролик-телефон="../../пример-студия/video/zhivaya-telefon.mp4" data-постер-телефон="../../пример-студия/video/zhivaya-telefon-poster.jpg" data-лицо="50,22" aria-label="НейроВидеоСтудия вы научитесь делать видео из ничего"></video><picture><source media="(max-width: 899px)" srcset="../../пример-студия/video/zhivaya-telefon-poster.jpg"><img src="../../пример-студия/video/zhivaya-poster.jpg" alt="НейроВидеоСтудия вы научитесь делать видео из ничего" data-лицо="50,22" fetchpriority="high" data-анимация-avif-компьютер="video/zhivaya-anim.avif" data-анимация-webp-компьютер="video/zhivaya-anim.webp" data-анимация-avif-телефон="video/zhivaya-telefon-anim.avif" data-анимация-webp-телефон="video/zhivaya-telefon-anim.webp"></picture></figure>
   <span class="живое">живая обложка · без звука</span>
   <div class="блок__внутри">
     <div class="первый-экран__текст">
@@ -159,37 +159,140 @@
 </script>
 <script>
 (function () {
-  var видео = document.querySelector(".первый-экран__картинка video");
-  if (!видео) { return; }
-  var фигура = видео.closest(".картинка"), ua = navigator.userAgent, узко = matchMedia("(max-width: 899px)");
-  var тихо = matchMedia("(prefers-reduced-motion: reduce)").matches, кадр = фигура.querySelector("img");
-  var сафари = /safari/i.test(ua) && !/chrome|chromium|crios|android|edg/i.test(ua), ждём = false;
-  var альфа = фигура.classList.contains("картинка--живой-портрет"), жесты = ["touchstart", "pointerdown", "click", "scroll", "keydown"];
-  function постер() { видео.pause(); видео.removeAttribute("autoplay"); фигура.classList.add("картинка--постер"); }
-  function пошло() { фигура.classList.remove("картинка--постер"); }
-  function поЖесту() { жесты.forEach(function (и) { removeEventListener(и, поЖесту, true); }); ждём = false; пуск(); }
-  function отказ() { постер(); if (ждём) { return; } ждём = true; жесты.forEach(function (и) { addEventListener(и, поЖесту, { capture: true, passive: true }); }); }
-  function пуск() { var о; try { о = видео.play(); } catch (е) { о = null; } if (о && о.then) { о.then(пошло, отказ); } }
-  function выбрать() {   // новый способ: адрес только у своего размера
-    var вид = узко.matches ? "телефон" : "компьютер", адрес = видео.getAttribute("data-ролик-" + вид);
-    if (видео.getAttribute("data-вид") === вид) { return false; }
-    видео.setAttribute("data-вид", вид); видео.muted = true; видео.setAttribute("playsinline", "");
-    видео.poster = видео.getAttribute("data-постер-" + вид) || видео.poster;
-    if (!адрес || тихо) { постер(); return false; }
-    видео.src = адрес; видео.load(); return true;
+  var ролики = [].slice.call(document.querySelectorAll(".первый-экран__картинка video"));
+  if (!ролики.length) { return; }
+  var ua = navigator.userAgent, узко = matchMedia("(max-width: 899px)");
+  var тихо = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var сафари = /safari/i.test(ua) && !/chrome|chromium|crios|android|edg/i.test(ua);
+  var жесты = ["touchstart", "pointerdown", "click", "scroll", "keydown"], ждём = false, ЖДАТЬ_МС = 1000;
+
+  function тишина(в) { в.muted = true; в.defaultMuted = true; в.setAttribute("muted", ""); }
+  function вид() { return узко.matches ? "телефон" : "компьютер"; }
+
+  function партнёр(в, фигура) {
+    var сосед = в.parentNode.querySelector("img[data-анимация-webp], img[data-анимация-avif], img[data-анимация-webp-телефон], img[data-анимация-webp-компьютер]");
+    if (сосед) { return сосед; }
+    return фигура.querySelectorAll("video").length === 1 ? фигура.querySelector("img") : null;
   }
-  var новый = видео.hasAttribute("data-ролик-телефон") || видео.hasAttribute("data-ролик-компьютер");
-  if (!новый && узко.matches && видео.getAttribute("data-телефон")) {
-    видео.setAttribute("poster", видео.getAttribute("data-телефон-постер") || видео.getAttribute("poster"));
-    if (кадр) { кадр.src = видео.getAttribute("poster"); }
-    видео.src = видео.getAttribute("data-телефон"); видео.load();   // src элемента сильнее <source>: иначе браузер с WebM оставит горизонтальный ролик
+  function адрес(img, формат) {
+    if (!img) { return ""; }
+    return img.getAttribute("data-анимация-" + формат + "-" + вид()) || img.getAttribute("data-анимация-" + формат) || "";
   }
-  if (тихо) { document.querySelectorAll(".первый-экран__картинка video").forEach(function (в) { в.pause(); в.removeAttribute("autoplay"); }); }
-  if (тихо || (альфа && (сафари || !видео.canPlayType('video/webm; codecs="vp9"')))) { постер(); return; }
-  видео.addEventListener("error", постер, true);
-  if (!новый) { var обещание = видео.play(); if (обещание && обещание.catch) { обещание.then(пошло).catch(отказ); } return; }
-  if (выбрать()) { пуск(); }
-  if (узко.addEventListener) { узко.addEventListener("change", function () { if (выбрать()) { пуск(); } }); }
+
+  function Ролик(в) {
+    var с = this;
+    с.в = в; с.фигура = в.closest(".картинка") || в.parentNode; с.img = партнёр(в, с.фигура);
+    с.один = с.фигура.querySelectorAll("video").length === 1;   // постер фигуры — только когда ролик в ней один
+    с.играет = false; с.заменён = false; с.сломана = false; с.таймер = 0; с.сохранено = null; с.источник = null;
+    с.альфа = с.фигура.classList.contains("картинка--живой-портрет") && (сафари || !в.canPlayType('video/webm; codecs="vp9"'));
+    в.addEventListener("timeupdate", function () { if (в.currentTime > 0.05 && !в.paused) { с.пошёл(); } });
+    в.addEventListener("loadedmetadata", function () { с.пуск(); });
+    в.addEventListener("canplay", function () { с.пуск(); });
+    ["suspend", "stalled"].forEach(function (имя) {
+      в.addEventListener(имя, function () { if (!с.играет && в.paused && (в.currentSrc || в.src)) { с.запасной(); } });
+    });
+    в.addEventListener("error", function () { с.запасной(); }, true);   // true — ошибку <source> слышно только так
+  }
+  Ролик.prototype.постер = function (да) { if (this.один) { this.фигура.classList.toggle("картинка--постер", да); } };
+  Ролик.prototype.пуск = function () {
+    var с = this, в = с.в, о;
+    if (с.играет || с.альфа || тихо || !(в.currentSrc || в.src || в.querySelector("source"))) { return; }
+    тишина(в);
+    try { о = в.play(); } catch (е) { о = null; }
+    if (о && о.then) { о.then(null, function () { с.запасной(); ждатьЖеста(); }); }
+  };
+  Ролик.prototype.запасной = function () {
+    var с = this;
+    if (с.играет || тихо) { return; }
+    clearTimeout(с.таймер);
+    с.постер(true);
+    if (с.заменён || с.сломана || !с.img) { return; }
+    var avif = адрес(с.img, "avif"), webp = адрес(с.img, "webp"), img = с.img, рамка = img.parentNode;
+    if (!avif && !webp) { return; }
+    var картинка = рамка.tagName === "PICTURE" ? рамка : null;
+    с.сохранено = {src: img.getAttribute("src"), скрыта: img.hidden,
+                   источники: картинка ? [].slice.call(картинка.querySelectorAll("source")) : []};
+    с.сохранено.источники.forEach(function (и) { картинка.removeChild(и); });
+    if (картинка && avif) {
+      с.источник = document.createElement("source");
+      с.источник.type = "image/avif"; с.источник.srcset = avif;
+      картинка.insertBefore(с.источник, img);
+    }
+    img.onerror = function () {
+
+      if (с.источник && webp) { картинка.removeChild(с.источник); с.источник = null; if (img.getAttribute("src") !== webp) { img.src = webp; } return; }
+      с.сломана = true; с.вернуть(); с.постер(true);
+    };
+    img.src = webp || avif;
+    img.hidden = false;
+    с.заменён = true;
+  };
+  Ролик.prototype.вернуть = function () {   // картинку — обратно в постер, как в разметке
+    var с = this, img = с.img, сохр = с.сохранено;
+    if (!сохр || !img) { с.заменён = false; return; }
+    img.onerror = null;
+    if (с.источник && с.источник.parentNode) { с.источник.parentNode.removeChild(с.источник); }
+    с.источник = null;
+    сохр.источники.forEach(function (и) { img.parentNode.insertBefore(и, img); });
+    if (сохр.src === null) { img.removeAttribute("src"); } else { img.setAttribute("src", сохр.src); }
+    img.hidden = сохр.скрыта;
+    с.сохранено = null; с.заменён = false;
+  };
+  Ролик.prototype.пошёл = function () {
+    var с = this;
+    if (с.играет) { return; }
+    с.играет = true; clearTimeout(с.таймер);
+    с.вернуть(); с.постер(false);
+  };
+  Ролик.prototype.ждать = function () {
+    var с = this;
+    clearTimeout(с.таймер);
+    с.таймер = setTimeout(function () { if (!с.играет) { с.запасной(); } }, ЖДАТЬ_МС);
+  };
+  Ролик.prototype.выбрать = function () {   // новый способ: адрес только у своего размера
+    var с = this, в = с.в, размер = вид(), путь = в.getAttribute("data-ролик-" + размер);
+    if (в.getAttribute("data-вид") === размер) { return false; }
+    в.setAttribute("data-вид", размер);
+    if (с.заменён) { с.вернуть(); }
+    с.играет = false; с.сломана = false;
+    в.poster = в.getAttribute("data-постер-" + размер) || в.poster;
+    if (!путь || тихо) { с.постер(true); return false; }
+    в.src = путь;
+    return true;
+  };
+  Ролик.prototype.начать = function () {
+    var с = this, в = с.в;
+    тишина(в); в.setAttribute("playsinline", ""); в.setAttribute("webkit-playsinline", "");
+    if (тихо) { в.pause(); в.removeAttribute("autoplay"); с.постер(true); return; }
+    if (с.альфа) { в.pause(); в.removeAttribute("autoplay"); в.preload = "none"; с.запасной(); return; }
+    var новый = в.hasAttribute("data-ролик-телефон") || в.hasAttribute("data-ролик-компьютер");
+    if (новый) {
+      if (с.выбрать()) { с.ждать(); с.пуск(); }
+      if (узко.addEventListener) { узко.addEventListener("change", function () { if (с.выбрать()) { с.ждать(); с.пуск(); } }); }
+      return;
+    }
+    if (узко.matches && в.getAttribute("data-телефон")) {   // старая пара: src элемента сильнее <source>
+      в.setAttribute("poster", в.getAttribute("data-телефон-постер") || в.getAttribute("poster"));
+      if (с.один && с.img && !с.img.hasAttribute("data-анимация-webp")) { с.img.src = в.getAttribute("poster"); }
+      в.src = в.getAttribute("data-телефон"); в.load();
+    }
+    с.ждать(); с.пуск();
+  };
+
+  var все = ролики.map(function (в) { return new Ролик(в); });
+  function пускВсех() { все.forEach(function (с) { с.пуск(); }); }
+  function ждатьЖеста() {
+    if (ждём) { return; }
+    ждём = true;
+    жесты.forEach(function (и) { addEventListener(и, поЖесту, { capture: true, passive: true }); });
+  }
+  function поЖесту() {
+    жесты.forEach(function (и) { removeEventListener(и, поЖесту, { capture: true, passive: true }); });
+    ждём = false; пускВсех();
+  }
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) { пускВсех(); } });
+  addEventListener("pageshow", пускВсех);
+  все.forEach(function (с) { с.начать(); });
 })();
 </script>
 </body>
