@@ -188,6 +188,30 @@ class СтилиВнутриБлокаТесты(unittest.TestCase):
                 self.assertNotIn("document.documentElement", б["html"])
 
 
+class РазметкаКтоЭтоТесты(unittest.TestCase):
+    """JSON-LD «кто это» на площадку не едет: ни в хвост блока, ни в общий список скриптов."""
+
+    def test_ld_json_не_попадает_в_скрипты(self):
+        html = ('<html><head><script type="application/ld+json">{"@type":"Person","url":"https://x.github.io/a/"}'
+                '</script><script>var a=1;</script></head><body><section>1</section><section>2</section>'
+                '<script type="application/ld+json">{"@type":"Person"}</script><script>var b=2;</script></body></html>')
+        страница = выгрузить.разобрать_страницу(html, Path("."))
+        вместе = "\n".join(страница["скрипты"] + страница["скрипты_головы"])
+        self.assertNotIn("Person", вместе)
+        self.assertIn("var a=1;", вместе)
+        self.assertIn("var b=2;", вместе)
+
+    def test_инструкция_говорит_про_разметку_и_адрес_оригинал(self):
+        р = Работа()
+        try:
+            итог = выгрузить.выгрузить(р.работа, "getcourse")
+            текст = (итог["куда"] / "ИНСТРУКЦИЯ.md").read_text(encoding="utf-8")
+            self.assertIn("JSON-LD", текст)
+            self.assertIn("адрес-оригинал на площадке ставит сама площадка", текст)
+        finally:
+            р.закрыть()
+
+
 class КлассыИзСкриптаЭкранаТесты(unittest.TestCase):
     """Класс-состояние, который ставит только скрипт самого экрана (<script> внутри секции), в
     разметке не виден. Выгрузка выбрасывала его правило — так ролик обложки на площадке был

@@ -150,7 +150,11 @@ class ПоказТесты(unittest.TestCase):
             # поэтому зовём проверку прямо — без второго интерпретатора и второго браузера.
             итог = проверить.проверить(путь.parent, Path(д) / "проверка",
                                        браузер=self.браузер, ждать_сек=0.2)
-            self.assertFalse(находки.есть_красное(итог["находки"]), итог["отчёт"])
+            # Страница-образец склеена из всех обложек разом, у каждой свой h1, — «главный заголовок
+            # не один» здесь законен и про сайт ничего не говорит; у живой страницы обложка одна.
+            красное = [x for x in итог["находки"]
+                       if x["уровень"] == находки.ЧИНИТЬ and x["что"] != "Главных заголовков не один"]
+            self.assertFalse(красное, итог["отчёт"])
 
     def test_3_cli_без_показа(self):
         with tempfile.TemporaryDirectory() as д:
@@ -438,6 +442,11 @@ class ФиксВолнаТесты(unittest.TestCase):
             html, н = self._с_карточкой(д, "https://кто-то.github.io/moyo-delo/")
             self.assertIn('<meta property="og:image" content="https://кто-то.github.io/moyo-delo/img/card.jpg">', html)
             self.assertNotIn("Карточка в мессенджере без адреса сайта", [x["что"] for x in н], н)
+
+    def test_карточка_с_адресом_без_схемы_получает_https(self):
+        with tempfile.TemporaryDirectory() as д:
+            html, н = self._с_карточкой(д, "Мой.рф")
+            self.assertIn('<meta property="og:image" content="https://мой.рф/img/card.jpg">', html)
 
     def test_карточка_без_адреса_сайта_жёлтое(self):
         with tempfile.TemporaryDirectory() as д:
@@ -1373,3 +1382,147 @@ class ЛенивыеКартинкиТесты(unittest.TestCase):
             первый = html[:html.index('id="экран-2"')]
             self.assertNotIn("loading=", первый, "картинка первого экрана фикстуры осталась без пометки")
             self.assertIn('fetchpriority="high"', первый)
+
+
+class ПоискСеоТесты(unittest.TestCase):
+    """Задача A: canonical, JSON-LD, sitemap/robots, коды подтверждения, главный запрос."""
+
+    def _собрать(self, д: str, адрес="https://мой.рф", статус="открыт", поля_поиска="", правка=None):
+        работа = Path(д) / "работа"
+        shutil.copytree(ФИКСТУРЫ / "работа-образец", работа)
+        shutil.copytree(ФИКСТУРЫ / "профиль-образец", Path(д) / "профиль-образец")
+        файл = Path(д) / "профиль-образец" / "profile.json"
+        данные = json.loads(файл.read_text(encoding="utf-8"))
+        данные["сайт"]["адрес"] = адрес
+        if правка:
+            правка(данные)
+        файл.write_text(json.dumps(данные, ensure_ascii=False), encoding="utf-8")
+        поиск = работа / "поиск.md"
+        текст = поиск.read_text(encoding="utf-8").replace("Статус: закрыт", f"Статус: {статус}")
+        поиск.write_text(текст + поля_поиска, encoding="utf-8")
+        сайт = Path(д) / "сайт"
+        путь, н = собрать.собрать(работа, куда=сайт)
+        return путь.read_text(encoding="utf-8"), н, сайт
+
+    def test_адрес_оригинал_нормализуется(self):
+        for вход, ждём in (("мой.рф", "https://мой.рф/"), ("http://мой.рф", "https://мой.рф/"),
+                           ("https://мой.рф///", "https://мой.рф/"), ("  ", ""), ("", "")):
+            self.assertEqual(собрать.адрес_оригинал(вход), ждём, вход)
+
+    def test_адрес_оригинал_хост_строчными_без_хвостов(self):
+        for вход, ждём in (("HTTPS://Мой.РФ/Дело", "https://мой.рф/Дело/"),
+                           ("https://мой.рф/?utm=1#верх", "https://мой.рф/"),
+                           ("https://мой.рф/index.html", "https://мой.рф/"),
+                           ("https://Имя.github.io/сайт/INDEX.HTM?x=1", "https://имя.github.io/сайт/"),
+                           ("мой.рф/a/index.html#b", "https://мой.рф/a/")):
+            self.assertEqual(собрать.адрес_оригинал(вход), ждём, вход)
+
+    def test_сегодня_по_москве_без_zoneinfo(self):
+        self.assertRegex(собрать.сегодня_по_москве(), r"^\d{4}-\d{2}-\d{2}$")
+        self.assertFalse(hasattr(собрать, "ZoneInfo"))   # на Windows без tzdata он падал
+
+    def test_same_as_берёт_только_настоящие_ссылки(self):
+        данные = {"автор": {"имя": "А"},
+                  "контакты": [{"название": "A", "адрес": "x", "url": "javascript:alert(1)"},
+                               {"название": "B", "адрес": "x", "url": "https://логин@vk.com/a"},
+                               {"название": "C", "адрес": "x", "url": "https://localhost/a"},
+                               {"название": "D", "адрес": "x", "url": "ftp://files.example.com/a"},
+                               {"название": "E", "адрес": "x", "url": "https://vk.com/ok"}]}
+        ld = json.loads(собрать.разметка_автора(данные, "мой.рф", None).split("\n", 1)[1].rsplit("\n", 1)[0])
+        self.assertEqual(ld["sameAs"], ["https://vk.com/ok"])
+
+    def test_canonical_json_ld_и_sitemap_у_открытого_сайта(self):
+        with tempfile.TemporaryDirectory() as д:
+            html, н, сайт = self._собрать(д, адрес="мой.рф")
+            self.assertIn('<link rel="canonical" href="https://мой.рф/">', html)
+            self.assertEqual(собрать.найти_заглушки(html), [])
+            self.assertNotIn("Нет адреса-оригинала", [x["что"] for x in н], н)
+            self.assertIn("Sitemap: https://мой.рф/sitemap.xml", (сайт / "robots.txt").read_text(encoding="utf-8"))
+            карта = (сайт / "sitemap.xml").read_text(encoding="utf-8")
+            self.assertIn("<loc>https://мой.рф/</loc>", карта)
+            self.assertRegex(карта, r"<lastmod>\d{4}-\d{2}-\d{2}</lastmod>")
+            блок = re.search(r'<script type="application/ld\+json">\n(.*?)\n</script>', html, re.S)
+            ld = json.loads(блок.group(1))
+            self.assertEqual((ld["@type"], ld["name"], ld["url"]), ("Person", "Мария", "https://мой.рф/"))
+            self.assertEqual(ld["jobTitle"], "преподаватель математики")
+            self.assertEqual(ld["sameAs"], ["https://t.me/пример"])   # почта — не профиль
+            for нельзя in ("aggregateRating", "review", "ratingValue"):
+                self.assertNotIn(нельзя, html)
+
+    def test_закрытый_сайт_без_карты_и_старая_карта_уходит(self):
+        with tempfile.TemporaryDirectory() as д:
+            сайт = Path(д) / "сайт"; сайт.mkdir()
+            (сайт / "sitemap.xml").write_text("старая", encoding="utf-8")
+            собрать.записать_файлы_поиска(сайт, "https://мой.рф/", False)
+            self.assertFalse((сайт / "sitemap.xml").exists())
+            self.assertEqual((сайт / "robots.txt").read_text(encoding="utf-8"), "User-agent: *\nDisallow: /\n")
+
+    def test_lastmod_по_москве_а_не_по_машине(self):
+        from datetime import datetime
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as д:
+            class Поддельные(datetime):
+                @classmethod
+                def now(cls, tz=None):
+                    # 22:30 UTC 1 октября — в Москве уже 2 октября
+                    return datetime(2026, 10, 1, 22, 30, tzinfo=__import__("zoneinfo").ZoneInfo("UTC")).astimezone(tz)
+            with patch.object(собрать, "datetime", Поддельные):
+                собрать.записать_файлы_поиска(Path(д), "https://мой.рф/", True)
+            self.assertIn("<lastmod>2026-10-02</lastmod>", (Path(д) / "sitemap.xml").read_text(encoding="utf-8"))
+
+    def test_нет_адреса_у_открытого_сайта_жёлтое_и_без_тегов(self):
+        with tempfile.TemporaryDirectory() as д:
+            html, н, сайт = self._собрать(д, адрес="")
+            жёлтые = [x for x in н if x["что"] == "Нет адреса-оригинала"]
+            self.assertEqual(len(жёлтые), 1, н)
+            self.assertEqual(жёлтые[0]["уровень"], находки.ПОПРАВИТЬ)
+            self.assertNotIn("canonical", html)
+            self.assertNotIn("{{", html)
+            self.assertNotIn("Sitemap", (сайт / "robots.txt").read_text(encoding="utf-8"))
+            self.assertFalse((сайт / "sitemap.xml").exists())
+            self.assertNotIn('"url"', html)   # пустые поля не выводим
+
+    def test_закрытый_сайт_без_адреса_молчит(self):
+        with tempfile.TemporaryDirectory() as д:
+            _, н, _ = self._собрать(д, адрес="", статус="закрыт")
+            self.assertNotIn("Нет адреса-оригинала", [x["что"] for x in н], н)
+
+    def test_коды_подтверждения_и_главный_запрос(self):
+        with tempfile.TemporaryDirectory() as д:
+            html, н, _ = self._собрать(
+                д, поля_поиска="- Главный запрос: репетитор по математике\n"
+                               "- Подтверждение Яндекса: abc123\n- Подтверждение Google: нет\n")
+            self.assertIn('<meta name="yandex-verification" content="abc123">', html)
+            self.assertNotIn("google-site-verification", html)   # пусто — строки нет совсем
+            self.assertEqual(собрать.прочитать_поиск(Path(д) / "работа" / "поиск.md")["главный_запрос"],
+                             "репетитор по математике")
+            self.assertEqual(собрать.найти_заглушки(html), [])
+
+    def test_поля_поиска_пустые_по_умолчанию(self):
+        поиск = собрать.прочитать_поиск(None)
+        self.assertEqual((поиск["главный_запрос"], поиск["яндекс_код"], поиск["гугл_код"]), ("", "", ""))
+
+    def test_json_ld_экранирует_закрывающий_тег_и_без_имени_не_ставится(self):
+        данные = {"автор": {"имя": "А", "био": "</script><b>"}}
+        блок = собрать.разметка_автора(данные, "https://мой.рф/")
+        self.assertEqual(блок.count("</script>"), 1)   # только настоящий закрывающий
+        self.assertEqual(json.loads(блок.split("\n", 1)[1].rsplit("\n", 1)[0])["description"], "</script><b>")
+        self.assertEqual(собрать.разметка_автора({"автор": {"имя": " "}}, "https://мой.рф/"), "")
+        self.assertEqual(собрать.разметка_автора(None, ""), "")
+
+    def test_same_as_пропускает_заглушки_и_свой_сайт_а_фото_берёт_из_img(self):
+        with tempfile.TemporaryDirectory() as д:
+            img = Path(д)
+            (img / "me.webp").write_bytes(b"x")
+            данные = {"автор": {"имя": "А"},
+                      "контакты": [{"название": "Сайт", "адрес": "пример.рф"},
+                                   {"название": "Сайт", "адрес": "мой.рф"},
+                                   {"название": "ВК", "адрес": "vk.com/a"},
+                                   {"название": "Почта", "адрес": "a@b.рф"},
+                                   {"название": "Ютуб", "адрес": "x", "url": "https://youtube.com/@a"}],
+                      "активы": {"фото_автора": "активы/me.webp"}}
+            ld = json.loads(собрать.разметка_автора(данные, "мой.рф", img).split("\n", 1)[1].rsplit("\n", 1)[0])
+            self.assertEqual(ld["sameAs"], ["https://vk.com/a", "https://youtube.com/@a"])
+            self.assertEqual(ld["image"], "https://мой.рф/img/me.webp")
+            ld = json.loads(собрать.разметка_автора(данные, "", img).split("\n", 1)[1].rsplit("\n", 1)[0])
+            self.assertNotIn("image", ld)   # без адреса путь не расшифровать — не выдумываем

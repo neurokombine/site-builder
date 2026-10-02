@@ -280,3 +280,31 @@ class ФиксВолнаТесты(unittest.TestCase):
         self.assertEqual(журнал.count("обновление отправлено на полку"), 1)
         self.assertIn("изменений не было", журнал)
         self.assertEqual(_git("rev-list", "--count", "HEAD", cwd=self.полка).strip(), "1")
+
+
+class ПоискИКартаТесты(unittest.TestCase):
+    """Открыть/закрыть поиску ведёт sitemap.xml и строку Sitemap в robots.txt той же функцией, что и сборка."""
+
+    def _сайт(self, canonical: str):
+        д = tempfile.TemporaryDirectory(); self.addCleanup(д.cleanup)
+        сайт = Path(д.name) / "работа" / "сайт"; сайт.mkdir(parents=True)
+        тег = f'<link rel="canonical" href="{canonical}">' if canonical else ""
+        (сайт / "index.html").write_text(СТРАНИЦА.replace("</head>", тег + "</head>"), encoding="utf-8")
+        return сайт
+
+    def test_открыть_пишет_карту_а_закрыть_убирает(self):
+        сайт = self._сайт("https://мой.рф/")
+        опубликовать.открыть_поиску(сайт)
+        self.assertIn("Sitemap: https://мой.рф/sitemap.xml", (сайт / "robots.txt").read_text(encoding="utf-8"))
+        self.assertIn("<loc>https://мой.рф/</loc>", (сайт / "sitemap.xml").read_text(encoding="utf-8"))
+        опубликовать.закрыть_от_поиска(сайт)
+        self.assertFalse((сайт / "sitemap.xml").exists())
+        self.assertEqual((сайт / "robots.txt").read_text(encoding="utf-8"), "User-agent: *\nDisallow: /\n")
+
+    def test_без_canonical_карты_нет_и_есть_предупреждение(self):
+        сайт = self._сайт("")
+        with contextlib.redirect_stdout(io.StringIO()) as вывод:
+            опубликовать.открыть_поиску(сайт)
+        self.assertFalse((сайт / "sitemap.xml").exists())
+        self.assertNotIn("Sitemap", (сайт / "robots.txt").read_text(encoding="utf-8"))
+        self.assertIn("адреса-оригинала", вывод.getvalue())

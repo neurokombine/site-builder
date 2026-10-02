@@ -24,11 +24,13 @@ import subprocess
 import sys
 import time
 from datetime import datetime
+from html import unescape
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import глаза  # noqa: E402
+import собрать  # noqa: E402
 import что_уедет  # noqa: E402
 from находки import вывод_в_utf8  # noqa: E402
 
@@ -37,6 +39,7 @@ from находки import вывод_в_utf8  # noqa: E402
 ПАУЗА_СЕКУНД = 5
 БЕЗ_ИЗМЕНЕНИЙ = "без изменений"   # ответ отправить(), когда коммитить было нечего
 МЕТА_РОБОТЫ = re.compile(r'(<meta\s+name="robots"\s+content=")([^"]*)("\s*/?>)')
+CANONICAL = re.compile(r'<link\s+rel="canonical"\s+href="([^"]*)"')
 
 
 def запустить(команда: list[str], cwd: Path | None = None) -> tuple[int, str]:
@@ -100,15 +103,24 @@ def закрыт_ли(папка: Path) -> bool:
     return "noindex" in совпадение.group(2).lower() if совпадение else True
 
 
-def _переписать_поиск_и_robots(папка: Path, содержимое_robots: str, содержимое_meta: str,
-                               статус: str) -> None:
+def адрес_из_страницы(папка: Path) -> str:
+    """Адрес-оригинал берём из canonical в собранном index.html, а не из профиля: профиль скрипт
+    публикации не знает (имя профиля — в прототипе работы), зато сборка уже положила в страницу
+    ровно тот адрес, который проверила. Нет тега — адреса нет, и карты сайта тоже не будет."""
+    файл = Path(папка) / "index.html"
+    найдено = CANONICAL.search(файл.read_text(encoding="utf-8")) if файл.is_file() else None
+    return unescape(найдено.group(1)) if найдено else ""
+
+
+def _переписать_поиск_и_robots(папка: Path, открыт: bool, содержимое_meta: str, статус: str) -> None:
     папка = Path(папка)
     индекс = папка / "index.html"
     if индекс.is_file():
         текст = индекс.read_text(encoding="utf-8")
         текст = МЕТА_РОБОТЫ.sub(rf'\g<1>{содержимое_meta}\g<3>', текст)
         индекс.write_text(текст, encoding="utf-8")
-    (папка / "robots.txt").write_text(f"User-agent: *\n{содержимое_robots}\n", encoding="utf-8")
+    # robots.txt и sitemap.xml — той же функцией, что и сборка: логика в одном месте
+    собрать.записать_файлы_поиска(папка, адрес_из_страницы(папка), открыт)
     поиск_md = папка.parent / "поиск.md"
     if поиск_md.is_file():
         текст = поиск_md.read_text(encoding="utf-8")
@@ -118,11 +130,14 @@ def _переписать_поиск_и_robots(папка: Path, содержи�
 
 
 def закрыть_от_поиска(папка: Path) -> None:
-    _переписать_поиск_и_robots(папка, "Disallow: /", "noindex, nofollow", "закрыт")
+    _переписать_поиск_и_robots(папка, False, "noindex, nofollow", "закрыт")
 
 
 def открыть_поиску(папка: Path) -> None:
-    _переписать_поиск_и_robots(папка, "Allow: /", "index, follow", "открыт")
+    _переписать_поиск_и_robots(папка, True, "index, follow", "открыт")
+    if not адрес_из_страницы(папка):
+        print("⚠️ В странице нет адреса-оригинала (`сайт.адрес` в профиле был пуст при сборке): "
+              "карты сайта не будет. Впишите адрес в профиль и пересоберите сайт.")
 
 
 def _обеспечить_личность(папка: Path) -> None:
